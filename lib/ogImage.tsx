@@ -65,10 +65,10 @@ export default async function OgImage() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 22,
+            gap: 28,
           }}
         >
-          <img src={markSrc} width={168} height={168} alt="" />
+          <img src={markSrc} width={176} height={220} alt="" />
           <div
             style={{
               color: "#f2f4f7",

@@ -3,9 +3,10 @@ import type { PlayState, PromptState } from "./types";
 
 function toPromptState(state: PlayState | PromptState): PromptState {
   return {
-    character: state.character,
-    userPersona: state.userPersona,
+    character: { ...state.character, photo: "" },
+    userPersona: { ...state.userPersona, photo: "" },
     worldSetting: state.worldSetting,
+    prologue: "prologue" in state ? state.prologue : "",
     storySummary: state.storySummary,
     castNotes: state.castNotes,
     shortTermBuffer: state.shortTermBuffer,

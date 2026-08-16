@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
+import AvatarCircle from "@/components/AvatarCircle";
+import CastEditor from "@/components/CastEditor";
 import CharField from "@/components/CharField";
 import MemoryPanel from "@/components/MemoryPanel";
 import PageShell from "@/components/PageShell";
@@ -34,6 +36,7 @@ function SetupBody() {
   }
 
   const canStart = Boolean(play.state.character.name.trim());
+  const storyStarted = play.state.chatLog.length > 0;
 
   async function compressMemory() {
     if (compressing || play.state.shortTermBuffer.length === 0) return;
@@ -55,13 +58,19 @@ function SetupBody() {
         className="mx-auto w-full max-w-3xl space-y-6 overflow-y-auto px-6 py-8"
         onSubmit={(event) => {
           event.preventDefault();
-          if (canStart) router.push("/");
+          if (canStart) router.push(storyStarted ? "/chat" : "/");
         }}
       >
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="label-caps">설정</p>
             <h1 className="mt-1 text-3xl font-semibold">캐릭터와 세계관</h1>
+            {storyStarted ? (
+              <p className="mt-2 text-sm text-[var(--ink-dim)]">
+                이야기가 시작된 뒤에도 인물과 설정을 고칠 수 있습니다. 다음 턴부터
+                반영됩니다.
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -82,7 +91,12 @@ function SetupBody() {
                 className="preset-card"
                 onClick={() => play.applyPreset(preset.id)}
               >
-                <p className="font-semibold">{preset.label}</p>
+                <AvatarCircle
+                  src={preset.character.photo}
+                  name={preset.character.name}
+                  size="sm"
+                />
+                <p className="mt-3 font-semibold">{preset.label}</p>
                 <p className="mt-1 text-sm text-[var(--ink-dim)]">{preset.blurb}</p>
                 <p className="mt-2 text-xs text-[var(--blue-soft)]">
                   등장인물 {preset.cast.length}명
@@ -105,9 +119,16 @@ function SetupBody() {
                 className="min-w-0 flex-1 text-left"
                 onClick={() => play.selectSetting(item.id)}
               >
-                <p className="font-semibold">
-                  {item.character.name.trim() || "이름 없는 설정"}
-                </p>
+                <span className="flex items-center gap-3">
+                  <AvatarCircle
+                    src={item.character.photo}
+                    name={item.character.name}
+                    size="sm"
+                  />
+                  <p className="font-semibold">
+                    {item.character.name.trim() || "이름 없는 설정"}
+                  </p>
+                </span>
                 <p className="mt-1 truncate text-sm text-[var(--ink-dim)]">
                   {item.character.oneLiner || "한 줄 소개 없음"}
                   {item.turnCount > 0 ? ` · ${item.turnCount}턴` : ""}
@@ -129,6 +150,16 @@ function SetupBody() {
         {error ? <p className="alert-error">{error}</p> : null}
         <section className="paper-card space-y-4 p-6">
           <p className="label-caps">필수 프로필</p>
+          <div className="flex items-center gap-4">
+            <AvatarCircle
+              src={play.state.character.photo}
+              name={play.state.character.name}
+              size="lg"
+            />
+            <p className="text-sm text-[var(--ink-dim)]">
+              예시 세계관을 고르면 웹툰 화풍 사진이 들어갑니다.
+            </p>
+          </div>
           <CharField
             label="이름"
             required
@@ -160,14 +191,23 @@ function SetupBody() {
             onChange={(value) => play.updateCharacter("appearance", value)}
           />
           <div>
-            <p className="text-sm font-medium text-[var(--ink)]">금지</p>
-            <p className="mt-1 text-xs text-[var(--ink-dim)]">
-              말투와 세계관을 보고 자동으로 정합니다. 직접 고치지 않아도 됩니다.
-            </p>
-            <p className="forbidden-box">
-              {play.state.character.forbidden ||
-                "이름이나 말투를 적으면 여기에 규칙이 생깁니다."}
-            </p>
+            <CharField
+              label="금지"
+              multiline
+              rows={6}
+              value={play.state.character.forbidden}
+              max={FIELD_LIMITS.forbidden}
+              onChange={(value) => play.updateCharacter("forbidden", value)}
+              placeholder="이름이나 말투를 적으면 규칙이 생깁니다."
+              hint="말투와 세계관을 보고 자동으로 채웁니다. 직접 고쳐도 되고, 고친 뒤에는 다른 칸을 바꿔도 유지됩니다."
+            />
+            <button
+              type="button"
+              className="ghost-link mt-2"
+              onClick={play.resetForbidden}
+            >
+              자동으로 다시 채우기
+            </button>
           </div>
           <CharField
             label="시작 상황"
@@ -180,6 +220,23 @@ function SetupBody() {
 
         <section className="paper-card space-y-4 p-6">
           <p className="label-caps">유저 · 세계관</p>
+          <div className="flex items-start gap-4">
+            <div>
+              <p className="text-sm font-medium text-[var(--ink)]">사진</p>
+              <div className="mt-2">
+                <AvatarCircle
+                  src={play.state.userPersona.photo}
+                  name={play.state.userPersona.name}
+                  size="lg"
+                  editable
+                  onChange={play.setUserPhoto}
+                />
+              </div>
+              <p className="mt-2 text-xs text-[var(--ink-dim)]">
+                원을 눌러 사진을 넣으세요.
+              </p>
+            </div>
+            <div className="min-w-0 flex-1">
           <CharField
             label="유저 이름"
             value={play.state.userPersona.name}
@@ -195,6 +252,8 @@ function SetupBody() {
             onChange={(value) => play.updateUser("setting", value)}
             placeholder="나는 누구인지"
           />
+            </div>
+          </div>
           <CharField
             label="세계관"
             multiline
@@ -205,54 +264,25 @@ function SetupBody() {
             placeholder={WORLD_PLACEHOLDER}
             hint="세계관은 요약에 넣지 않고, 매 턴 그대로 주입됩니다."
           />
+          <CharField
+            label="프롤로그"
+            multiline
+            rows={8}
+            value={play.state.prologue}
+            max={FIELD_LIMITS.prologue}
+            onChange={play.setPrologue}
+            placeholder="예시 세계관을 고르면 대화 전에 읽을 프롤로그가 들어갑니다."
+            hint="미리 만들어진 시나리오의 도입부입니다. 대화 시작 전에 보여 주고, 모델에도 주입됩니다."
+          />
         </section>
 
         <section className="paper-card space-y-4 p-6">
-          <div className="flex items-center justify-between">
-            <p className="label-caps">등장인물 메모</p>
-            <button
-              type="button"
-              className="ghost-link"
-              onClick={play.addCastNote}
-            >
-              추가
-            </button>
-          </div>
-          {play.state.castNotes.length === 0 ? (
-            <p className="text-sm text-[var(--ink-dim)]">
-              중요한 인물만 직접 추가하세요. 자동으로 넣지 않습니다.
-            </p>
-          ) : (
-            play.state.castNotes.map((note) => (
-              <div key={note.id} className="grid gap-3 sm:grid-cols-[8rem_1fr_auto]">
-                <input
-                  className="field-input mt-0"
-                  placeholder="이름"
-                  value={note.name}
-                  maxLength={FIELD_LIMITS.castName}
-                  onChange={(event) =>
-                    play.updateCastNote(note.id, "name", event.target.value)
-                  }
-                />
-                <input
-                  className="field-input mt-0"
-                  placeholder="한 줄 메모"
-                  value={note.note}
-                  maxLength={FIELD_LIMITS.castNote}
-                  onChange={(event) =>
-                    play.updateCastNote(note.id, "note", event.target.value)
-                  }
-                />
-                <button
-                  type="button"
-                  className="ghost-link self-center"
-                  onClick={() => play.removeCastNote(note.id)}
-                >
-                  삭제
-                </button>
-              </div>
-            ))
-          )}
+          <CastEditor
+            notes={play.state.castNotes}
+            onAdd={play.addCastNote}
+            onUpdate={play.updateCastNote}
+            onRemove={play.removeCastNote}
+          />
         </section>
 
         <MemoryPanel
@@ -263,7 +293,7 @@ function SetupBody() {
         />
 
         <button type="submit" className="btn-primary w-full" disabled={!canStart}>
-          작성 화면으로
+          {storyStarted ? "채팅으로 돌아가기" : "작성 화면으로"}
         </button>
       </form>
     </AppFrame>

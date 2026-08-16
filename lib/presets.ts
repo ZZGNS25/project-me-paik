@@ -1,5 +1,10 @@
 import { FIELD_LIMITS, createEmptySetting } from "./constants";
 import { buildForbidden } from "./forbidden";
+import {
+  ACADEMY_PROLOGUE,
+  HUNTER_PROLOGUE,
+  REINCARNATE_PROLOGUE,
+} from "./prologues";
 import type { SettingRecord } from "./types";
 
 export type PresetId = "hunter" | "academy" | "reincarnate";
@@ -14,12 +19,14 @@ export type WorldPreset = {
     speechStyle: string;
     appearance: string;
     openingSituation: string;
+    photo: string;
   };
   userPersona: {
     name: string;
     setting: string;
   };
   worldSetting: string;
+  prologue: string;
   cast: { name: string; note: string }[];
 };
 
@@ -35,6 +42,7 @@ export const WORLD_PRESETS: WorldPreset[] = [
       appearance: "검은 숏컷, 회색 코트, 칼자국 난 장갑.",
       openingSituation:
         "E급 연습 던전 앞에서 신입인 유저를 기다리고 있다. 오늘은 생존 훈련이다.",
+      photo: "/avatars/hunter-seoyunha.jpg",
     },
     userPersona: {
       name: "나",
@@ -44,6 +52,7 @@ export const WORLD_PRESETS: WorldPreset[] = [
 세계의 규칙: 각성자만 던전에 들어간다. 랭크는 F~S. 마석은 화폐. 게이트 안에서는 총기·통신이 불안정하다.
 중요 지명: 한강 균열, 길드 연합 본부, E급 연습 던전
 절대 금지: 미각성자가 스킬을 쓰지 않는다. 시내에서 각성 스킬을 함부로 쓰지 않는다.`,
+    prologue: HUNTER_PROLOGUE,
     cast: [
       { name: "강태민", note: "청룡 길드장. 이익을 먼저 계산한다." },
       { name: "한소라", note: "B급 힐러. 밝고 잔소리가 많다." },
@@ -63,6 +72,7 @@ export const WORLD_PRESETS: WorldPreset[] = [
       appearance: "백금발 장발, 남색 제복, 은테 안경.",
       openingSituation:
         "입학식 다음 날, 결투장에서 편입생인 유저의 실력을 확인하고 있다.",
+      photo: "/avatars/academy-edel.jpg",
     },
     userPersona: {
       name: "나",
@@ -72,6 +82,7 @@ export const WORLD_PRESETS: WorldPreset[] = [
 세계의 규칙: 학생은 기숙사 생활. 마법은 속성 계약. 외부인은 허가 없이 교정에 못 들어온다.
 중요 지명: 중앙 첨탑, 금서고, 결투장, 후원 연회장
 절대 금지: 교내에서 살인을 일상화하지 않는다. 스마트폰 같은 현대 문물은 없다.`,
+    prologue: ACADEMY_PROLOGUE,
     cast: [
       { name: "카엘 반트", note: "검술 수석. 라이벌, 자존심이 세다." },
       { name: "루나 이브", note: "금서고 조수. 책을 사람보다 믿는다." },
@@ -91,6 +102,7 @@ export const WORLD_PRESETS: WorldPreset[] = [
       appearance: "밤색 웨이브, 연보라 드레스, 작은 티아라.",
       openingSituation:
         "벨로드 저택 온실에서 환생한 유저를 마주친다. 오늘은 약혼 이야기가 오가는 날이다.",
+      photo: "/avatars/reincarnate-serena.jpg",
     },
     userPersona: {
       name: "나",
@@ -100,6 +112,7 @@ export const WORLD_PRESETS: WorldPreset[] = [
 세계의 규칙: 전생 기억은 본인만 안다. 마법은 희귀하고 신분제가 강하다.
 중요 지명: 벨로드 공작가, 왕도 아르카, 북쪽 국경
 절대 금지: 총·공장·인터넷을 갑자기 만들지 않는다. 전생을 아무에게나 말하지 않는다.`,
+    prologue: REINCARNATE_PROLOGUE,
     cast: [
       { name: "로엔", note: "호위 기사. 충직하고 말이 적다." },
       { name: "벨로드 공작", note: "유저의 아버지. 차갑고 가문을 우선한다." },
@@ -125,6 +138,8 @@ export function settingFromPreset(preset: WorldPreset, id: string): SettingRecor
       FIELD_LIMITS.openingSituation,
     ),
     forbidden: "",
+    forbiddenManual: false,
+    photo: preset.character.photo,
   };
 
   const worldSetting = clipField(preset.worldSetting, FIELD_LIMITS.worldSetting);
@@ -145,8 +160,10 @@ export function settingFromPreset(preset: WorldPreset, id: string): SettingRecor
     userPersona: {
       name: clipField(preset.userPersona.name, FIELD_LIMITS.userName),
       setting: clipField(preset.userPersona.setting, FIELD_LIMITS.userSetting),
+      photo: "",
     },
     worldSetting,
+    prologue: clipField(preset.prologue, FIELD_LIMITS.prologue),
     castNotes: preset.cast.map((item, index) => ({
       id: `${id}-cast-${index}`,
       name: clipField(item.name, FIELD_LIMITS.castName),

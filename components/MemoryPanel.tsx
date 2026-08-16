@@ -1,5 +1,6 @@
 import { FIELD_LIMITS } from "@/lib/constants";
 import type { PlayState } from "@/lib/types";
+import AvatarCircle from "./AvatarCircle";
 import CharField from "./CharField";
 
 type MemoryPanelProps = {
@@ -19,9 +20,16 @@ export default function MemoryPanel({
     <aside className="paper-panel flex flex-col gap-5 overflow-y-auto p-5">
       <section>
         <p className="label-caps">프로필</p>
-        <h2 className="mt-1 text-2xl font-semibold text-[var(--ink)]">
-          {state.character.name || "이름 없음"}
-        </h2>
+        <div className="mt-2 flex items-center gap-3">
+          <AvatarCircle
+            src={state.character.photo}
+            name={state.character.name}
+            size="md"
+          />
+          <h2 className="text-2xl font-semibold text-[var(--ink)]">
+            {state.character.name || "이름 없음"}
+          </h2>
+        </div>
         <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">
           {state.character.oneLiner || "한 줄 소개가 아직 없습니다."}
         </p>

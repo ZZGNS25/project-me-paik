@@ -3,7 +3,9 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
+import AvatarCircle from "@/components/AvatarCircle";
 import Composer from "@/components/Composer";
+import PrologueCard from "@/components/PrologueCard";
 import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
 import PageShell from "@/components/PageShell";
@@ -77,18 +79,35 @@ function HomeBody() {
       ) : view === "history" ? (
         <HistoryPanel />
       ) : (
-        <div className="flex h-full flex-col items-center justify-center px-6">
-          <span className="gemini-mark text-sm font-semibold text-white">이</span>
+        <div className="flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-8">
+          {state.character.photo ? (
+            <AvatarCircle
+              src={state.character.photo}
+              name={state.character.name}
+              size="lg"
+            />
+          ) : (
+            <span className="gemini-mark text-sm font-semibold text-white">이</span>
+          )}
           <h1 className="mt-6 text-center text-3xl font-semibold tracking-tight sm:text-4xl">
             {state.character.name
-              ? `${state.character.name}과 이야기를 이어볼까요?`
+              ? state.chatLog.length > 0
+                ? `${state.character.name}과 이야기를 이어가 볼까요?`
+                : `${state.character.name}과 이야기를 시작해볼까요?`
               : "오늘은 어떤 이야기를 시작할까요?"}
           </h1>
           <p className="mt-3 max-w-md text-center text-sm text-[var(--ink-dim)]">
             {state.character.name
-              ? "아래 칸에 대사나 행동을 적으면 바로 이어집니다."
+              ? state.prologue && state.chatLog.length === 0
+                ? "프롤로그를 읽고, 아래 칸에 대사나 행동을 적으면 이어집니다."
+                : "아래 칸에 대사나 행동을 적으면 바로 이어집니다."
               : "왼쪽 설정에서 캐릭터를 먼저 적어 주세요."}
           </p>
+          {state.prologue && state.chatLog.length === 0 ? (
+            <div className="mt-8 w-full max-w-2xl">
+              <PrologueCard text={state.prologue} />
+            </div>
+          ) : null}
           <div className="mt-10 w-full max-w-2xl">
             <Composer
               value={draft}

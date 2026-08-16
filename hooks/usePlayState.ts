@@ -20,18 +20,22 @@ function newId() {
 }
 
 function withForbidden(record: SettingRecord): SettingRecord {
+  const forbiddenManual = Boolean(record.character.forbiddenManual);
   return {
     ...record,
     updatedAt: new Date().toISOString(),
     character: {
       ...record.character,
-      forbidden: buildForbidden({
-        name: record.character.name,
-        speechStyle: record.character.speechStyle,
-        appearance: record.character.appearance,
-        worldSetting: record.worldSetting,
-        openingSituation: record.character.openingSituation,
-      }),
+      forbiddenManual,
+      forbidden: forbiddenManual
+        ? clip(record.character.forbidden, FIELD_LIMITS.forbidden)
+        : buildForbidden({
+            name: record.character.name,
+            speechStyle: record.character.speechStyle,
+            appearance: record.character.appearance,
+            worldSetting: record.worldSetting,
+            openingSituation: record.character.openingSituation,
+          }),
     },
   };
 }
@@ -74,34 +78,48 @@ export function usePlayState() {
 
   const state = toPlayState(store);
 
-  function updateCharacter<K extends keyof CharacterProfile>(
-    key: K,
+  function updateCharacter(
+    key: Exclude<keyof CharacterProfile, "forbiddenManual" | "photo">,
     value: string,
   ) {
-    if (key === "forbidden") return;
-
-    const limits: Record<keyof CharacterProfile, number> = {
+    const limits = {
       name: FIELD_LIMITS.characterName,
       oneLiner: FIELD_LIMITS.oneLiner,
       speechStyle: FIELD_LIMITS.speechStyle,
       appearance: FIELD_LIMITS.appearance,
       forbidden: FIELD_LIMITS.forbidden,
       openingSituation: FIELD_LIMITS.openingSituation,
-    };
+    } as const;
 
     updateStore((prev) =>
       patchCurrent(prev, (current) => ({
         ...current,
-        character: { ...current.character, [key]: clip(value, limits[key]) },
+        character: {
+          ...current.character,
+          [key]: clip(value, limits[key]),
+          ...(key === "forbidden" ? { forbiddenManual: true } : {}),
+        },
       })),
     );
   }
 
-  function updateUser<K extends keyof UserPersona>(key: K, value: string) {
-    const limits: Record<keyof UserPersona, number> = {
+  function resetForbidden() {
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        character: {
+          ...current.character,
+          forbiddenManual: false,
+        },
+      })),
+    );
+  }
+
+  function updateUser(key: Exclude<keyof UserPersona, "photo">, value: string) {
+    const limits = {
       name: FIELD_LIMITS.userName,
       setting: FIELD_LIMITS.userSetting,
-    };
+    } as const;
 
     updateStore((prev) =>
       patchCurrent(prev, (current) => ({
@@ -111,11 +129,29 @@ export function usePlayState() {
     );
   }
 
+  function setUserPhoto(photo: string) {
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        userPersona: { ...current.userPersona, photo },
+      })),
+    );
+  }
+
   function setWorldSetting(value: string) {
     updateStore((prev) =>
       patchCurrent(prev, (current) => ({
         ...current,
         worldSetting: clip(value, FIELD_LIMITS.worldSetting),
+      })),
+    );
+  }
+
+  function setPrologue(value: string) {
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        prologue: clip(value, FIELD_LIMITS.prologue),
       })),
     );
   }
@@ -204,11 +240,25 @@ export function usePlayState() {
 
   function hydrateFromCloud(partial: Partial<PlayState>) {
     updateStore((prev) =>
-      patchCurrent(prev, (current) => ({
-        ...current,
-        ...partial,
-        id: current.id,
-      })),
+      patchCurrent(prev, (current) => {
+        const character = partial.character
+          ? {
+              ...current.character,
+              ...partial.character,
+              forbiddenManual:
+                partial.character.forbiddenManual ??
+                Boolean(partial.character.forbidden.trim()),
+            }
+          : current.character;
+
+        return {
+          ...current,
+          ...partial,
+          character,
+          prologue: partial.prologue?.trim() ? partial.prologue : current.prologue,
+          id: current.id,
+        };
+      }),
     );
   }
 
@@ -308,8 +358,11 @@ export function usePlayState() {
     settings: store.settings,
     currentSettingId: store.currentSettingId,
     updateCharacter,
+    resetForbidden,
     updateUser,
+    setUserPhoto,
     setWorldSetting,
+    setPrologue,
     setStorySummary,
     addCastNote,
     updateCastNote,

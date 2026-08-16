@@ -35,6 +35,11 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     "[세계관]",
     state.worldSetting.trim() || "(없음)",
     "",
+    "[프롤로그]",
+    state.prologue.trim()
+      ? `${state.prologue.trim()}\n(프롤로그는 이미 지난 일이다. 처음부터 다시 쓰지 말고 그 직후부터 이어라.)`
+      : "(없음)",
+    "",
     "[캐릭터 설정집]",
     `이름: ${state.character.name}`,
     `한 줄: ${state.character.oneLiner}`,
@@ -70,7 +75,7 @@ export function buildSummaryPrompt(state: PromptState) {
     )
     .join("\n");
 
-  return `아래 기존 요약과 최근 대화만 보고, 스토리 진행 상황만 600자 안으로 요약하라.
+  return `아래 기존 요약과 최근 대화만 보고, 스토리 진행 상황만 800자 안으로 요약하라.
 세계관·캐릭터 말투·금지는 넣지 마라.
 형식:
 진행중:

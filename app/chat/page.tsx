@@ -3,8 +3,10 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
+import AvatarCircle from "@/components/AvatarCircle";
 import ChatLog from "@/components/ChatLog";
 import Composer from "@/components/Composer";
+import StoryExtrasPanel from "@/components/StoryExtrasPanel";
 import PageShell from "@/components/PageShell";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
@@ -19,6 +21,7 @@ function ChatBody() {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState<"chat" | "cloud" | null>(null);
   const [error, setError] = useState("");
+  const [extrasOpen, setExtrasOpen] = useState(false);
   const pendingSent = useRef(false);
 
   useEffect(() => {
@@ -84,23 +87,57 @@ function ChatBody() {
     <AppFrame>
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-6 py-4">
-          <div>
+          <div className="flex items-center gap-3">
+            <AvatarCircle
+              src={play.state.character.photo}
+              name={play.state.character.name}
+              size="sm"
+            />
+            <div>
             <p className="label-caps">이어롤</p>
             <h1 className="text-xl font-semibold">
               {play.state.character.name || "채팅"}
             </h1>
+            </div>
           </div>
-          <button
-            type="button"
-            className="ghost-link"
-            onClick={saveCloud}
-            disabled={busy === "cloud"}
-          >
-            {busy === "cloud" ? "저장 중…" : "클라우드 저장"}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="ghost-link"
+              onClick={() => setExtrasOpen((open) => !open)}
+            >
+              {extrasOpen ? "닫기" : "인물·설정 추가"}
+            </button>
+            <button
+              type="button"
+              className="ghost-link"
+              onClick={saveCloud}
+              disabled={busy === "cloud"}
+            >
+              {busy === "cloud" ? "저장 중…" : "클라우드 저장"}
+            </button>
+          </div>
         </div>
 
-        <ChatLog messages={play.state.chatLog} />
+        {extrasOpen ? (
+          <StoryExtrasPanel
+            worldSetting={play.state.worldSetting}
+            castNotes={play.state.castNotes}
+            onWorldChange={play.setWorldSetting}
+            onAddCast={play.addCastNote}
+            onUpdateCast={play.updateCastNote}
+            onRemoveCast={play.removeCastNote}
+          />
+        ) : null}
+
+        <ChatLog
+          messages={play.state.chatLog}
+          prologue={play.state.prologue}
+          characterPhoto={play.state.character.photo}
+          characterName={play.state.character.name}
+          userPhoto={play.state.userPersona.photo}
+          userName={play.state.userPersona.name}
+        />
 
         <div className="mx-auto w-full max-w-3xl px-4 pb-6">
           {error ? <p className="alert-error mb-3">{error}</p> : null}

@@ -1,23 +1,24 @@
 export const STORAGE_KEY = "eorol-play-state";
 
 export const GEMINI_MODEL = "gemini-3.6-flash";
-export const GEMINI_MAX_OUTPUT_TOKENS = 400;
+export const GEMINI_MAX_OUTPUT_TOKENS = 512;
 export const SHORT_TERM_TURNS = 5;
 
 export const FIELD_LIMITS = {
-  characterName: 20,
-  oneLiner: 50,
-  speechStyle: 200,
-  appearance: 200,
-  forbidden: 300,
-  openingSituation: 300,
-  userName: 20,
-  userSetting: 200,
-  worldSetting: 800,
-  storySummary: 600,
-  castName: 20,
-  castNote: 80,
-  castNotesTotal: 400,
+  characterName: 32,
+  oneLiner: 80,
+  speechStyle: 400,
+  appearance: 400,
+  forbidden: 600,
+  openingSituation: 500,
+  userName: 32,
+  userSetting: 400,
+  worldSetting: 1600,
+  prologue: 1200,
+  storySummary: 800,
+  castName: 32,
+  castNote: 150,
+  castNotesTotal: 900,
 } as const;
 
 export const WORLD_PLACEHOLDER = `시대/장소:
@@ -31,12 +32,15 @@ export const EMPTY_CHARACTER = {
   speechStyle: "",
   appearance: "",
   forbidden: "",
+  forbiddenManual: false,
   openingSituation: "",
+  photo: "",
 };
 
 export const EMPTY_USER = {
   name: "",
   setting: "",
+  photo: "",
 };
 
 export function createEmptySetting(
@@ -48,6 +52,7 @@ export function createEmptySetting(
     character: { ...EMPTY_CHARACTER },
     userPersona: { ...EMPTY_USER },
     worldSetting: "",
+    prologue: "",
     storySummary: "",
     castNotes: [],
     chatLog: [],
@@ -73,6 +78,7 @@ export function createEmptyPlayState(): import("./types").PlayState {
     character: setting.character,
     userPersona: setting.userPersona,
     worldSetting: setting.worldSetting,
+    prologue: setting.prologue,
     storySummary: setting.storySummary,
     castNotes: setting.castNotes,
     chatLog: setting.chatLog,

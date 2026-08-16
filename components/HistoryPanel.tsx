@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AvatarCircle from "@/components/AvatarCircle";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
 import { listPlaySessions, loadPlayById, type SessionSummary } from "@/lib/cloud";
@@ -72,7 +73,14 @@ export default function HistoryPanel() {
           onClick={() => router.push(local.lines > 0 ? "/chat" : "/setup")}
         >
           <p className="text-xs text-[var(--blue-soft)]">이 브라우저</p>
-          <p className="mt-1 text-lg font-semibold">{local.name}</p>
+          <span className="mt-2 flex items-center gap-3">
+            <AvatarCircle
+              src={play.state.character.photo}
+              name={local.name}
+              size="sm"
+            />
+            <p className="text-lg font-semibold">{local.name}</p>
+          </span>
           <p className="mt-1 text-sm text-[var(--ink-dim)]">
             {local.turns}턴 · 메시지 {local.lines}개
           </p>

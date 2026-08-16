@@ -19,12 +19,15 @@ export type CharacterProfile = {
   speechStyle: string;
   appearance: string;
   forbidden: string;
+  forbiddenManual: boolean;
   openingSituation: string;
+  photo: string;
 };
 
 export type UserPersona = {
   name: string;
   setting: string;
+  photo: string;
 };
 
 export type PlayState = {
@@ -32,6 +35,7 @@ export type PlayState = {
   character: CharacterProfile;
   userPersona: UserPersona;
   worldSetting: string;
+  prologue: string;
   storySummary: string;
   castNotes: CastNote[];
   chatLog: ChatMessage[];
@@ -56,6 +60,7 @@ export type PromptState = Pick<
   | "character"
   | "userPersona"
   | "worldSetting"
+  | "prologue"
   | "storySummary"
   | "castNotes"
   | "shortTermBuffer"

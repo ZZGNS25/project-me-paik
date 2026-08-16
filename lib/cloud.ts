@@ -12,7 +12,10 @@ type SessionRow = {
   user_name: string;
   user_setting: string;
   world_setting: string;
+  prologue?: string;
   story_summary: string;
+  character_photo?: string;
+  user_photo?: string;
   turn_count: number;
   updated_at?: string;
 };
@@ -38,6 +41,8 @@ function toSessionPayload(userId: string, state: PlayState) {
     user_setting: state.userPersona.setting,
     world_setting: state.worldSetting,
     story_summary: state.storySummary,
+    character_photo: state.character.photo,
+    user_photo: state.userPersona.photo,
     turn_count: state.turnCount,
   };
 }
@@ -157,13 +162,17 @@ async function loadPlayBySession(row: SessionRow) {
       speechStyle: row.speech_style,
       appearance: row.appearance,
       forbidden: row.forbidden,
+      forbiddenManual: Boolean(row.forbidden.trim()),
       openingSituation: row.opening_situation,
+      photo: row.character_photo ?? "",
     },
     userPersona: {
       name: row.user_name,
       setting: row.user_setting,
+      photo: row.user_photo ?? "",
     },
     worldSetting: row.world_setting,
+    prologue: row.prologue ?? "",
     storySummary: row.story_summary,
     turnCount: row.turn_count,
     castNotes: ((notes ?? []) as CastNote[]).map((note) => ({

@@ -4,17 +4,27 @@ import type { AppStore, PlayState, SettingRecord } from "./types";
 import { STORAGE_KEY } from "./constants";
 
 function applyForbidden(record: SettingRecord): SettingRecord {
+  const forbiddenManual = Boolean(record.character.forbiddenManual);
   return {
     ...record,
+    prologue: record.prologue ?? "",
+    userPersona: {
+      ...record.userPersona,
+      photo: record.userPersona.photo ?? "",
+    },
     character: {
       ...record.character,
-      forbidden: buildForbidden({
-        name: record.character.name,
-        speechStyle: record.character.speechStyle,
-        appearance: record.character.appearance,
-        worldSetting: record.worldSetting,
-        openingSituation: record.character.openingSituation,
-      }),
+      photo: record.character.photo ?? "",
+      forbiddenManual,
+      forbidden: forbiddenManual
+        ? record.character.forbidden
+        : buildForbidden({
+            name: record.character.name,
+            speechStyle: record.character.speechStyle,
+            appearance: record.character.appearance,
+            worldSetting: record.worldSetting,
+            openingSituation: record.character.openingSituation,
+          }),
     },
   };
 }
@@ -27,9 +37,16 @@ export function toPlayState(store: AppStore): PlayState {
 
   return {
     apiKey: store.apiKey,
-    character: current.character,
-    userPersona: current.userPersona,
+    character: {
+      ...current.character,
+      photo: current.character.photo ?? "",
+    },
+    userPersona: {
+      ...current.userPersona,
+      photo: current.userPersona.photo ?? "",
+    },
     worldSetting: current.worldSetting,
+    prologue: current.prologue ?? "",
     storySummary: current.storySummary,
     castNotes: current.castNotes,
     chatLog: current.chatLog,
@@ -56,6 +73,7 @@ function migrateLegacy(parsed: PlayState): AppStore {
     character: parsed.character ?? createEmptyPlayState().character,
     userPersona: parsed.userPersona ?? createEmptyPlayState().userPersona,
     worldSetting: parsed.worldSetting ?? "",
+    prologue: parsed.prologue ?? "",
     storySummary: parsed.storySummary ?? "",
     castNotes: parsed.castNotes ?? [],
     chatLog: parsed.chatLog ?? [],

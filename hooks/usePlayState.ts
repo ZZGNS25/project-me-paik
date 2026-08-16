@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FIELD_LIMITS, createEmptySetting, createEmptyStore } from "@/lib/constants";
+import { FIELD_LIMITS, PERSONAS_MAX, createEmptySetting, createEmptyStore } from "@/lib/constants";
 import { buildForbidden } from "@/lib/forbidden";
 import { WORLD_PRESETS, settingFromPreset, type PresetId } from "@/lib/presets";
 import {
@@ -18,6 +18,7 @@ import {
   saveStore,
   toPlayState,
 } from "@/lib/storage";
+import { userFromPersona } from "@/lib/persona";
 import type { ShareSnapshot } from "@/lib/share";
 import type {
   AppStore,
@@ -25,6 +26,7 @@ import type {
   CharacterProfile,
   ChatMessage,
   PlayState,
+  SavedPersona,
   SettingRecord,
   UserPersona,
 } from "@/lib/types";
@@ -351,13 +353,18 @@ export function usePlayState() {
     );
   }
 
-  function applySummary(summary: string) {
+  function applySummary(summary: string, summarizedTurns?: number) {
     updateStore((prev) =>
-      patchCurrent(prev, (current) => ({
-        ...current,
-        storySummary: clip(sanitizeSummary(summary), FIELD_LIMITS.storySummary),
-        shortTermBuffer: [],
-      })),
+      patchCurrent(prev, (current) => {
+        const closed = summarizedTurns ?? recountTurns(current.shortTermBuffer);
+        const keepTurns = Math.max(0, current.turnCount - closed);
+        return {
+          ...current,
+          storySummary: clip(sanitizeSummary(summary), FIELD_LIMITS.storySummary),
+          shortTermBuffer:
+            keepTurns > 0 ? current.chatLog.slice(-keepTurns * 2) : [],
+        };
+      }),
     );
   }
 
@@ -525,27 +532,24 @@ export function usePlayState() {
     });
   }
 
-  function applyPreset(presetId: PresetId) {
-    const preset = WORLD_PRESETS.find((item) => item.id === presetId);
-    if (!preset) return;
-    const setting = settingFromPreset(preset, newId());
+  function forkCurrentSetting() {
     updateStore((prev) => {
       const current =
         prev.settings.find((item) => item.id === prev.currentSettingId) ??
         prev.settings[0];
-      const canReplace = current && current.chatLog.length === 0;
-
-      if (canReplace && current) {
-        const next = {
-          ...prev,
-          settings: prev.settings.map((item) =>
-            item.id === current.id ? { ...setting, id: current.id } : item,
-          ),
-        };
-        saveStore(next);
-        return next;
-      }
-
+      if (!current) return prev;
+      const setting: SettingRecord = {
+        ...current,
+        id: newId(),
+        title: "",
+        shareId: null,
+        cloudSessionId: null,
+        storySummary: "",
+        chatLog: [],
+        shortTermBuffer: [],
+        turnCount: 0,
+        updatedAt: new Date().toISOString(),
+      };
       const next = {
         ...prev,
         currentSettingId: setting.id,
@@ -556,16 +560,122 @@ export function usePlayState() {
     });
   }
 
-  function createSetting() {
-    const setting = withForbidden(createEmptySetting(newId()));
+  function upsertPersona(input: {
+    id?: string;
+    label: string;
+    name: string;
+    setting: string;
+    photo: string;
+  }) {
+    const name = input.name.trim();
+    const label = input.label.trim() || name;
+    if (!name) return;
+
     updateStore((prev) => {
-      const next = {
+      const personas = prev.personas ?? [];
+      const existing = input.id
+        ? personas.find((item) => item.id === input.id)
+        : undefined;
+      if (!existing && personas.length >= PERSONAS_MAX) return prev;
+      const nextPersona: SavedPersona = {
+        id: existing?.id ?? newId(),
+        label: clip(label, FIELD_LIMITS.personaLabel),
+        name: clip(name, FIELD_LIMITS.userName),
+        setting: clip(input.setting, FIELD_LIMITS.userSetting),
+        photo: input.photo ?? "",
+        updatedAt: new Date().toISOString(),
+      };
+      return {
         ...prev,
+        lastPersonaId: nextPersona.id,
+        personas: existing
+          ? personas.map((item) =>
+              item.id === existing.id ? nextPersona : item,
+            )
+          : [...personas, nextPersona],
+      };
+    });
+  }
+
+  function applyPersona(id: string) {
+    updateStore((prev) => {
+      const persona = (prev.personas ?? []).find((item) => item.id === id);
+      if (!persona) return prev;
+      return {
+        ...patchCurrent(prev, (current) => ({
+          ...current,
+          personaId: persona.id,
+          userPersona: userFromPersona(persona),
+        })),
+        lastPersonaId: persona.id,
+      };
+    });
+  }
+
+  function deletePersona(id: string) {
+    updateStore((prev) => ({
+      ...prev,
+      lastPersonaId: prev.lastPersonaId === id ? null : prev.lastPersonaId,
+      personas: (prev.personas ?? []).filter((item) => item.id !== id),
+    }));
+  }
+
+  function applyPreset(presetId: PresetId, personaId?: string | null) {
+    const preset = WORLD_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+    updateStore((prev) => {
+      const setting = settingFromPreset(preset, newId());
+      const chosenId = personaId === undefined ? prev.lastPersonaId : personaId;
+      const persona = chosenId
+        ? (prev.personas ?? []).find((item) => item.id === chosenId)
+        : undefined;
+      if (persona) {
+        setting.userPersona = userFromPersona(persona);
+        setting.personaId = persona.id;
+      }
+
+      const current =
+        prev.settings.find((item) => item.id === prev.currentSettingId) ??
+        prev.settings[0];
+      const canReplace = current && current.chatLog.length === 0;
+      const lastPersonaId = persona?.id ?? prev.lastPersonaId ?? null;
+
+      if (canReplace && current) {
+        return {
+          ...prev,
+          lastPersonaId,
+          settings: prev.settings.map((item) =>
+            item.id === current.id ? { ...setting, id: current.id } : item,
+          ),
+        };
+      }
+
+      return {
+        ...prev,
+        lastPersonaId,
         currentSettingId: setting.id,
         settings: [...prev.settings, setting],
       };
-      saveStore(next);
-      return next;
+    });
+  }
+
+  function createSetting(personaId?: string | null) {
+    updateStore((prev) => {
+      const setting = withForbidden(createEmptySetting(newId()));
+      const chosenId = personaId === undefined ? prev.lastPersonaId : personaId;
+      const persona = chosenId
+        ? (prev.personas ?? []).find((item) => item.id === chosenId)
+        : undefined;
+      if (persona) {
+        setting.userPersona = userFromPersona(persona);
+        setting.personaId = persona.id;
+      }
+      return {
+        ...prev,
+        lastPersonaId: persona?.id ?? prev.lastPersonaId ?? null,
+        currentSettingId: setting.id,
+        settings: [...prev.settings, setting],
+      };
     });
   }
 
@@ -659,6 +769,8 @@ export function usePlayState() {
     state,
     ready,
     settings: store.settings,
+    personas: store.personas ?? [],
+    lastPersonaId: store.lastPersonaId ?? null,
     currentSettingId: store.currentSettingId,
     updatedAt: state && store.settings.find((item) => item.id === store.currentSettingId)?.updatedAt,
     updateCharacter,
@@ -688,9 +800,13 @@ export function usePlayState() {
     hydrateFromCloud,
     setCloudSessionId,
     startNewStory,
+    forkCurrentSetting,
     createSetting,
     applyPreset,
     selectSetting,
+    upsertPersona,
+    applyPersona,
+    deletePersona,
     unlinkCloudSession,
     deleteSetting,
     renameSetting,

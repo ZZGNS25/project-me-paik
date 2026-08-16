@@ -1,5 +1,6 @@
 import {
   FIELD_LIMITS,
+  PERSONAS_MAX,
   STORAGE_KEY,
   createEmptyPlayState,
   createEmptySetting,
@@ -8,7 +9,7 @@ import {
 import { buildForbidden } from "./forbidden";
 import { normalizePins } from "./memory";
 import { WORLD_PRESETS } from "./presets";
-import type { AppStore, PlayState, SettingRecord } from "./types";
+import type { AppStore, PlayState, SavedPersona, SettingRecord } from "./types";
 
 let lastSaved = "";
 
@@ -140,6 +141,7 @@ function applyForbidden(record: SettingRecord): SettingRecord {
     ...record,
     title: record.title ?? "",
     shareId: record.shareId ?? null,
+    personaId: record.personaId ?? null,
     prologue: record.prologue ?? "",
     storyPins: normalizePins(record.storyPins),
     castNotes: (record.castNotes ?? []).map((note) => ({
@@ -232,13 +234,40 @@ function migrateLegacy(parsed: PlayState): AppStore {
     shortTermBuffer: parsed.shortTermBuffer ?? [],
     turnCount: parsed.turnCount ?? 0,
     cloudSessionId: parsed.cloudSessionId ?? null,
+    personaId: null,
   };
 
   return {
     apiKey: parsed.apiKey ?? "",
     currentSettingId: id,
     settings: [setting],
+    personas: [],
+    lastPersonaId: null,
   };
+}
+
+function normalizePersonas(value: unknown): SavedPersona[] {
+  if (!Array.isArray(value)) return [];
+  const personas: SavedPersona[] = [];
+  for (const item of value) {
+    if (personas.length >= PERSONAS_MAX) break;
+    if (!item || typeof item !== "object") continue;
+    const row = item as SavedPersona;
+    const name = String(row.name ?? "").trim();
+    if (!name) continue;
+    personas.push({
+      id: typeof row.id === "string" && row.id ? row.id : crypto.randomUUID(),
+      label: String(row.label ?? "").slice(0, FIELD_LIMITS.personaLabel),
+      name: name.slice(0, FIELD_LIMITS.userName),
+      setting: String(row.setting ?? "").slice(0, FIELD_LIMITS.userSetting),
+      photo: typeof row.photo === "string" ? row.photo : "",
+      updatedAt:
+        typeof row.updatedAt === "string" && row.updatedAt
+          ? row.updatedAt
+          : new Date().toISOString(),
+    });
+  }
+  return personas;
 }
 
 export function loadStore(): AppStore {
@@ -251,6 +280,8 @@ export function loadStore(): AppStore {
     if (isStore(parsed) && parsed.settings.length > 0) {
       const next = {
         ...parsed,
+        personas: normalizePersonas(parsed.personas),
+        lastPersonaId: parsed.lastPersonaId ?? null,
         settings: parsed.settings.map((item) =>
           applyForbidden(backfillPresetMeta(item)),
         ),
@@ -264,6 +295,8 @@ export function loadStore(): AppStore {
     });
     return {
       ...migrated,
+      personas: [],
+      lastPersonaId: null,
       settings: migrated.settings.map((item) =>
         applyForbidden(backfillPresetMeta(item)),
       ),

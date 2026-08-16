@@ -7,12 +7,16 @@ import ChatLog from "@/components/ChatLog";
 import ProfileCard from "@/components/ProfileCard";
 import Composer from "@/components/Composer";
 import StoryExtrasPanel from "@/components/StoryExtrasPanel";
+import PersonaPicker from "@/components/PersonaPicker";
 import PageShell from "@/components/PageShell";
 import { useConfirm } from "@/components/ConfirmDialog";
 import ShareButton from "@/components/ShareButton";
 import { useCloudSync, usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { requestGenerateStream } from "@/lib/geminiClient";
+import { useStartFresh } from "@/hooks/useStartFresh";
+import { COMPRESS_EVERY_TURNS } from "@/lib/constants";
+import { requestGenerate, requestGenerateStream } from "@/lib/geminiClient";
+import { recountTurns } from "@/lib/memory";
 import { takePendingMessage } from "@/lib/pending";
 import { storyTitle } from "@/lib/storyTitle";
 import type { ChatMessage, PlayState } from "@/lib/types";
@@ -26,11 +30,17 @@ function ChatBody() {
   const [busy, setBusy] = useState<"chat" | null>(null);
   const [error, setError] = useState("");
   const [extrasOpen, setExtrasOpen] = useState(false);
+  const [pickingPersona, setPickingPersona] = useState(false);
   const [pendingUser, setPendingUser] = useState("");
   const [streamingReply, setStreamingReply] = useState("");
+  const [compressing, setCompressing] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const [pinnedFlash, setPinnedFlash] = useState(false);
   const pendingSent = useRef(false);
   const sending = useRef(false);
+  const quietCompress = useRef(false);
   const confirm = useConfirm();
+  const fresh = useStartFresh();
 
   useEffect(() => {
     if (!play.ready || !auth.ready) return;
@@ -50,6 +60,19 @@ function ChatBody() {
     pendingSent.current = true;
     void sendMessage(pending);
   }, [play.ready, auth.user]);
+
+  useEffect(() => {
+    if (!play.ready || busy || quietCompress.current) return;
+    if (recountTurns(play.state.shortTermBuffer) < COMPRESS_EVERY_TURNS) return;
+    quietCompress.current = true;
+    const closedTurns = recountTurns(play.state.shortTermBuffer);
+    void requestGenerate("summary", play.state)
+      .then((summary) => play.applySummary(summary, closedTurns))
+      .catch(() => undefined)
+      .finally(() => {
+        quietCompress.current = false;
+      });
+  }, [play.ready, busy, play.state.turnCount, play.state.shortTermBuffer.length]);
 
   if (!play.ready || !auth.ready) {
     return (
@@ -122,6 +145,42 @@ function ChatBody() {
 
   function pinTurn(user: ChatMessage, model?: ChatMessage) {
     play.pinTurn(user, model);
+    setPinnedFlash(true);
+    window.setTimeout(() => setPinnedFlash(false), 1600);
+  }
+
+  async function saveChat() {
+    await cloud.saveNow();
+    if (cloud.status !== "error") {
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 1600);
+    }
+  }
+
+  async function compressMemory() {
+    if (compressing || play.state.shortTermBuffer.length === 0) return;
+    setCompressing(true);
+    try {
+      const closedTurns = recountTurns(play.state.shortTermBuffer);
+      const summary = await requestGenerate("summary", play.state);
+      play.applySummary(summary, closedTurns);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "요약을 만들지 못했습니다.");
+    } finally {
+      setCompressing(false);
+    }
+  }
+
+  function pinLastTurn() {
+    const log = play.state.chatLog;
+    if (log.length === 0) return;
+    const last = log[log.length - 1];
+    const prev = log[log.length - 2];
+    if (last.role === "model" && prev?.role === "user") {
+      pinTurn(prev, last);
+      return;
+    }
+    pinTurn(last);
   }
 
   const listening = busy === "chat";
@@ -142,8 +201,44 @@ function ChatBody() {
               statusIdle={!listening}
             />
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+            <button
+              type="button"
+              className="btn-quiet"
+              onClick={() => void saveChat()}
+              disabled={cloud.status === "saving"}
+              title={cloud.error || "지금 대화를 저장합니다"}
+            >
+              {cloud.status === "saving"
+                ? "저장 중…"
+                : cloud.status === "error"
+                  ? "저장 실패"
+                  : savedFlash
+                    ? "저장됨"
+                    : "저장"}
+            </button>
             <ShareButton />
+            <button
+              type="button"
+              className="btn-quiet"
+              onClick={fresh.startChat}
+            >
+              새로
+            </button>
+            <button
+              type="button"
+              className="btn-quiet"
+              title="이 이야기의 나"
+              onClick={() => {
+                if (play.personas.length === 0) {
+                  router.push("/?view=profiles");
+                  return;
+                }
+                setPickingPersona(true);
+              }}
+            >
+              나
+            </button>
             <button
               type="button"
               className="btn-quiet"
@@ -151,17 +246,6 @@ function ChatBody() {
             >
               {extrasOpen ? "닫기" : "인물 추가"}
             </button>
-            {cloud.status === "saving" || cloud.status === "error" ? (
-              <button
-                type="button"
-                className={cloud.status === "error" ? "btn-danger" : "btn-quiet"}
-                onClick={() => void cloud.saveNow()}
-                disabled={cloud.status === "saving"}
-                title={cloud.error || "클라우드에 남기는 중"}
-              >
-                {cloud.status === "saving" ? "저장 중…" : "저장 실패"}
-              </button>
-            ) : null}
           </div>
         </div>
 
@@ -201,6 +285,22 @@ function ChatBody() {
                 <button
                   type="button"
                   className="btn-quiet"
+                  disabled={Boolean(busy) || compressing || play.state.shortTermBuffer.length === 0}
+                  onClick={() => void compressMemory()}
+                >
+                  {compressing ? "압축 중…" : "압축"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-quiet"
+                  disabled={Boolean(busy)}
+                  onClick={pinLastTurn}
+                >
+                  {pinnedFlash ? "고정됨" : "고정"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-quiet"
                   disabled={Boolean(busy)}
                   onClick={() => {
                     const text = play.popLastUserMessage();
@@ -237,6 +337,19 @@ function ChatBody() {
           </div>
         </div>
         {confirm.dialog}
+        {fresh.dialog}
+        {pickingPersona ? (
+          <PersonaPicker
+            personas={play.personas}
+            selectedId={current?.personaId}
+            copy="다음 대사부터 이 이야기의 나가 바뀝니다. 지난 장면은 그대로입니다."
+            onPick={(id) => {
+              play.applyPersona(id);
+              setPickingPersona(false);
+            }}
+            onCancel={() => setPickingPersona(false)}
+          />
+        ) : null}
       </div>
     </AppFrame>
   );

@@ -186,6 +186,7 @@ body {
 
 .chat-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.45rem;
   margin-bottom: 0.45rem;
@@ -244,6 +245,7 @@ body {
 
 .confirm-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.45rem;
   margin-top: 1.15rem;
@@ -1012,6 +1014,41 @@ body {
   min-width: 0;
   display: grid;
   gap: 0.5rem;
+}
+
+.persona-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.persona-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.persona-pick {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid rgba(77, 141, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(12, 16, 24, 0.55);
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  color: var(--ink);
+}
+
+.persona-item.is-active .persona-pick {
+  border-color: rgba(77, 141, 255, 0.55);
+}
+
+.persona-picker {
+  width: min(28rem, 100%);
+  max-height: min(80vh, 40rem);
+  overflow: auto;
 }
 
 .prologue-card {

@@ -41,6 +41,7 @@ export function parseImport(raw: string): SettingRecord[] {
     ...item,
     title: item.title ?? "",
     shareId: null,
+    personaId: item.personaId ?? null,
     storyPins: normalizePins(item.storyPins),
     castNotes: (item.castNotes ?? []).map((note) => ({
       ...note,

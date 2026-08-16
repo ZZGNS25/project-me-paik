@@ -4,6 +4,8 @@ export const GEMINI_MODEL = "gemini-3.7-flash";
 export const GEMINI_MAX_OUTPUT_TOKENS = 4096;
 export const GEMINI_SUMMARY_OUTPUT_TOKENS = 768;
 export const SHORT_TERM_TURNS = 3;
+export const COMPRESS_EVERY_TURNS = 30;
+export const PERSONAS_MAX = 12;
 
 export const FIELD_LIMITS = {
   characterName: 32,
@@ -23,6 +25,7 @@ export const FIELD_LIMITS = {
   castNote: 200,
   castNotesTotal: 1200,
   storyTitle: 40,
+  personaLabel: 40,
 } as const;
 
 export const WORLD_PLACEHOLDER = `시대/장소:
@@ -66,6 +69,7 @@ export function createEmptySetting(
     shortTermBuffer: [],
     turnCount: 0,
     cloudSessionId: null,
+    personaId: null,
   };
 }
 
@@ -75,6 +79,8 @@ export function createEmptyStore(): import("./types").AppStore {
     apiKey: "",
     currentSettingId: setting.id,
     settings: [setting],
+    personas: [],
+    lastPersonaId: null,
   };
 }
 

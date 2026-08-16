@@ -6,6 +6,7 @@ import ProfileCard from "@/components/ProfileCard";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { PlayController } from "@/hooks/usePlayState";
+import { useStartFresh } from "@/hooks/useStartFresh";
 import {
   deletePlayFromCloud,
   listPlaySessions,
@@ -21,6 +22,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const confirm = useConfirm();
+  const fresh = useStartFresh();
 
   useEffect(() => {
     if (!auth.user) return;
@@ -108,10 +110,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
         <button
           type="button"
           className="btn-secondary"
-          onClick={() => {
-            play.createSetting();
-            router.push("/setup");
-          }}
+          onClick={fresh.startStory}
         >
           새 설정
         </button>
@@ -225,6 +224,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
       </div>
     </div>
     {confirm.dialog}
+    {fresh.dialog}
     </>
   );
 }

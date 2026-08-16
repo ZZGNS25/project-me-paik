@@ -36,6 +36,15 @@ export type UserPersona = {
   photo: string;
 };
 
+export type SavedPersona = {
+  id: string;
+  label: string;
+  name: string;
+  setting: string;
+  photo: string;
+  updatedAt: string;
+};
+
 export type PlayState = {
   apiKey: string;
   character: CharacterProfile;
@@ -55,6 +64,7 @@ export type SettingRecord = Omit<PlayState, "apiKey"> & {
   id: string;
   title: string;
   shareId: string | null;
+  personaId: string | null;
   updatedAt: string;
 };
 
@@ -62,6 +72,8 @@ export type AppStore = {
   apiKey: string;
   currentSettingId: string;
   settings: SettingRecord[];
+  personas: SavedPersona[];
+  lastPersonaId: string | null;
 };
 
 export type PromptState = Pick<

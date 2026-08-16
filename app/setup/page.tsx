@@ -7,6 +7,7 @@ import AvatarCircle from "@/components/AvatarCircle";
 import CastEditor from "@/components/CastEditor";
 import CharField from "@/components/CharField";
 import MemoryPanel from "@/components/MemoryPanel";
+import PersonaList from "@/components/PersonaList";
 import PageShell from "@/components/PageShell";
 import { useConfirm } from "@/components/ConfirmDialog";
 import ShareButton from "@/components/ShareButton";
@@ -15,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { deletePlayFromCloud } from "@/lib/cloud";
 import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
 import { requestGenerate } from "@/lib/geminiClient";
+import { recountTurns } from "@/lib/memory";
 import { WORLD_PRESETS, isPresetNamed } from "@/lib/presets";
 import { downloadExport, parseImport } from "@/lib/transfer";
 import type { SettingRecord } from "@/lib/types";
@@ -120,8 +122,9 @@ function SetupBody() {
     setCompressing(true);
     setError("");
     try {
+      const closedTurns = recountTurns(play.state.shortTermBuffer);
       const summary = await requestGenerate("summary", play.state);
-      play.applySummary(summary);
+      play.applySummary(summary, closedTurns);
     } catch (err) {
       setError(err instanceof Error ? err.message : "요약을 만들지 못했습니다.");
     } finally {
@@ -384,42 +387,73 @@ function SetupBody() {
               </div>
             </details>
 
-            <details className="setup-fold">
-              <summary className="label-caps">유저 프로필</summary>
-              <div className="mt-4 flex items-start gap-4">
-                <div>
-                  <p className="text-sm font-medium text-[var(--ink)]">사진</p>
-                  <div className="mt-2">
-                    <AvatarCircle
-                      src={play.state.userPersona.photo}
-                      name={play.state.userPersona.name}
-                      size="lg"
-                      editable
-                      onChange={play.setUserPhoto}
+            <details className="setup-fold" open>
+              <summary className="label-caps">이 이야기의 나</summary>
+              <div className="mt-4 space-y-4">
+                <p className="text-sm text-[var(--ink-dim)]">
+                  프로필은 내가 누구인지입니다. 고르면 이 이야기에만 복사됩니다. 목록
+                  원본은 프로필에서 고칩니다.
+                </p>
+                {play.personas.length === 0 ? (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => router.push("/?view=profiles")}
+                  >
+                    프로필 먼저 만들기
+                  </button>
+                ) : (
+                  <PersonaList
+                    personas={play.personas}
+                    activeId={
+                      play.settings.find((item) => item.id === play.currentSettingId)
+                        ?.personaId ?? null
+                    }
+                    onPick={play.applyPersona}
+                  />
+                )}
+                <button
+                  type="button"
+                  className="btn-quiet"
+                  onClick={() => router.push("/?view=profiles")}
+                >
+                  프로필 목록
+                </button>
+                <div className="flex items-start gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--ink)]">사진</p>
+                    <div className="mt-2">
+                      <AvatarCircle
+                        src={play.state.userPersona.photo}
+                        name={play.state.userPersona.name}
+                        size="lg"
+                        editable
+                        onChange={play.setUserPhoto}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-[var(--ink-dim)]">
+                      이 이야기에서만 바뀝니다.
+                    </p>
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-4">
+                    <CharField
+                      label="이야기에서 부를 이름"
+                      value={play.state.userPersona.name}
+                      max={FIELD_LIMITS.userName}
+                      onChange={(value) => play.updateUser("name", value)}
+                      placeholder="하준"
+                    />
+                    <CharField
+                      label="이 이야기에서의 나"
+                      multiline
+                      rows={6}
+                      value={play.state.userPersona.setting}
+                      max={FIELD_LIMITS.userSetting}
+                      onChange={(value) => play.updateUser("setting", value)}
+                      placeholder="나는 누구인지, 관계, 숨기는 것"
+                      hint="여기 적은 것은 이 이야기만 바꿉니다. 프로필 원본은 그대로입니다."
                     />
                   </div>
-                  <p className="mt-2 text-xs text-[var(--ink-dim)]">
-                    원을 눌러 사진을 넣으세요.
-                  </p>
-                </div>
-                <div className="min-w-0 flex-1 space-y-4">
-                  <CharField
-                    label="유저 이름"
-                    value={play.state.userPersona.name}
-                    max={FIELD_LIMITS.userName}
-                    onChange={(value) => play.updateUser("name", value)}
-                    placeholder="하준"
-                  />
-                  <CharField
-                    label="유저 설정"
-                    multiline
-                    rows={6}
-                    value={play.state.userPersona.setting}
-                    max={FIELD_LIMITS.userSetting}
-                    onChange={(value) => play.updateUser("setting", value)}
-                    placeholder="나는 누구인지, 관계, 숨기는 것"
-                    hint="캐릭터 칸을 줄인 만큼 여기에 더 적을 수 있습니다."
-                  />
                 </div>
               </div>
             </details>

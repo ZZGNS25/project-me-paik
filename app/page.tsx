@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
 import AvatarCircle from "@/components/AvatarCircle";
@@ -8,10 +8,13 @@ import BrandLockup from "@/components/BrandLockup";
 import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
 import PageShell from "@/components/PageShell";
+import PersonaPicker from "@/components/PersonaPicker";
 import ProfileCard from "@/components/ProfileCard";
+import ProfilesPanel from "@/components/ProfilesPanel";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { useStartFresh } from "@/hooks/useStartFresh";
 import { deletePlayFromCloud } from "@/lib/cloud";
 import { WORLD_PRESETS, type PresetId } from "@/lib/presets";
 import { storyTitle } from "@/lib/storyTitle";
@@ -24,6 +27,11 @@ function HomeBody() {
   const play = usePlay();
   const view = searchParams.get("view");
   const confirm = useConfirm();
+  const fresh = useStartFresh();
+  const [pendingStart, setPendingStart] = useState<{
+    presetId: PresetId;
+    next: "/chat" | "/setup";
+  } | null>(null);
 
   if (!auth.ready || !play.ready) {
     return (
@@ -99,7 +107,11 @@ function HomeBody() {
     (item) => item.character.name.trim() && item.chatLog.length > 0,
   );
 
-  function startPreset(presetId: PresetId, next: "/chat" | "/setup") {
+  function goPreset(
+    presetId: PresetId,
+    next: "/chat" | "/setup",
+    personaId?: string | null,
+  ) {
     const preset = WORLD_PRESETS.find((item) => item.id === presetId);
     if (!preset) return;
     const unused = play.settings.find(
@@ -107,9 +119,21 @@ function HomeBody() {
         item.character.name.trim() === preset.character.name &&
         item.chatLog.length === 0,
     );
-    if (unused) play.selectSetting(unused.id);
-    else play.applyPreset(presetId);
+    if (unused) {
+      play.selectSetting(unused.id);
+      if (personaId) play.applyPersona(personaId);
+    } else {
+      play.applyPreset(presetId, personaId);
+    }
     router.push(next);
+  }
+
+  function startPreset(presetId: PresetId, next: "/chat" | "/setup") {
+    if (play.personas.length > 0) {
+      setPendingStart({ presetId, next });
+      return;
+    }
+    goPreset(presetId, next);
   }
 
   return (
@@ -119,6 +143,8 @@ function HomeBody() {
         <GuidePanel />
       ) : view === "history" ? (
         <HistoryPanel play={play} />
+      ) : view === "profiles" ? (
+        <ProfilesPanel play={play} />
       ) : (
         <div className="page-scroll mx-auto w-full max-w-3xl px-6 py-10">
           <div className="page-hero">
@@ -216,7 +242,7 @@ function HomeBody() {
             <button
               type="button"
               className="btn-quiet"
-              onClick={() => router.push(`/setup?new=${Date.now()}`)}
+              onClick={fresh.startStory}
             >
               내 세계관으로 만들기
             </button>
@@ -225,6 +251,25 @@ function HomeBody() {
       )}
     </AppFrame>
     {confirm.dialog}
+    {fresh.dialog}
+    {pendingStart ? (
+      <PersonaPicker
+        personas={play.personas}
+        selectedId={play.lastPersonaId}
+        skipLabel="없이 시작"
+        onPick={(id) => {
+          const pending = pendingStart;
+          setPendingStart(null);
+          goPreset(pending.presetId, pending.next, id);
+        }}
+        onSkip={() => {
+          const pending = pendingStart;
+          setPendingStart(null);
+          goPreset(pending.presetId, pending.next, null);
+        }}
+        onCancel={() => setPendingStart(null)}
+      />
+    ) : null}
     </>
   );
 }

@@ -5,11 +5,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import BrandLockup from "@/components/BrandLockup";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useStartFresh } from "@/hooks/useStartFresh";
 
 const NAV = [
   { href: "/", view: null, label: "이야기" },
-  { href: "/?view=guide", view: "guide", label: "안내" },
+  { href: "/?view=profiles", view: "profiles", label: "프로필" },
   { href: "/?view=history", view: "history", label: "내 기록" },
+  { href: "/?view=guide", view: "guide", label: "안내" },
   { href: "/setup", view: null, label: "설정" },
 ] as const;
 
@@ -24,6 +26,7 @@ export default function AppFrame({ children }: AppFrameProps) {
   const auth = useAuth();
   const view = searchParams.get("view");
   const confirm = useConfirm();
+  const fresh = useStartFresh();
 
   function isActive(item: (typeof NAV)[number]) {
     if (item.href === "/setup") return pathname === "/setup";
@@ -38,11 +41,7 @@ export default function AppFrame({ children }: AppFrameProps) {
           <BrandLockup compact layout="row" />
         </Link>
 
-        <button
-          type="button"
-          className="side-new"
-          onClick={() => router.push(`/setup?new=${Date.now()}`)}
-        >
+        <button type="button" className="side-new" onClick={fresh.startStory}>
           새 이야기
         </button>
 
@@ -87,6 +86,7 @@ export default function AppFrame({ children }: AppFrameProps) {
         </div>
       </div>
       {confirm.dialog}
+      {fresh.dialog}
     </div>
   );
 }

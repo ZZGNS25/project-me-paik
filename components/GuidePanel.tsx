@@ -8,8 +8,13 @@ export default function GuidePanel() {
       </p>
       <ol className="mt-8 space-y-5 text-sm leading-relaxed text-[var(--ink-soft)]">
         <li>
+          <strong className="text-[var(--ink)]">프로필</strong>에서 내가 누구인지를
+          여러 개 만들어 둡니다. 예: 헌터 — 20세. 새 이야기를 시작할 때 고르면, 설정을
+          다시 적을 필요가 없습니다. 프로필을 고쳐도 이미 시작한 이야기는 그대로입니다.
+        </li>
+        <li>
           <strong className="text-[var(--ink)]">새 이야기</strong>나 설정에서 예시
-          세계관을 고르거나, 직접 프로필을 적습니다.
+          세계관을 고르거나, 직접 세계와 역할을 적습니다.
         </li>
         <li>
           <strong className="text-[var(--ink)]">채팅 시작</strong>을 누르면
@@ -29,14 +34,17 @@ export default function GuidePanel() {
           <strong className="text-[var(--ink)]">답 다시 생성</strong>으로 돌아갑니다.
         </li>
         <li>
-          중요한 일은 <strong className="text-[var(--ink)]">사건 고정</strong>으로 남기세요.
-          길어지면 설정에서 <strong className="text-[var(--ink)]">기억 압축</strong>을 해도
-          말투·금지·고정 사건은 그대로입니다.
+          중요한 일은 채팅의 <strong className="text-[var(--ink)]">고정</strong>으로
+          남기세요. 서른 턴마다 기억이 조용히 압축되고, 필요할 때는{" "}
+          <strong className="text-[var(--ink)]">압축</strong>을 눌러도 됩니다. 말투·금지·고정
+          사건은 그대로입니다.
         </li>
         <li>
-          로그인한 이야기는 클라우드에 자동으로 남습니다. 설정이나 채팅의{" "}
+          로그인한 이야기는 클라우드에 자동으로 남습니다. 채팅의{" "}
+          <strong className="text-[var(--ink)]">저장</strong>으로 바로 남길 수 있고,{" "}
           <strong className="text-[var(--ink)]">공유</strong>는 캐릭터·세계관 링크만
-          복사합니다. 대화는 들어가지 않습니다. 브라우저를 바꾸면{" "}
+          복사합니다. 대화는 들어가지 않습니다. 새 대화를 열 때는 지금 대화를 저장할지
+          묻습니다. 브라우저를 바꾸면{" "}
           <strong className="text-[var(--ink)]">내보내기/가져오기</strong>로 옮길 수 있습니다.
         </li>
       </ol>

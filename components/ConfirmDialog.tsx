@@ -6,8 +6,10 @@ import { createPortal } from "react-dom";
 type ConfirmRequest = {
   message: string;
   confirmLabel?: string;
+  altLabel?: string;
   danger?: boolean;
   run: () => void | Promise<void>;
+  runAlt?: () => void | Promise<void>;
 };
 
 export function useConfirm() {
@@ -17,8 +19,18 @@ export function useConfirm() {
     <ConfirmDialog
       message={request.message}
       confirmLabel={request.confirmLabel}
+      altLabel={request.altLabel}
       danger={request.danger}
       onCancel={() => setRequest(null)}
+      onAlt={
+        request.runAlt
+          ? () => {
+              const run = request.runAlt;
+              setRequest(null);
+              void run?.();
+            }
+          : undefined
+      }
       onConfirm={() => {
         const run = request.run;
         setRequest(null);
@@ -38,16 +50,20 @@ export function useConfirm() {
 type ConfirmDialogProps = {
   message: string;
   confirmLabel?: string;
+  altLabel?: string;
   danger?: boolean;
   onCancel: () => void;
+  onAlt?: () => void;
   onConfirm: () => void;
 };
 
 export default function ConfirmDialog({
   message,
   confirmLabel = "확인",
+  altLabel,
   danger = false,
   onCancel,
+  onAlt,
   onConfirm,
 }: ConfirmDialogProps) {
   const [mounted, setMounted] = useState(false);
@@ -83,6 +99,11 @@ export default function ConfirmDialog({
           <button type="button" className="btn-quiet" onClick={onCancel}>
             취소
           </button>
+          {onAlt && altLabel ? (
+            <button type="button" className="btn-quiet" onClick={onAlt}>
+              {altLabel}
+            </button>
+          ) : null}
           <button
             type="button"
             className={danger ? "btn-danger" : "btn-primary"}

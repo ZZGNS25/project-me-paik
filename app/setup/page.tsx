@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
 import AvatarCircle from "@/components/AvatarCircle";
@@ -18,7 +18,7 @@ import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
 import { requestGenerate } from "@/lib/geminiClient";
 import { recountTurns } from "@/lib/memory";
 import { WORLD_PRESETS, isPresetNamed } from "@/lib/presets";
-import { downloadExport, parseImport } from "@/lib/transfer";
+import { downloadTranscript } from "@/lib/transcript";
 import type { SettingRecord } from "@/lib/types";
 
 function isPresetSetting(setting: SettingRecord) {
@@ -43,7 +43,6 @@ function SetupBody() {
   const [compressing, setCompressing] = useState(false);
   const [error, setError] = useState("");
   const [picked, setPicked] = useState(false);
-  const importRef = useRef<HTMLInputElement>(null);
   const newToken = searchParams.get("new");
   const confirm = useConfirm();
 
@@ -158,16 +157,16 @@ function SetupBody() {
             <button
               type="button"
               className="btn-secondary"
-              onClick={() => downloadExport(play.settings)}
+              disabled={!play.state.character.name.trim()}
+              title="세계관과 대화를 텍스트로 남깁니다."
+              onClick={() => {
+                const current = play.settings.find(
+                  (item) => item.id === play.currentSettingId,
+                );
+                if (current) downloadTranscript(current);
+              }}
             >
-              내보내기
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => importRef.current?.click()}
-            >
-              가져오기
+              기록 내려받기
             </button>
             <ShareButton className="btn-secondary" />
             {play.settings.length > 1 ? (
@@ -184,34 +183,6 @@ function SetupBody() {
                 삭제
               </button>
             ) : null}
-            <input
-              ref={importRef}
-              type="file"
-              accept="application/json"
-              className="sr-only"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (!file) return;
-                void file.text().then((raw) => {
-                  try {
-                    const imported = parseImport(raw);
-                    if (imported.length === 0) {
-                      throw new Error("가져올 설정이 없습니다.");
-                    }
-                    play.importSettings(imported);
-                    setPicked(true);
-                    setError("");
-                  } catch (err) {
-                    setError(
-                      err instanceof Error
-                        ? err.message
-                        : "설정 파일을 읽지 못했습니다.",
-                    );
-                  }
-                });
-              }}
-            />
           </div>
         </div>
 

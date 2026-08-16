@@ -407,29 +407,6 @@ export function usePlayState() {
     );
   }
 
-  function importSettings(incoming: SettingRecord[]) {
-    if (incoming.length === 0) return;
-    updateStore((prev) => {
-      const next = incoming.map((item) =>
-        withForbidden({
-          ...createEmptySetting(newId()),
-          ...item,
-          id: newId(),
-          title: item.title ?? "",
-          shareId: null,
-          storyPins: normalizePins(item.storyPins),
-          cloudSessionId: null,
-          updatedAt: new Date().toISOString(),
-        }),
-      );
-      return {
-        ...prev,
-        currentSettingId: next[0].id,
-        settings: [...prev.settings, ...next],
-      };
-    });
-  }
-
   function mergeCloudPlay(
     prev: AppStore,
     partial: Partial<PlayState> & { cloudSessionId: string },
@@ -794,7 +771,6 @@ export function usePlayState() {
     pinTurn,
     updateStoryPin,
     removeStoryPin,
-    importSettings,
     addFromCloud,
     openFromCloud,
     hydrateFromCloud,

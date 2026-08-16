@@ -37,10 +37,34 @@ const OLD_WORLD_PREFIX: Record<string, string> = {
   세레나: "시대/장소: 검과 마법이 있는 중세풍 대륙. 벨로드 공작가와 왕도가 중심이다.",
 };
 
-const OLD_PROLOGUE_PREFIX: Record<string, string> = {
-  서윤하: "십 년 전 한강 위로 검은 균열이 열렸다",
-  "에델 라이트": "성창 아카데미는 왕국의 검과 마법이 한자리에",
-  세레나: "벨로드 공작은 대륙에서 가장 오래된 가문",
+const OLD_PROLOGUE_PREFIX: Record<string, string[]> = {
+  서윤하: ["십 년 전 한강 위로 검은 균열이 열렸다"],
+  "에델 라이트": ["성창 아카데미는 왕국의 검과 마법이 한자리에"],
+  세레나: ["벨로드 공작은 대륙에서 가장 오래된 가문"],
+};
+
+const OLD_PROLOGUE_EXACT: Record<string, string[]> = {
+  서윤하: [
+    `당신은 어제 새벽 세 시에 각성했다. 손목에 희미한 문양이 떠올랐고 협회 문자가 바로 왔다. 랭크는 미정, 스킬은 하나뿐이다. 오늘은 청룡 길드가 위탁한 E급 연습 던전 3호에서 생존 훈련을 받는 첫날이다. 가방에는 단검과 물, 협회 수첩이 전부다.
+
+대기실에서 동기 이도현의 손이 떨린다. 한소라가 잔소리를 하고, 박진우는 값을 불렀지만 살 것이 없다. 강태민과 김재혁은 아직 오지 않았다.
+
+입구 콘크리트 그늘에 서윤하가 서 있다. 게이트 안 찬 공기가 문틈으로 샌다. 그녀가 당신을 보고 있다. 신입이 따라오는지 확인한 뒤에야 문이 열린다.`,
+  ],
+  "에델 라이트": [
+    `당신은 이번 학기 편입생이다. 출신은 변방 남작 가문. 입학식은 어제 끝났고, 거절 칸 없는 쪽지가 아침 일찍 왔다. 결투장, 그리고 수석의 이름.
+
+제3결투장 난간에 카엘 반트가 기대어 있고, 루나 이브는 책을 덮지 않은 채 흘깃 본다. 마르코의 잔소리는 복도에 남아 있다. 이리스 로엔이 소문을 묻고 다닌다는 말도 있다. 원장 드레이크는 보이지 않는다.
+
+모래 위에 에델 라이트가 서 있다. 창끝을 내리지 않은 채 당신을 한 번 훑는다. 첫 수업은 말보다 검으로 시작된다.`,
+  ],
+  세레나: [
+    `당신은 현대인으로 살다 눈을 떴을 때, 벨로드 저택의 천장을 보고 있었다. 시녀 유리아만이 편하게 말을 건넨다. 로엔은 문 밖에서 기다린다. 점성술사 미르는 영혼이 이상하다고만 남기고 입을 다물었다. 거울의 얼굴은 아직 어색하다.
+
+오늘은 약혼 이야기가 오가는 날이다. 알렌 왕자가 저택을 찾는다는 소식이 아침부터 복도를 채웠다.
+
+온실에는 젖은 흙 냄새와 보라색 꽃이 있다. 그 사이에 세레나가 서 있다. 그녀가 당신을 보는 눈에는, 이 사람이 맞는지 재는 기색이 있다. 전생은 아직 비밀이다.`,
+  ],
 };
 
 const OLD_APPEARANCE: Record<string, string> = {
@@ -79,14 +103,16 @@ export function backfillPresetMeta(record: SettingRecord): SettingRecord {
   const oldHunterSpeech = "존댓말, 짧은 문장, 이모지 금지. 감정은 잘 안 드러낸다.";
   const castByName = new Map(preset.cast.map((item) => [item.name, item]));
   const worldPrefix = OLD_WORLD_PREFIX[name];
-  const prologuePrefix = OLD_PROLOGUE_PREFIX[name];
+  const prologuePrefixes = OLD_PROLOGUE_PREFIX[name] ?? [];
+  const oldExact = (OLD_PROLOGUE_EXACT[name] ?? []).map((text) => text.trim());
+  const stockPrologue =
+    !record.prologue.trim() ||
+    prologuePrefixes.some((prefix) => record.prologue.startsWith(prefix)) ||
+    oldExact.includes(record.prologue.trim());
 
   return {
     ...record,
-    prologue:
-      !record.prologue.trim() || record.prologue.startsWith(prologuePrefix ?? "\0")
-        ? preset.prologue
-        : record.prologue,
+    prologue: stockPrologue ? preset.prologue : record.prologue,
     worldSetting:
       worldPrefix && record.worldSetting.startsWith(worldPrefix)
         ? preset.worldSetting

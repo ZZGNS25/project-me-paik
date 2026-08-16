@@ -167,7 +167,7 @@ function HomeBody() {
                     meta={`${item.turnCount}턴`}
                     onRename={(title) => play.renameSetting(item.id, title)}
                   />
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <div className="story-actions">
                     <button
                       type="button"
                       className="btn-secondary"

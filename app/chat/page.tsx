@@ -8,9 +8,10 @@ import ProfileCard from "@/components/ProfileCard";
 import Composer from "@/components/Composer";
 import StoryExtrasPanel from "@/components/StoryExtrasPanel";
 import PersonaPicker from "@/components/PersonaPicker";
+import ChatMenu from "@/components/ChatMenu";
 import PageShell from "@/components/PageShell";
 import { useConfirm } from "@/components/ConfirmDialog";
-import ShareButton from "@/components/ShareButton";
+import AvatarCircle from "@/components/AvatarCircle";
 import { useCloudSync, usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useStartFresh } from "@/hooks/useStartFresh";
@@ -31,6 +32,7 @@ function ChatBody() {
   const [error, setError] = useState("");
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [pickingPersona, setPickingPersona] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [pendingUser, setPendingUser] = useState("");
   const [streamingReply, setStreamingReply] = useState("");
   const [compressing, setCompressing] = useState(false);
@@ -188,6 +190,13 @@ function ChatBody() {
   const headerName = current
     ? storyTitle(current)
     : play.state.character.name || "채팅";
+  const meName = play.state.userPersona.name.trim() || "나";
+  const hasTurns = play.state.chatLog.length > 0;
+
+  function openPersonaPicker() {
+    setMenuOpen(false);
+    setPickingPersona(true);
+  }
 
   return (
     <AppFrame>
@@ -201,52 +210,13 @@ function ChatBody() {
               statusIdle={!listening}
             />
           </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-            <button
-              type="button"
-              className="btn-quiet"
-              onClick={() => void saveChat()}
-              disabled={cloud.status === "saving"}
-              title={cloud.error || "지금 대화를 저장합니다"}
-            >
-              {cloud.status === "saving"
-                ? "저장 중…"
-                : cloud.status === "error"
-                  ? "저장 실패"
-                  : savedFlash
-                    ? "저장됨"
-                    : "저장"}
-            </button>
-            <ShareButton />
-            <button
-              type="button"
-              className="btn-quiet"
-              onClick={fresh.startChat}
-            >
-              새로
-            </button>
-            <button
-              type="button"
-              className="btn-quiet"
-              title="이 이야기의 나"
-              onClick={() => {
-                if (play.personas.length === 0) {
-                  router.push("/?view=profiles");
-                  return;
-                }
-                setPickingPersona(true);
-              }}
-            >
-              나
-            </button>
-            <button
-              type="button"
-              className="btn-quiet"
-              onClick={() => setExtrasOpen((open) => !open)}
-            >
-              {extrasOpen ? "닫기" : "인물 추가"}
-            </button>
-          </div>
+          <button
+            type="button"
+            className="btn-quiet"
+            onClick={() => setMenuOpen(true)}
+          >
+            메뉴
+          </button>
         </div>
 
         {extrasOpen ? (
@@ -275,57 +245,28 @@ function ChatBody() {
           onTruncateFrom={truncateFrom}
           onRegenerate={regenerate}
           onPinTurn={pinTurn}
+          onPickMe={openPersonaPicker}
         />
 
         <div className="composer-dock">
           <div className="mx-auto w-full max-w-2xl">
             {error ? <p className="alert-error mb-3">{error}</p> : null}
-            {play.state.chatLog.length > 0 && !pendingUser && !streamingReply ? (
-              <div className="chat-actions">
-                <button
-                  type="button"
-                  className="btn-quiet"
-                  disabled={Boolean(busy) || compressing || play.state.shortTermBuffer.length === 0}
-                  onClick={() => void compressMemory()}
-                >
-                  {compressing ? "압축 중…" : "압축"}
-                </button>
-                <button
-                  type="button"
-                  className="btn-quiet"
-                  disabled={Boolean(busy)}
-                  onClick={pinLastTurn}
-                >
-                  {pinnedFlash ? "고정됨" : "고정"}
-                </button>
-                <button
-                  type="button"
-                  className="btn-quiet"
-                  disabled={Boolean(busy)}
-                  onClick={() => {
-                    const text = play.popLastUserMessage();
-                    if (text) setDraft(text);
-                  }}
-                >
-                  마지막 말 수정
-                </button>
-                <button
-                  type="button"
-                  className="btn-danger"
-                  disabled={Boolean(busy)}
-                  onClick={() =>
-                    confirm.ask({
-                      message: "마지막 턴을 지울까요?",
-                      confirmLabel: "삭제",
-                      danger: true,
-                      run: play.deleteLastTurn,
-                    })
-                  }
-                >
-                  마지막 턴 삭제
-                </button>
-              </div>
-            ) : null}
+            <button
+              type="button"
+              className="me-chip"
+              onClick={openPersonaPicker}
+              title="이 이야기의 나"
+            >
+              <AvatarCircle
+                src={play.state.userPersona.photo}
+                name={meName}
+                size="sm"
+              />
+              <span className="me-chip-who">나</span>
+              <span className="me-chip-name">
+                {play.state.userPersona.name.trim() || "프로필 고르기"}
+              </span>
+            </button>
             <Composer
               value={draft}
               onChange={setDraft}
@@ -338,14 +279,74 @@ function ChatBody() {
         </div>
         {confirm.dialog}
         {fresh.dialog}
+        {menuOpen ? (
+          <ChatMenu
+            profileName={meName}
+            saveLabel={
+              cloud.status === "saving"
+                ? "저장 중…"
+                : cloud.status === "error"
+                  ? "저장 실패"
+                  : savedFlash
+                    ? "저장됨"
+                    : ""
+            }
+            saveDisabled={cloud.status === "saving"}
+            extrasOpen={extrasOpen}
+            compressing={compressing}
+            compressDisabled={Boolean(busy) || compressing || play.state.shortTermBuffer.length === 0}
+            pinLabel={pinnedFlash ? "고정됨" : "고정"}
+            pinDisabled={Boolean(busy) || !hasTurns}
+            editDisabled={Boolean(busy) || !hasTurns}
+            deleteDisabled={Boolean(busy) || !hasTurns}
+            onPickProfile={openPersonaPicker}
+            onSave={() => {
+              void saveChat();
+            }}
+            onFresh={() => {
+              setMenuOpen(false);
+              fresh.startChat();
+            }}
+            onExtras={() => {
+              setExtrasOpen((open) => !open);
+              setMenuOpen(false);
+            }}
+            onCompress={() => {
+              setMenuOpen(false);
+              void compressMemory();
+            }}
+            onPin={() => {
+              pinLastTurn();
+            }}
+            onEditLast={() => {
+              const text = play.popLastUserMessage();
+              if (text) setDraft(text);
+              setMenuOpen(false);
+            }}
+            onDeleteLast={() => {
+              setMenuOpen(false);
+              confirm.ask({
+                message: "마지막 턴을 지울까요?",
+                confirmLabel: "삭제",
+                danger: true,
+                run: play.deleteLastTurn,
+              });
+            }}
+            onClose={() => setMenuOpen(false)}
+          />
+        ) : null}
         {pickingPersona ? (
           <PersonaPicker
             personas={play.personas}
             selectedId={current?.personaId}
-            copy="다음 대사부터 이 이야기의 나가 바뀝니다. 지난 장면은 그대로입니다."
+            copy="미리 만든 프로필에서 고르세요. 다음 대사부터 이 이야기의 나가 바뀝니다."
             onPick={(id) => {
               play.applyPersona(id);
               setPickingPersona(false);
+            }}
+            onManage={() => {
+              setPickingPersona(false);
+              router.push("/?view=profiles");
             }}
             onCancel={() => setPickingPersona(false)}
           />

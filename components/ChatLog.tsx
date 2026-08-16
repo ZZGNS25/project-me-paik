@@ -21,6 +21,7 @@ type ChatLogProps = {
   onTruncateFrom?: (messageId: string) => void;
   onRegenerate?: (userMessageId: string) => void;
   onPinTurn?: (user: ChatMessage, model?: ChatMessage) => void;
+  onPickMe?: () => void;
 };
 
 const NEAR_BOTTOM = 96;
@@ -39,6 +40,7 @@ export default function ChatLog({
   onTruncateFrom,
   onRegenerate,
   onPinTurn,
+  onPickMe,
 }: ChatLogProps) {
   const feedRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -101,6 +103,7 @@ export default function ChatLog({
                   userPhoto={userPhoto}
                   castNotes={castNotes}
                   fromUser
+                  onPickMe={onPickMe}
                 />
               ) : null}
               {turn.model ? (
@@ -158,6 +161,7 @@ export default function ChatLog({
               userPhoto={userPhoto}
               castNotes={castNotes}
               fromUser
+              onPickMe={onPickMe}
             />
           ) : null}
           {streamingText ? (
@@ -215,6 +219,7 @@ function PlayLines({
   castNotes = [],
   fromUser = false,
   streaming = false,
+  onPickMe,
 }: {
   content: string;
   characterName?: string;
@@ -224,6 +229,7 @@ function PlayLines({
   castNotes?: CastNote[];
   fromUser?: boolean;
   streaming?: boolean;
+  onPickMe?: () => void;
 }) {
   const lines = parseModelReply(content);
   const last = lines[lines.length - 1];
@@ -258,20 +264,47 @@ function PlayLines({
           >
             <div className={`chat-speech ${mine ? "is-user" : ""}`}>
               {mine ? null : <AvatarCircle src={photo} name={label} size="sm" />}
-              <div
-                className={`${
-                  mine
-                    ? "bubble-user"
-                    : line.kind === "fallback"
-                      ? "fallback-box"
-                      : "bubble-model"
-                } ${live ? "is-streaming" : ""}`}
-              >
-                <p className="whitespace-pre-wrap">
-                  <MarkupText text={line.text} />
-                </p>
+              <div className={`chat-bubbles ${mine ? "is-user" : ""}`}>
+                {mine && onPickMe ? (
+                  <button
+                    type="button"
+                    className="chat-speaker is-me"
+                    onClick={onPickMe}
+                  >
+                    나
+                    {userName?.trim() ? ` · ${userName.trim()}` : ""}
+                  </button>
+                ) : (
+                  <p className="chat-speaker">{label}</p>
+                )}
+                <div
+                  className={`${
+                    mine
+                      ? "bubble-user"
+                      : line.kind === "fallback"
+                        ? "fallback-box"
+                        : "bubble-model"
+                  } ${live ? "is-streaming" : ""}`}
+                >
+                  <p className="whitespace-pre-wrap">
+                    <MarkupText text={line.text} />
+                  </p>
+                </div>
               </div>
-              {mine ? <AvatarCircle src={photo} name={label || "나"} size="sm" /> : null}
+              {mine ? (
+                onPickMe ? (
+                  <button
+                    type="button"
+                    className="chat-me-face"
+                    onClick={onPickMe}
+                    aria-label="프로필 고르기"
+                  >
+                    <AvatarCircle src={photo} name={label || "나"} size="sm" />
+                  </button>
+                ) : (
+                  <AvatarCircle src={photo} name={label || "나"} size="sm" />
+                )
+              ) : null}
             </div>
           </div>
         );

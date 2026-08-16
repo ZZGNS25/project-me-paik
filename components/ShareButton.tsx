@@ -6,7 +6,13 @@ import { usePlay } from "@/hooks/PlayProvider";
 import { copyText, shareUrl, upsertShare } from "@/lib/share";
 import { trackEvent } from "@/lib/analytics";
 
-export default function ShareButton({ className = "btn-quiet" }: { className?: string }) {
+export default function ShareButton({
+  className = "btn-quiet",
+  align = "button",
+}: {
+  className?: string;
+  align?: "button" | "row";
+}) {
   const auth = useAuth();
   const play = usePlay();
   const [busy, setBusy] = useState(false);
@@ -33,6 +39,30 @@ export default function ShareButton({ className = "btn-quiet" }: { className?: s
     }
   }
 
+  const label = busy ? "만드는 중…" : copied ? "복사됨" : "공유";
+
+  if (align === "row") {
+    return (
+      <>
+        <button
+          type="button"
+          className="sheet-row"
+          disabled={!canShare || busy}
+          onClick={() => void share()}
+        >
+          <span>
+            <span className="sheet-row-title">공유</span>
+            <span className="sheet-row-hint">캐릭터와 세계관 링크. 대화는 빠집니다.</span>
+          </span>
+          <span className="sheet-row-value">
+            {busy ? "만드는 중…" : copied ? "복사됨" : ""}
+          </span>
+        </button>
+        {error ? <p className="sheet-row-error">{error}</p> : null}
+      </>
+    );
+  }
+
   return (
     <span className="inline-flex flex-col items-end">
       <button
@@ -42,7 +72,7 @@ export default function ShareButton({ className = "btn-quiet" }: { className?: s
         title={canShare ? "설정 링크를 복사합니다. 대화는 들어가지 않습니다." : "로그인과 캐릭터 이름이 필요합니다."}
         onClick={() => void share()}
       >
-        {busy ? "만드는 중…" : copied ? "복사됨" : "공유"}
+        {label}
       </button>
       {error ? <span className="mt-1 text-xs text-[var(--danger)]">{error}</span> : null}
     </span>

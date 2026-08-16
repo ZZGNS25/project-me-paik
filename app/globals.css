@@ -165,3 +165,121 @@ body {
     linear-gradient(135deg, #4d8dff, #1a73e8);
   box-shadow: 0 0 24px rgba(77, 141, 255, 0.35);
 }
+
+.app-frame {
+  display: flex;
+  height: 100dvh;
+  background:
+    radial-gradient(ellipse 70% 45% at 60% -10%, rgba(26, 115, 232, 0.2), transparent 55%),
+    var(--background);
+}
+
+.side-rail {
+  display: flex;
+  width: 13.5rem;
+  flex-shrink: 0;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  background: rgba(10, 12, 16, 0.92);
+  padding: 1.1rem 0.7rem;
+}
+
+.side-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.2rem 0.55rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.side-item {
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.side-item:hover,
+.side-item.is-active {
+  background: rgba(77, 141, 255, 0.12);
+  color: var(--ink);
+}
+
+.app-main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.app-main > * {
+  min-height: 0;
+  flex: 1;
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(18, 21, 27, 0.95);
+  padding: 0.65rem 0.7rem 0.65rem 1.1rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.composer-input {
+  min-height: 2.6rem;
+  max-height: 8rem;
+  flex: 1;
+  resize: none;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+}
+
+.composer-send {
+  display: inline-flex;
+  height: 2.4rem;
+  width: 2.4rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--blue), var(--blue-deep));
+  color: white;
+}
+
+.composer-send:disabled {
+  opacity: 0.35;
+}
+
+.history-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(18, 21, 27, 0.88);
+  padding: 1rem 1.1rem;
+}
+
+@media (max-width: 800px) {
+  .app-frame {
+    flex-direction: column;
+  }
+
+  .side-rail {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .side-rail nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

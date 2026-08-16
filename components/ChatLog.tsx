@@ -10,8 +10,8 @@ export default function ChatLog({ messages }: ChatLogProps) {
     return (
       <div className="flex flex-1 items-center justify-center px-6 text-center">
         <p className="max-w-sm text-sm leading-relaxed text-[var(--ink-dim)]">
-          왼쪽 설정이 매 턴 주입됩니다. 첫 대사를 보내면 나레이션과 말풍선으로
-          나뉘어 보여요.
+          설정의 캐릭터·세계관이 매 턴 주입됩니다. 첫 대사를 보내면
+          나레이션과 말풍선으로 나뉘어 보여요.
         </p>
       </div>
     );

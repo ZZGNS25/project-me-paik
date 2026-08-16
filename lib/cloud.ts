@@ -14,6 +14,15 @@ type SessionRow = {
   world_setting: string;
   story_summary: string;
   turn_count: number;
+  updated_at?: string;
+};
+
+export type SessionSummary = {
+  id: string;
+  characterName: string;
+  oneLiner: string;
+  turnCount: number;
+  updatedAt: string;
 };
 
 function toSessionPayload(userId: string, state: PlayState) {
@@ -94,9 +103,43 @@ export async function loadLatestPlayFromCloud(userId: string) {
 
   if (error) throw new Error(error.message);
   if (!session) return null;
+  return loadPlayBySession(session as SessionRow);
+}
 
-  const row = session as SessionRow;
+export async function listPlaySessions(userId: string): Promise<SessionSummary[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("eorol_play_sessions")
+    .select("id, character_name, character_one_liner, turn_count, updated_at")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
 
+  if (error) throw new Error(error.message);
+
+  return ((data ?? []) as SessionRow[]).map((row) => ({
+    id: row.id,
+    characterName: row.character_name || "이름 없음",
+    oneLiner: row.character_one_liner,
+    turnCount: row.turn_count,
+    updatedAt: row.updated_at ?? "",
+  }));
+}
+
+export async function loadPlayById(sessionId: string) {
+  const supabase = getSupabase();
+  const { data: session, error } = await supabase
+    .from("eorol_play_sessions")
+    .select("*")
+    .eq("id", sessionId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!session) return null;
+  return loadPlayBySession(session as SessionRow);
+}
+
+async function loadPlayBySession(row: SessionRow) {
+  const supabase = getSupabase();
   const [{ data: notes }, { data: messages }] = await Promise.all([
     supabase.from("eorol_cast_notes").select("*").eq("session_id", row.id),
     supabase

@@ -154,6 +154,21 @@ export function usePlayState() {
     patch((prev) => ({ ...prev, cloudSessionId }));
   }
 
+  function startNewStory() {
+    patch((prev) => {
+      const next = {
+        ...prev,
+        storySummary: "",
+        chatLog: [],
+        shortTermBuffer: [],
+        turnCount: 0,
+        cloudSessionId: null,
+      };
+      savePlayState(next);
+      return next;
+    });
+  }
+
   return {
     state,
     ready,
@@ -169,5 +184,6 @@ export function usePlayState() {
     applySummary,
     hydrateFromCloud,
     setCloudSessionId,
+    startNewStory,
   };
 }

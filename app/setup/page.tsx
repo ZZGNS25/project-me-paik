@@ -1,18 +1,22 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import AppHeader from "@/components/AppHeader";
+import AppFrame from "@/components/AppFrame";
 import CharField from "@/components/CharField";
+import MemoryPanel from "@/components/MemoryPanel";
 import PageShell from "@/components/PageShell";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
 import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
+import { requestGenerate } from "@/lib/geminiClient";
 
-export default function SetupPage() {
+function SetupBody() {
   const router = useRouter();
   const auth = useAuth();
   const play = usePlayState();
+  const [compressing, setCompressing] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (auth.ready && !auth.user) {
@@ -30,17 +34,34 @@ export default function SetupPage() {
 
   const canStart = Boolean(play.state.character.name.trim());
 
-  return (
-    <PageShell>
-      <AppHeader title="캐릭터 설정" />
+  async function compressMemory() {
+    if (compressing || play.state.shortTermBuffer.length === 0) return;
+    setCompressing(true);
+    setError("");
+    try {
+      const summary = await requestGenerate("summary", play.state);
+      play.applySummary(summary);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "요약을 만들지 못했습니다.");
+    } finally {
+      setCompressing(false);
+    }
+  }
 
+  return (
+    <AppFrame>
       <form
-        className="mt-8 space-y-8"
+        className="mx-auto w-full max-w-3xl space-y-6 overflow-y-auto px-6 py-8"
         onSubmit={(event) => {
           event.preventDefault();
-          if (canStart) router.push("/chat");
+          if (canStart) router.push("/");
         }}
       >
+        <div>
+          <p className="label-caps">설정</p>
+          <h1 className="mt-1 text-3xl font-semibold">캐릭터와 세계관</h1>
+        </div>
+        {error ? <p className="alert-error">{error}</p> : null}
         <section className="paper-card space-y-4 p-6">
           <p className="label-caps">필수 프로필</p>
           <CharField
@@ -167,10 +188,31 @@ export default function SetupPage() {
           )}
         </section>
 
+        <MemoryPanel
+          state={play.state}
+          onSummaryChange={play.setStorySummary}
+          onCompress={compressMemory}
+          compressing={compressing}
+        />
+
         <button type="submit" className="btn-primary w-full" disabled={!canStart}>
-          채팅 시작
+          작성 화면으로
         </button>
       </form>
-    </PageShell>
+    </AppFrame>
+  );
+}
+
+export default function SetupPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageShell>
+          <p className="mono-readout text-sm text-[var(--ink-dim)]">불러오는 중…</p>
+        </PageShell>
+      }
+    >
+      <SetupBody />
+    </Suspense>
   );
 }

@@ -1,24 +1,25 @@
 "use client";
 
-import Link from "next/link";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import AuthButton from "@/components/AuthButton";
+import AppFrame from "@/components/AppFrame";
 import ChatLog from "@/components/ChatLog";
-import MemoryPanel from "@/components/MemoryPanel";
+import Composer from "@/components/Composer";
 import PageShell from "@/components/PageShell";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
 import { savePlayToCloud } from "@/lib/cloud";
 import { requestGenerate } from "@/lib/geminiClient";
+import { takePendingMessage } from "@/lib/pending";
 
-export default function ChatPage() {
+function ChatBody() {
   const router = useRouter();
   const play = usePlayState();
   const auth = useAuth();
   const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState<"chat" | "summary" | "cloud" | null>(null);
+  const [busy, setBusy] = useState<"chat" | "cloud" | null>(null);
   const [error, setError] = useState("");
+  const pendingSent = useRef(false);
 
   useEffect(() => {
     if (!play.ready || !auth.ready) return;
@@ -31,16 +32,23 @@ export default function ChatPage() {
     }
   }, [play.ready, auth.ready, auth.user, play.state.character.name, router]);
 
+  useEffect(() => {
+    if (!play.ready || !auth.user || pendingSent.current) return;
+    const pending = takePendingMessage();
+    if (!pending) return;
+    pendingSent.current = true;
+    void sendMessage(pending);
+  }, [play.ready, auth.user]);
+
   if (!play.ready || !auth.ready) {
     return (
-      <PageShell wide>
+      <PageShell>
         <p className="mono-readout text-sm text-[var(--ink-dim)]">불러오는 중…</p>
       </PageShell>
     );
   }
 
-  async function sendMessage() {
-    const text = draft.trim();
+  async function sendMessage(text = draft.trim()) {
     if (!text || busy) return;
 
     setBusy("chat");
@@ -58,27 +66,8 @@ export default function ChatPage() {
     }
   }
 
-  async function compressMemory() {
-    if (busy || play.state.shortTermBuffer.length === 0) return;
-    setBusy("summary");
-    setError("");
-
-    try {
-      const summary = await requestGenerate("summary", play.state);
-      play.applySummary(summary);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "요약을 만들지 못했습니다.");
-    } finally {
-      setBusy(null);
-    }
-  }
-
   async function saveCloud() {
-    if (!auth.user) {
-      setError("클라우드 저장은 Google 로그인 후 사용할 수 있습니다.");
-      return;
-    }
-
+    if (!auth.user) return;
     setBusy("cloud");
     setError("");
     try {
@@ -92,16 +81,15 @@ export default function ChatPage() {
   }
 
   return (
-    <PageShell wide>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="label-caps">이어롤</p>
-          <h1 className="text-2xl font-semibold">
-            {play.state.character.name || "채팅"}
-          </h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <AuthButton />
+    <AppFrame>
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div>
+            <p className="label-caps">이어롤</p>
+            <h1 className="text-xl font-semibold">
+              {play.state.character.name || "채팅"}
+            </h1>
+          </div>
           <button
             type="button"
             className="ghost-link"
@@ -110,54 +98,34 @@ export default function ChatPage() {
           >
             {busy === "cloud" ? "저장 중…" : "클라우드 저장"}
           </button>
-          <Link href="/setup" className="ghost-link">
-            설정
-          </Link>
+        </div>
+
+        <ChatLog messages={play.state.chatLog} />
+
+        <div className="mx-auto w-full max-w-3xl px-4 pb-6">
+          {error ? <p className="alert-error mb-3">{error}</p> : null}
+          <Composer
+            value={draft}
+            onChange={setDraft}
+            onSubmit={() => void sendMessage()}
+            disabled={Boolean(busy)}
+          />
         </div>
       </div>
+    </AppFrame>
+  );
+}
 
-      <div className="grid min-h-[70vh] gap-4 lg:grid-cols-[20rem_1fr]">
-        <MemoryPanel
-          state={play.state}
-          onSummaryChange={play.setStorySummary}
-          onCompress={compressMemory}
-          compressing={busy === "summary"}
-        />
-
-        <section className="paper-panel flex min-h-[28rem] flex-col">
-          <ChatLog messages={play.state.chatLog} />
-          {error ? <p className="alert-error mx-4 mb-3">{error}</p> : null}
-          <form
-            className="flex gap-3 border-t border-[var(--line)] p-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void sendMessage();
-            }}
-          >
-            <textarea
-              className="field-input mt-0 min-h-[3rem] flex-1"
-              rows={2}
-              placeholder="대사나 행동을 입력하세요"
-              value={draft}
-              disabled={Boolean(busy)}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  void sendMessage();
-                }
-              }}
-            />
-            <button
-              type="submit"
-              className="btn-primary self-end"
-              disabled={Boolean(busy) || !draft.trim()}
-            >
-              {busy === "chat" ? "응답 중" : "전송"}
-            </button>
-          </form>
-        </section>
-      </div>
-    </PageShell>
+export default function ChatPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageShell>
+          <p className="mono-readout text-sm text-[var(--ink-dim)]">불러오는 중…</p>
+        </PageShell>
+      }
+    >
+      <ChatBody />
+    </Suspense>
   );
 }

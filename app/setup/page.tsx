@@ -8,8 +8,10 @@ import CastEditor from "@/components/CastEditor";
 import CharField from "@/components/CharField";
 import MemoryPanel from "@/components/MemoryPanel";
 import PageShell from "@/components/PageShell";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { deletePlayFromCloud } from "@/lib/cloud";
 import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
 import { requestGenerate } from "@/lib/geminiClient";
 import { WORLD_PRESETS, isPresetNamed } from "@/lib/presets";
@@ -40,6 +42,7 @@ function SetupBody() {
   const [picked, setPicked] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
   const newToken = searchParams.get("new");
+  const confirm = useConfirm();
 
   useEffect(() => {
     if (auth.ready && !auth.user) {
@@ -89,6 +92,26 @@ function SetupBody() {
       play.createSetting();
     }
     setPicked(true);
+  }
+
+  async function removeStory(setting: SettingRecord) {
+    if (setting.cloudSessionId) {
+      try {
+        await deletePlayFromCloud(setting.cloudSessionId);
+      } catch {
+        // 로컬은 지운다.
+      }
+    }
+    play.deleteSetting(setting.id);
+  }
+
+  function askRemove(setting: SettingRecord) {
+    confirm.ask({
+      message: "이 이야기를 지울까요?",
+      confirmLabel: "삭제",
+      danger: true,
+      run: () => void removeStory(setting),
+    });
   }
 
   async function compressMemory() {
@@ -142,6 +165,20 @@ function SetupBody() {
             >
               가져오기
             </button>
+            {play.settings.length > 1 ? (
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={() => {
+                  const current =
+                    play.settings.find((item) => item.id === play.currentSettingId) ??
+                    play.settings[0];
+                  if (current) askRemove(current);
+                }}
+              >
+                삭제
+              </button>
+            ) : null}
             <input
               ref={importRef}
               type="file"
@@ -444,6 +481,7 @@ function SetupBody() {
           </>
         ) : null}
       </form>
+      {confirm.dialog}
     </AppFrame>
   );
 }

@@ -9,6 +9,7 @@ import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
 import PageShell from "@/components/PageShell";
 import ProfileCard from "@/components/ProfileCard";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { deletePlayFromCloud } from "@/lib/cloud";
@@ -22,6 +23,7 @@ function HomeBody() {
   const auth = useAuth();
   const play = usePlay();
   const view = searchParams.get("view");
+  const confirm = useConfirm();
 
   if (!auth.ready || !play.ready) {
     return (
@@ -83,7 +85,6 @@ function HomeBody() {
   }
 
   async function removeStory(setting: SettingRecord) {
-    if (!window.confirm("이 이야기를 지울까요?")) return;
     if (setting.cloudSessionId) {
       try {
         await deletePlayFromCloud(setting.cloudSessionId);
@@ -112,6 +113,7 @@ function HomeBody() {
   }
 
   return (
+    <>
     <AppFrame>
       {view === "guide" ? (
         <GuidePanel />
@@ -161,7 +163,14 @@ function HomeBody() {
                       <button
                         type="button"
                         className="btn-danger"
-                        onClick={() => void removeStory(item)}
+                        onClick={() =>
+                          confirm.ask({
+                            message: "이 이야기를 지울까요?",
+                            confirmLabel: "삭제",
+                            danger: true,
+                            run: () => void removeStory(item),
+                          })
+                        }
                       >
                         삭제
                       </button>
@@ -215,6 +224,8 @@ function HomeBody() {
         </div>
       )}
     </AppFrame>
+    {confirm.dialog}
+    </>
   );
 }
 

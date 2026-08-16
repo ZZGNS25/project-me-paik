@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProfileCard from "@/components/ProfileCard";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { PlayController } from "@/hooks/usePlayState";
 import {
@@ -19,6 +20,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   useEffect(() => {
     if (!auth.user) return;
@@ -47,32 +49,44 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
     }
   }
 
-  async function deleteSession(id: string) {
-    if (!window.confirm("클라우드에서 이 이야기를 지울까요?")) return;
-    setBusyId(id);
-    setError("");
-    try {
-      await deletePlayFromCloud(id);
-      play.unlinkCloudSession(id);
-      setSessions((current) => current.filter((item) => item.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "삭제에 실패했습니다.");
-    } finally {
-      setBusyId(null);
-    }
+  function deleteSession(id: string) {
+    confirm.ask({
+      message: "클라우드에서 이 이야기를 지울까요?",
+      confirmLabel: "삭제",
+      danger: true,
+      run: async () => {
+        setBusyId(id);
+        setError("");
+        try {
+          await deletePlayFromCloud(id);
+          play.unlinkCloudSession(id);
+          setSessions((current) => current.filter((item) => item.id !== id));
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "삭제에 실패했습니다.");
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   }
 
-  async function deleteLocal(id: string, cloudSessionId: string | null) {
-    if (!window.confirm("이 브라우저에서 이 이야기를 지울까요?")) return;
-    if (cloudSessionId) {
-      try {
-        await deletePlayFromCloud(cloudSessionId);
-        setSessions((current) => current.filter((item) => item.id !== cloudSessionId));
-      } catch {
-        // 로컬은 지운다. 클라우드가 남아 있으면 아래 목록에서 다시 지울 수 있다.
-      }
-    }
-    play.deleteSetting(id);
+  function deleteLocal(id: string, cloudSessionId: string | null) {
+    confirm.ask({
+      message: "이 브라우저에서 이 이야기를 지울까요?",
+      confirmLabel: "삭제",
+      danger: true,
+      run: async () => {
+        if (cloudSessionId) {
+          try {
+            await deletePlayFromCloud(cloudSessionId);
+            setSessions((current) => current.filter((item) => item.id !== cloudSessionId));
+          } catch {
+            // 로컬은 지운다. 클라우드가 남아 있으면 아래 목록에서 다시 지울 수 있다.
+          }
+        }
+        play.deleteSetting(id);
+      },
+    });
   }
 
   const localStories = play.settings.filter((item) => item.character.name.trim());
@@ -84,6 +98,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
   const remoteOnly = sessions.filter((item) => !localCloudIds.has(item.id));
 
   return (
+    <>
     <div className="page-scroll mx-auto w-full max-w-2xl px-6 py-12">
       <div className="flex items-end justify-between gap-3">
         <div>
@@ -209,5 +224,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
         )}
       </div>
     </div>
+    {confirm.dialog}
+    </>
   );
 }

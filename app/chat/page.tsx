@@ -8,6 +8,7 @@ import ProfileCard from "@/components/ProfileCard";
 import Composer from "@/components/Composer";
 import StoryExtrasPanel from "@/components/StoryExtrasPanel";
 import PageShell from "@/components/PageShell";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useCloudSync, usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { requestGenerateStream } from "@/lib/geminiClient";
@@ -28,6 +29,7 @@ function ChatBody() {
   const [streamingReply, setStreamingReply] = useState("");
   const pendingSent = useRef(false);
   const sending = useRef(false);
+  const confirm = useConfirm();
 
   useEffect(() => {
     if (!play.ready || !auth.ready) return;
@@ -82,22 +84,39 @@ function ChatBody() {
     }
   }
 
-  function confirmLaterTurns(fromId: string) {
+  function laterTurnsWillDrop(fromId: string) {
     const index = play.state.chatLog.findIndex((item) => item.id === fromId);
-    return index >= 0 && index < play.state.chatLog.length - 2
-      ? window.confirm("이 뒤의 대화가 사라집니다. 계속할까요?")
-      : true;
+    return index >= 0 && index < play.state.chatLog.length - 2;
   }
 
   function truncateFrom(messageId: string) {
-    if (!confirmLaterTurns(messageId)) return;
-    play.truncateFrom(messageId);
+    if (!laterTurnsWillDrop(messageId)) {
+      play.truncateFrom(messageId);
+      return;
+    }
+    confirm.ask({
+      message: "이 뒤의 대화가 사라집니다.",
+      confirmLabel: "삭제",
+      danger: true,
+      run: () => play.truncateFrom(messageId),
+    });
   }
 
   function regenerate(userMessageId: string) {
-    if (!confirmLaterTurns(userMessageId)) return;
-    const rewound = play.rewindForRegen(userMessageId);
-    if (rewound) void sendMessage(rewound.text, rewound.state);
+    const run = () => {
+      const rewound = play.rewindForRegen(userMessageId);
+      if (rewound) void sendMessage(rewound.text, rewound.state);
+    };
+    if (!laterTurnsWillDrop(userMessageId)) {
+      run();
+      return;
+    }
+    confirm.ask({
+      message: "이 뒤의 대화가 사라지고 답을 다시 씁니다.",
+      confirmLabel: "다시 쓰기",
+      danger: true,
+      run,
+    });
   }
 
   function pinTurn(user: ChatMessage, model?: ChatMessage) {
@@ -191,7 +210,14 @@ function ChatBody() {
                   type="button"
                   className="btn-danger"
                   disabled={Boolean(busy)}
-                  onClick={play.deleteLastTurn}
+                  onClick={() =>
+                    confirm.ask({
+                      message: "마지막 턴을 지울까요?",
+                      confirmLabel: "삭제",
+                      danger: true,
+                      run: play.deleteLastTurn,
+                    })
+                  }
                 >
                   마지막 턴 삭제
                 </button>
@@ -207,6 +233,7 @@ function ChatBody() {
             <p className="composer-hint">@: 장면 · @나: 내 말 · @이름: 그 인물 · *행동*</p>
           </div>
         </div>
+        {confirm.dialog}
       </div>
     </AppFrame>
   );

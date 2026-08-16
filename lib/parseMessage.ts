@@ -52,7 +52,7 @@ export function parseModelReply(raw: string): ParsedLine[] {
 
     if (line.startsWith("@:")) {
       flushLeftover();
-      parsed.push({ kind: "narration", text: line.slice(2).trim() });
+      pushNarration(parsed, line.slice(2).trim());
       continue;
     }
 
@@ -70,7 +70,7 @@ export function parseModelReply(raw: string): ParsedLine[] {
     const narration = line.match(NARRATION);
     if (narration) {
       flushLeftover();
-      parsed.push({ kind: "narration", text: narration[1] || line });
+      pushNarration(parsed, narration[1] || line);
       continue;
     }
 
@@ -85,11 +85,36 @@ export function parseModelReply(raw: string): ParsedLine[] {
       continue;
     }
 
+    const last = parsed[parsed.length - 1];
+    if (last?.kind === "narration") {
+      pushNarration(parsed, line);
+      continue;
+    }
+
     leftover.push(rawLine);
   }
 
   flushLeftover();
-  return mergeSpeech(parsed.length > 0 ? parsed : [{ kind: "fallback", text: raw.trim() }]);
+  return mergeRuns(parsed.length > 0 ? parsed : [{ kind: "fallback", text: raw.trim() }]);
+}
+
+function pushNarration(parsed: ParsedLine[], text: string) {
+  const next = text.trim();
+  if (!next) return;
+  const last = parsed[parsed.length - 1];
+  if (last?.kind === "narration") {
+    last.text = joinProse(last.text, next);
+    return;
+  }
+  parsed.push({ kind: "narration", text: next });
+}
+
+function joinProse(left: string, right: string) {
+  const a = left.trim();
+  const b = right.trim();
+  if (!a) return b;
+  if (!b) return a;
+  return /\s$/.test(a) ? `${a}${b}` : `${a} ${b}`;
 }
 
 function unwrapSpeech(text: string) {
@@ -98,11 +123,15 @@ function unwrapSpeech(text: string) {
   return wrapped ? wrapped[1].trim() : trimmed;
 }
 
-function mergeSpeech(lines: ParsedLine[]): ParsedLine[] {
+function mergeRuns(lines: ParsedLine[]): ParsedLine[] {
   const merged: ParsedLine[] = [];
 
   for (const line of lines) {
     const last = merged[merged.length - 1];
+    if (line.kind === "narration" && last?.kind === "narration") {
+      last.text = joinProse(last.text, line.text);
+      continue;
+    }
     if (line.kind === "speech" && last?.kind === "speech" && last.name === line.name) {
       last.text = `${last.text}\n${line.text}`;
       continue;

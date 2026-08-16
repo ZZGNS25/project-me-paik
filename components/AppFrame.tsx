@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import BrandLockup from "@/components/BrandLockup";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
 
 const NAV = [
@@ -22,6 +23,7 @@ export default function AppFrame({ children }: AppFrameProps) {
   const searchParams = useSearchParams();
   const auth = useAuth();
   const view = searchParams.get("view");
+  const confirm = useConfirm();
 
   function isActive(item: (typeof NAV)[number]) {
     if (item.href === "/setup") return pathname === "/setup";
@@ -63,9 +65,14 @@ export default function AppFrame({ children }: AppFrameProps) {
               <button
                 type="button"
                 className="btn-quiet w-full"
-                onClick={() => {
-                  void auth.signOut().then(() => router.replace("/"));
-                }}
+                onClick={() =>
+                  confirm.ask({
+                    message: "로그아웃할까요?",
+                    confirmLabel: "로그아웃",
+                    run: () =>
+                      void auth.signOut().then(() => router.replace("/")),
+                  })
+                }
                 disabled={auth.busy}
               >
                 로그아웃
@@ -79,6 +86,7 @@ export default function AppFrame({ children }: AppFrameProps) {
           {children}
         </div>
       </div>
+      {confirm.dialog}
     </div>
   );
 }

@@ -212,6 +212,43 @@ body {
   font-size: 0.8rem;
 }
 
+.confirm-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(4, 6, 10, 0.64);
+  backdrop-filter: blur(10px);
+}
+
+.confirm-card {
+  width: min(22rem, 100%);
+  border: 1px solid rgba(77, 141, 255, 0.2);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(28, 34, 44, 0.98), rgba(16, 19, 26, 0.96));
+  padding: 1.2rem 1.25rem 1.1rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.confirm-copy {
+  margin-top: 0.55rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin-top: 1.15rem;
+}
+
 .bubble-user,
 .bubble-model {
   max-width: 28rem;
@@ -241,7 +278,7 @@ body {
 .scene-narration {
   color: #93a1b3;
   font-style: normal;
-  line-height: 1.85;
+  line-height: 1.95;
 }
 
 .chat-feed {

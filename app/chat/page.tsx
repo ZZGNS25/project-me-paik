@@ -13,6 +13,7 @@ import ChatMenu from "@/components/ChatMenu";
 import PageShell from "@/components/PageShell";
 import { useConfirm } from "@/components/ConfirmDialog";
 import AvatarCircle from "@/components/AvatarCircle";
+import Icon from "@/components/Icon";
 import { useCloudSync, usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useStartFresh } from "@/hooks/useStartFresh";
@@ -228,10 +229,11 @@ function ChatBody() {
           </div>
           <button
             type="button"
-            className="btn-quiet"
+            className="icon-btn"
+            aria-label="메뉴"
             onClick={() => setMenuOpen(true)}
           >
-            메뉴
+            <Icon name="menu" />
           </button>
         </div>
 
@@ -286,19 +288,23 @@ function ChatBody() {
               </button>
               <button
                 type="button"
-                className="btn-quiet"
+                className="icon-btn"
                 disabled={Boolean(busy) || compressing || play.state.shortTermBuffer.length === 0}
                 onClick={() => void compressMemory()}
+                aria-label={compressing ? "압축 중" : "압축"}
+                title="압축"
               >
-                {compressing ? "압축 중…" : "압축"}
+                <Icon name="compress" />
               </button>
               <button
                 type="button"
-                className="btn-quiet"
+                className="icon-btn"
                 disabled={Boolean(busy) || !hasTurns}
                 onClick={pinLastTurn}
+                aria-label={pinnedFlash ? "고정됨" : "고정"}
+                title="고정"
               >
-                {pinnedFlash ? "고정됨" : "고정"}
+                <Icon name="pin" />
               </button>
             </div>
             <Composer
@@ -397,6 +403,7 @@ function ChatBody() {
           <PersonaPicker
             personas={play.personas}
             selectedId={current?.personaId}
+            current={play.state.userPersona}
             onPick={(id) => {
               play.applyPersona(id);
               setPickingPersona(false);

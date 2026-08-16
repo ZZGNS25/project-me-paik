@@ -7,7 +7,6 @@ import AvatarCircle from "@/components/AvatarCircle";
 import CastEditor from "@/components/CastEditor";
 import CharField from "@/components/CharField";
 import MemoryPanel from "@/components/MemoryPanel";
-import PersonaList from "@/components/PersonaList";
 import PageShell from "@/components/PageShell";
 import { useConfirm } from "@/components/ConfirmDialog";
 import ShareButton from "@/components/ShareButton";
@@ -362,36 +361,9 @@ function SetupBody() {
               <summary className="label-caps">이 이야기의 나</summary>
               <div className="mt-4 space-y-4">
                 <p className="text-sm text-[var(--ink-dim)]">
-                  프로필은 내가 누구인지입니다. 고르면 이 이야기에만 복사됩니다. 목록
-                  원본은 프로필에서 고칩니다.
+                  이 이야기에서만 바뀝니다. 다른 프로필로 바꾸려면 대화에서 나를
+                  누르세요.
                 </p>
-                {play.personas.length === 0 ? (
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => router.push("/?view=profiles&from=setup")}
-                  >
-                    프로필 먼저 만들기
-                  </button>
-                ) : (
-                  <PersonaList
-                    personas={play.personas}
-                    activeId={
-                      play.settings.find((item) => item.id === play.currentSettingId)
-                        ?.personaId ?? null
-                    }
-                    onPick={play.applyPersona}
-                    onAdd={() => router.push("/?view=profiles&from=setup")}
-                    onEdit={(id) => router.push(`/?view=profiles&from=setup&edit=${id}`)}
-                  />
-                )}
-                <button
-                  type="button"
-                  className="btn-quiet"
-                  onClick={() => router.push("/?view=profiles&from=setup")}
-                >
-                  프로필 목록
-                </button>
                 <div className="flex items-start gap-4">
                   <div>
                     <p className="text-sm font-medium text-[var(--ink)]">사진</p>

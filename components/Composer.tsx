@@ -57,8 +57,8 @@ export default function Composer({
         disabled={disabled || !value.trim()}
         aria-label="전송"
       >
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-          <path d="M3.4 20.4 21 12 3.4 3.6 3 10l12 2-12 2z" />
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+          <path d="M8 5.2v13.6L20 12 8 5.2Z" />
         </svg>
       </button>
     </form>

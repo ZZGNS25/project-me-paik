@@ -40,12 +40,14 @@ export default function GuidePanel() {
           시작한 대화는 바뀌지 않습니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
-          대화에서 <strong className="text-[var(--ink)]">나</strong>를 누르면 미리 만든
-          프로필이 뜹니다. 내 말 위 이름, 얼굴, 입력창 위 칩, 메뉴의{" "}
-          <strong className="text-[var(--ink)]">대화 프로필</strong>이 같습니다. 설정의{" "}
-          <strong className="text-[var(--ink)]">이 이야기의 나</strong>에서도 고를 수
-          있습니다. 다음 대사부터 반영되고, 이미 나온 장면은 그대로입니다. 이
-          이야기에서만 이름·설정을 고쳐도 됩니다. 그때는 프로필 원본이 바뀌지 않습니다.
+          대화에서 <strong className="text-[var(--ink)]">나</strong>를 누르면 지금 이
+          이야기에서 쓰는 내가 아래에 있고, 그 위로 다른 프로필이 뜹니다. 미리 만든
+          것이든 이 이야기에서만 고친 것이든, 지금 쓰는 것이 나옵니다. 내 말 위 이름,
+          얼굴, 입력창 위 칩, 메뉴의{" "}
+          <strong className="text-[var(--ink)]">대화 프로필</strong>이 같습니다. 줄을
+          누르면 다음 대사부터 바뀌고, 이미 나온 장면은 그대로입니다. 설정의{" "}
+          <strong className="text-[var(--ink)]">이 이야기의 나</strong>는 이 이야기에서만
+          이름·설정을 고칩니다. 그때는 프로필 원본이 바뀌지 않습니다.
         </p>
       </section>
 
@@ -159,8 +161,8 @@ export default function GuidePanel() {
           </li>
           <li>
             입력창 위 <strong className="text-[var(--ink)]">나</strong>, 내 말의 이름·얼굴을
-            누르면 프로필 목록이 먼저 열립니다. 줄을 누르면 이 이야기의 나가 바뀌고,
-            연필은 프로필을 고칩니다.
+            누르면 지금 쓰는 내가 아래에 나오고, 그 위로 프로필 목록이 열립니다. 줄을
+            누르면 이 이야기의 나가 바뀌고, 연필은 프로필을 고칩니다.
           </li>
           <li>
             위쪽 <strong className="text-[var(--ink)]">메뉴</strong>에 대화 프로필, 새로하기,

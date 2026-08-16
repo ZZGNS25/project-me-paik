@@ -11,7 +11,7 @@ import PageShell from "@/components/PageShell";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
 import { savePlayToCloud } from "@/lib/cloud";
-import { requestGenerate } from "@/lib/geminiClient";
+import { requestGenerateStream } from "@/lib/geminiClient";
 import { takePendingMessage } from "@/lib/pending";
 
 function ChatBody() {
@@ -22,7 +22,10 @@ function ChatBody() {
   const [busy, setBusy] = useState<"chat" | "cloud" | null>(null);
   const [error, setError] = useState("");
   const [extrasOpen, setExtrasOpen] = useState(false);
+  const [pendingUser, setPendingUser] = useState("");
+  const [streamingReply, setStreamingReply] = useState("");
   const pendingSent = useRef(false);
+  const sending = useRef(false);
 
   useEffect(() => {
     if (!play.ready || !auth.ready) return;
@@ -52,19 +55,27 @@ function ChatBody() {
   }
 
   async function sendMessage(text = draft.trim()) {
-    if (!text || busy) return;
+    if (!text || sending.current) return;
 
+    sending.current = true;
     setBusy("chat");
     setError("");
     setDraft("");
+    setPendingUser(text);
+    setStreamingReply("");
 
     try {
-      const reply = await requestGenerate("chat", play.state, text);
+      const reply = await requestGenerateStream(play.state, text, setStreamingReply);
       play.appendTurn(text, reply);
+      setPendingUser("");
+      setStreamingReply("");
     } catch (err) {
       setDraft(text);
+      setPendingUser("");
+      setStreamingReply("");
       setError(err instanceof Error ? err.message : "응답을 받지 못했습니다.");
     } finally {
+      sending.current = false;
       setBusy(null);
     }
   }
@@ -129,6 +140,17 @@ function ChatBody() {
           characterName={play.state.character.name}
           userPhoto={play.state.userPersona.photo}
           userName={play.state.userPersona.name}
+          pendingUserText={pendingUser}
+          streamingText={streamingReply}
+          onEditLast={
+            busy
+              ? undefined
+              : () => {
+                  const text = play.popLastUserMessage();
+                  if (text) setDraft(text);
+                }
+          }
+          onDeleteLast={busy ? undefined : play.deleteLastTurn}
         />
 
         <div className="mx-auto w-full max-w-3xl px-4 pb-6">
@@ -138,6 +160,7 @@ function ChatBody() {
             onChange={setDraft}
             onSubmit={() => void sendMessage()}
             disabled={Boolean(busy)}
+            placeholder="@:나레이션  @이름:대사  *행동*"
           />
         </div>
       </div>

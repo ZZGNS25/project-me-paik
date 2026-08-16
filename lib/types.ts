@@ -66,6 +66,11 @@ export type PromptState = Pick<
   | "shortTermBuffer"
 >;
 
+export type InlinePart = {
+  text: string;
+  italic?: boolean;
+};
+
 export type ParsedLine =
   | { kind: "narration"; text: string }
   | { kind: "speech"; name: string; text: string }

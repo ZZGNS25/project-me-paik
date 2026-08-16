@@ -13,6 +13,22 @@ import { usePlayState } from "@/hooks/usePlayState";
 import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
 import { requestGenerate } from "@/lib/geminiClient";
 import { WORLD_PRESETS } from "@/lib/presets";
+import type { SettingRecord } from "@/lib/types";
+
+function isPresetNamed(setting: SettingRecord) {
+  const name = setting.character.name.trim();
+  return WORLD_PRESETS.some((preset) => preset.character.name === name);
+}
+
+function isUnusedBlank(setting: SettingRecord) {
+  return (
+    !isPresetNamed(setting) &&
+    !setting.character.name.trim() &&
+    !setting.character.photo &&
+    !setting.worldSetting.trim() &&
+    setting.chatLog.length === 0
+  );
+}
 
 function SetupBody() {
   const router = useRouter();
@@ -42,6 +58,24 @@ function SetupBody() {
   const activePreset = WORLD_PRESETS.find(
     (item) => item.character.name === play.state.character.name.trim(),
   );
+  const customSettings = play.settings.filter((setting) => {
+    if (isPresetNamed(setting)) return false;
+    const onlyHiddenStarter =
+      !picked &&
+      play.settings.filter((item) => !isPresetNamed(item)).length === 1 &&
+      isUnusedBlank(setting);
+    return !onlyHiddenStarter;
+  });
+
+  function addScenario() {
+    const unusedBlank = play.settings.find(isUnusedBlank);
+    if (unusedBlank && customSettings.length === 0) {
+      play.selectSetting(unusedBlank.id);
+    } else {
+      play.createSetting();
+    }
+    setPicked(true);
+  }
 
   async function compressMemory() {
     if (compressing || play.state.shortTermBuffer.length === 0) return;
@@ -105,15 +139,55 @@ function SetupBody() {
                 <span>{preset.character.name}</span>
               </button>
             ))}
+            {customSettings.map((setting) => {
+              const selected = setting.id === play.currentSettingId;
+              return (
+                <div
+                  key={setting.id}
+                  className={`scenario-pick ${selected ? "is-active" : ""}`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      play.selectSetting(setting.id);
+                      setPicked(true);
+                    }}
+                  >
+                    <AvatarCircle
+                      src={setting.character.photo}
+                      name={setting.character.name}
+                      size="lg"
+                    />
+                  </button>
+                  {selected ? (
+                    <input
+                      className="scenario-name"
+                      value={play.state.character.name}
+                      maxLength={FIELD_LIMITS.characterName}
+                      placeholder="이름"
+                      aria-label="시나리오 이름"
+                      onChange={(event) =>
+                        play.updateCharacter("name", event.target.value)
+                      }
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        play.selectSetting(setting.id);
+                        setPicked(true);
+                      }}
+                    >
+                      {setting.character.name.trim() || "새 시나리오"}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
             <button
               type="button"
-              className={`scenario-add ${
-                editorOpen && !activePreset ? "is-active" : ""
-              }`}
-              onClick={() => {
-                play.createSetting();
-                setPicked(true);
-              }}
+              className="scenario-add"
+              onClick={addScenario}
             >
               <span className="avatar-circle avatar-lg">+</span>
               <span>시나리오 추가</span>

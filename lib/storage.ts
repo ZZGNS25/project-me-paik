@@ -11,12 +11,17 @@ function backfillPresetMeta(record: SettingRecord): SettingRecord {
     (item) => item.character.name === record.character.name.trim(),
   );
   if (!preset) return record;
+  const oldHunterSpeech = "존댓말, 짧은 문장, 이모지 금지. 감정은 잘 안 드러낸다.";
   return {
     ...record,
     prologue: record.prologue.trim() || preset.prologue,
     character: {
       ...record.character,
       photo: record.character.photo || preset.character.photo,
+      speechStyle:
+        record.character.speechStyle.trim() === oldHunterSpeech
+          ? preset.character.speechStyle
+          : record.character.speechStyle,
     },
   };
 }

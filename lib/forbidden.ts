@@ -24,6 +24,7 @@ export function buildForbidden(input: ForbiddenInput) {
   if (/존댓말/.test(style)) rules.push("반말이나 편한 말투로 바뀌지 않는다.");
   if (/반말/.test(style) && !/존댓말/.test(style)) {
     rules.push("갑자기 존댓말로 바뀌지 않는다.");
+    rules.push("하십시오·바랍니다 같은 안내문 말투를 쓰지 않는다.");
   }
   if (/이모지/.test(style)) rules.push("이모지를 쓰지 않는다.");
   if (/마법 없|마법을 못|마법 금지/.test(blob)) {

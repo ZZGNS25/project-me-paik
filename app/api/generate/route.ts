@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { GEMINI_SUMMARY_OUTPUT_TOKENS } from "@/lib/constants";
-import { generateGeminiText } from "@/lib/gemini";
+import { generateGeminiText, streamGeminiText } from "@/lib/gemini";
 import { buildChatPrompt, buildSummaryPrompt } from "@/lib/prompt";
 import { requireUser } from "@/lib/requireUser";
 import type { PromptState } from "@/lib/types";
+
+export const maxDuration = 60;
 
 const USER_TEXT_MAX = 2000;
 
@@ -35,8 +37,13 @@ export async function POST(request: Request) {
       if (!userText) {
         return NextResponse.json({ error: "메시지를 입력해 주세요." }, { status: 400 });
       }
-      const text = await generateGeminiText(buildChatPrompt(body.state, userText));
-      return NextResponse.json({ text });
+      const stream = await streamGeminiText(buildChatPrompt(body.state, userText));
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      });
     }
 
     if (body.mode === "summary") {

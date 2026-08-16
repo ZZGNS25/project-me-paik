@@ -1,6 +1,12 @@
 import { SHORT_TERM_TURNS } from "./constants";
 import type { PromptState } from "./types";
 
+function clip(value: string, max: number) {
+  const text = value.trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, max).trim()}…`;
+}
+
 export function buildPinnedRules(state: PromptState) {
   const character = state.character.name.trim() || "캐릭터";
   const user = state.userPersona.name.trim() || "유저";
@@ -8,13 +14,25 @@ export function buildPinnedRules(state: PromptState) {
   return `[규칙]
 너는 ${character}의 시점과 행동만 서술한다.
 절대로 ${user}의 대사·감정·행동을 대신 쓰지 않는다.
-나레이션은 (나레이션) 으로 시작하는 줄을 2~4개 쓴다. 각 줄은 한 문장.
-대사는 이름: 「대사」 형식으로 2~4줄 쓴다.
+유저가 @이름: 으로 쓴 것은 그 인물을 지칭한 말이다.
+유저가 @: 로 쓴 것은 나레이션이다.
+유저가 *이렇게* 쓴 것은 행동·속마음이다.
+나레이션은 차갑고 짧은 반말. ~다/~었다. 합니다·습니다 금지.
+나레이션은 @: 로 시작하는 줄을 2~4개 쓴다. 각 줄은 한 문장.
+대사는 @이름: 대사 형식. 말투를 따르되 짧고 차갑게.
+안내문·설명조·하십시오·바랍니다 금지. 한 줄에 한 말만.
+대사는 1~3줄. 같은 인물을 여러 칸으로 나누어 설명하지 마라.
+동작·속마음은 *이렇게* 쓴다.
 다른 기호·OOC 설명은 금지한다.
-한 줄로 끝내지 마라. 문장을 중간에 끊지 마라.`;
+한 줄로 끝내지 마라. 문장을 중간에 끊지 마라.
+나쁜 나레이션: @:그녀는 고개를 끄덕였습니다.
+좋은 나레이션: @:그녀는 짧게 고개를 끄덕였다.
+나쁜 대사: @${character}: 제 뒤를 세 걸음 이상 떨어지지 말고 따라오십시오.
+좋은 대사: @${character}: 세 걸음 이상 떨어지지 마.`;
 }
 
 export function buildChatPrompt(state: PromptState, userText: string) {
+  const started = state.shortTermBuffer.length > 0;
   const recent = state.shortTermBuffer
     .slice(-SHORT_TERM_TURNS * 2)
     .map((message) =>
@@ -29,44 +47,58 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     .map((note) => `- ${note.name}: ${note.note}`)
     .join("\n");
 
-  return [
+  const blocks = [
     buildPinnedRules(state),
     "",
     "[세계관]",
-    state.worldSetting.trim() || "(없음)",
+    clip(state.worldSetting, started ? 900 : 1600) || "(없음)",
     "",
     "[프롤로그]",
-    state.prologue.trim()
-      ? `${state.prologue.trim()}\n(프롤로그는 이미 지난 일이다. 처음부터 다시 쓰지 말고 그 직후부터 이어라.)`
-      : "(없음)",
+    started
+      ? "이미 지난 일이다. 처음부터 다시 쓰지 말고 최근 대화 직후부터 이어라."
+      : state.prologue.trim()
+        ? `${clip(state.prologue, 1200)}\n(프롤로그는 이미 지난 일이다. 처음부터 다시 쓰지 말고 그 직후부터 이어라.)`
+        : "(없음)",
     "",
-    "[캐릭터 설정집]",
+    "[캐릭터]",
     `이름: ${state.character.name}`,
-    `한 줄: ${state.character.oneLiner}`,
-    `말투: ${state.character.speechStyle}`,
-    `외형: ${state.character.appearance}`,
-    `금지: ${state.character.forbidden}`,
-    `시작 상황: ${state.character.openingSituation}`,
+    state.character.oneLiner.trim() ? `한 줄: ${state.character.oneLiner}` : "",
+    state.character.speechStyle.trim()
+      ? `말투: ${clip(state.character.speechStyle, 240)}`
+      : "",
+    state.character.appearance.trim()
+      ? `외형: ${clip(state.character.appearance, started ? 160 : 400)}`
+      : "",
+    state.character.forbidden.trim()
+      ? `금지: ${clip(state.character.forbidden, 400)}`
+      : "",
+    !started && state.character.openingSituation.trim()
+      ? `시작 상황: ${clip(state.character.openingSituation, 500)}`
+      : "",
     "",
-    "[유저 설정]",
-    `이름: ${state.userPersona.name}`,
-    state.userPersona.setting.trim() || "(없음)",
+    "[유저]",
+    `이름: ${state.userPersona.name || "유저"}`,
+    state.userPersona.setting.trim()
+      ? clip(state.userPersona.setting, started ? 180 : 400)
+      : "",
     "",
-    "[등장인물 메모]",
+    "[등장인물]",
     cast || "(없음)",
     "",
-    "[스토리 요약]",
-    state.storySummary.trim() || "(아직 없음)",
+    "[요약]",
+    clip(state.storySummary, 500) || "(아직 없음)",
     "",
     "[최근 대화]",
     recent || "(없음)",
     "",
     "[유저 말]",
     userText,
-    !recent && state.prologue.trim()
-      ? "\n프롤로그 직후 장면을 나레이션 2~4줄과 대사 2~4줄로 충분히 보여라."
+    !started && state.prologue.trim()
+      ? "\n프롤로그 직후 장면을 @:나레이션 2~4줄과 @이름:대사 1~3줄로 보여라."
       : "",
-  ].join("\n");
+  ];
+
+  return blocks.filter((line) => line !== "").join("\n");
 }
 
 export function buildSummaryPrompt(state: PromptState) {

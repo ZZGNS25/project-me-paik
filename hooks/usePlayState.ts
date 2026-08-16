@@ -217,6 +217,49 @@ export function usePlayState() {
     );
   }
 
+  function lastTurn(log: ChatMessage[]) {
+    if (log.length === 0) {
+      return { ids: [] as string[], userText: "" };
+    }
+
+    const last = log[log.length - 1];
+    const prev = log[log.length - 2];
+    if (last.role === "model" && prev?.role === "user") {
+      return { ids: [prev.id, last.id], userText: prev.content };
+    }
+    if (last.role === "user") {
+      return { ids: [last.id], userText: last.content };
+    }
+    return { ids: [last.id], userText: "" };
+  }
+
+  function removeLastTurn() {
+    let userText = "";
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => {
+        const turn = lastTurn(current.chatLog);
+        userText = turn.userText;
+        if (turn.ids.length === 0) return current;
+        const ids = new Set(turn.ids);
+        return {
+          ...current,
+          chatLog: current.chatLog.filter((item) => !ids.has(item.id)),
+          shortTermBuffer: current.shortTermBuffer.filter((item) => !ids.has(item.id)),
+          turnCount: Math.max(0, current.turnCount - 1),
+        };
+      }),
+    );
+    return userText;
+  }
+
+  function deleteLastTurn() {
+    removeLastTurn();
+  }
+
+  function popLastUserMessage() {
+    return removeLastTurn();
+  }
+
   function appendTurn(userText: string, modelText: string) {
     const createdAt = new Date().toISOString();
     const userMessage: ChatMessage = {
@@ -379,6 +422,8 @@ export function usePlayState() {
     updateCastNote,
     removeCastNote,
     appendTurn,
+    deleteLastTurn,
+    popLastUserMessage,
     applySummary,
     hydrateFromCloud,
     setCloudSessionId,

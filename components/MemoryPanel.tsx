@@ -19,7 +19,7 @@ export default function MemoryPanel({
     <aside className="paper-panel flex flex-col gap-5 overflow-y-auto p-5">
       <section>
         <p className="label-caps">프로필</p>
-        <h2 className="font-serif mt-1 text-2xl text-[var(--ink)]">
+        <h2 className="mt-1 text-2xl font-semibold text-[var(--ink)]">
           {state.character.name || "이름 없음"}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">

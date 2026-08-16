@@ -38,8 +38,9 @@ export default function HomePage() {
       </div>
 
       <main className="paper-card mt-6 px-7 py-10">
-        <p className="label-caps">이어 + Role</p>
-        <h1 className="font-serif mt-3 text-4xl tracking-tight">이어롤</h1>
+        <span className="gemini-mark text-sm font-semibold text-white">이</span>
+        <p className="label-caps mt-5">이어 + Role</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight">이어롤</h1>
         <p className="mt-4 text-base leading-relaxed text-[var(--ink-soft)]">
           길게 놀아도 캐릭터 설정이 이어지는 개인용 스토리 롤플 채팅.
           키는 이 브라우저에만 저장되고, 서버로 보내지 않습니다.

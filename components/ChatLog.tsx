@@ -23,7 +23,7 @@ export default function ChatLog({ messages }: ChatLogProps) {
         message.role === "user" ? (
           <div key={message.id} className="flex justify-end">
             <div className="bubble-user max-w-[80%]">
-              <p className="text-xs text-[var(--amber)]">나</p>
+              <p className="text-xs text-[var(--blue-soft)]">나</p>
               <p className="mt-1 whitespace-pre-wrap">{message.content}</p>
             </div>
           </div>
@@ -52,7 +52,7 @@ function ModelBlock({ content }: { content: string }) {
         if (line.kind === "speech") {
           return (
             <div key={index} className="bubble-model">
-              <p className="text-xs text-[var(--amber)]">{line.name}</p>
+              <p className="text-xs text-[var(--blue-soft)]">{line.name}</p>
               <p className="mt-1 whitespace-pre-wrap">「{line.text}」</p>
             </div>
           );

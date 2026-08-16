@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_KR, Noto_Serif_KR } from "next/font/google";
+import { IBM_Plex_Sans_KR } from "next/font/google";
 import "./globals.css";
 
 const sans = IBM_Plex_Sans_KR({
   variable: "--font-sans-kr",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
-
-const serif = Noto_Serif_KR({
-  variable: "--font-serif-kr",
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
   display: "swap",
 });
 
@@ -29,7 +22,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${sans.variable} ${serif.variable} h-full antialiased`}
+      className={`${sans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>

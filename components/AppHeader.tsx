@@ -15,7 +15,7 @@ export default function AppHeader({
     <header className="flex items-start justify-between gap-4">
       <div>
         <p className="label-caps">{eyebrow}</p>
-        <h1 className="font-serif mt-1 text-3xl tracking-tight text-[var(--ink)]">
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[var(--ink)]">
           {title}
         </h1>
       </div>

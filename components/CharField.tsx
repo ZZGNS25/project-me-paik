@@ -36,7 +36,7 @@ export default function CharField({
       <span className="flex items-baseline justify-between gap-3">
         <span className="text-sm font-medium text-[var(--ink)]">
           {label}
-          {required ? <span className="ml-1 text-[var(--amber)]">*</span> : null}
+          {required ? <span className="ml-1 text-[var(--blue)]">*</span> : null}
         </span>
         <span className="mono-readout text-xs text-[var(--ink-dim)]">
           {value.length}/{max}

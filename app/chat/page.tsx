@@ -103,7 +103,7 @@ export default function ChatPage() {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="label-caps">이어롤</p>
-          <h1 className="font-serif text-2xl">
+          <h1 className="text-2xl font-semibold">
             {play.state.character.name || "채팅"}
           </h1>
         </div>

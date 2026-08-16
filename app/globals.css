@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --background: #14110e;
-  --foreground: #f3e6d4;
-  --paper: #1c1814;
-  --paper-2: #241e18;
-  --ink: #f3e6d4;
-  --ink-soft: #cbbba6;
-  --ink-dim: #8a7a68;
-  --amber: #d4a574;
-  --amber-soft: #e6c39a;
-  --line: rgba(212, 165, 116, 0.18);
-  --danger: #e07a6a;
+  --background: #0b0d10;
+  --foreground: #e8eef7;
+  --paper: #12151b;
+  --paper-2: #171b22;
+  --ink: #e8eef7;
+  --ink-soft: #b4c0d0;
+  --ink-dim: #7d8a99;
+  --blue: #4d8dff;
+  --blue-soft: #8ab4f8;
+  --blue-deep: #1a73e8;
+  --line: rgba(77, 141, 255, 0.2);
+  --danger: #f28b82;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans-kr);
-  --font-serif: var(--font-serif-kr);
 }
 
 body {
@@ -27,27 +27,26 @@ body {
   font-family: var(--font-sans-kr), system-ui, sans-serif;
 }
 
-.font-serif {
-  font-family: var(--font-serif-kr), serif;
-}
-
 .paper-bg {
   min-height: 100%;
   background:
-    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(212, 165, 116, 0.12), transparent 60%),
+    radial-gradient(ellipse 80% 55% at 50% -18%, rgba(26, 115, 232, 0.28), transparent 58%),
+    radial-gradient(ellipse 40% 30% at 90% 10%, rgba(77, 141, 255, 0.1), transparent 50%),
     var(--background);
 }
 
 .paper-panel,
 .paper-card {
-  background: linear-gradient(180deg, var(--paper-2), var(--paper));
+  background: linear-gradient(180deg, rgba(23, 27, 34, 0.96), rgba(18, 21, 27, 0.96));
   border: 1px solid var(--line);
-  border-radius: 18px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 18px 48px rgba(0, 0, 0, 0.38);
 }
 
 .label-caps {
-  color: var(--amber);
+  color: var(--blue-soft);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -63,15 +62,16 @@ body {
   width: 100%;
   resize: vertical;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.22);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.35);
   padding: 0.7rem 0.85rem;
   color: var(--ink);
   outline: none;
 }
 
 .field-input:focus {
-  border-color: rgba(212, 165, 116, 0.55);
+  border-color: rgba(77, 141, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18);
 }
 
 .btn-primary,
@@ -80,17 +80,24 @@ body {
   padding: 0.75rem 1.15rem;
   font-size: 0.95rem;
   font-weight: 600;
-  transition: opacity 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    background 0.15s ease;
 }
 
 .btn-primary {
-  background: var(--amber);
-  color: #2a1d12;
+  background: linear-gradient(180deg, var(--blue), var(--blue-deep));
+  color: #f7fbff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
   border: 1px solid var(--line);
-  background: transparent;
+  background: rgba(77, 141, 255, 0.06);
   color: var(--ink);
 }
 
@@ -101,7 +108,7 @@ body {
 }
 
 .ghost-link {
-  color: var(--amber-soft);
+  color: var(--blue-soft);
   font-size: 0.85rem;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -109,7 +116,7 @@ body {
 
 .alert-error {
   border-radius: 10px;
-  background: rgba(224, 122, 106, 0.12);
+  background: rgba(242, 139, 130, 0.12);
   padding: 0.65rem 0.8rem;
   color: var(--danger);
   font-size: 0.8rem;
@@ -123,7 +130,8 @@ body {
 }
 
 .bubble-user {
-  background: rgba(212, 165, 116, 0.16);
+  background: rgba(26, 115, 232, 0.22);
+  border: 1px solid rgba(77, 141, 255, 0.28);
 }
 
 .bubble-model {
@@ -143,4 +151,17 @@ body {
   padding: 0.8rem;
   color: var(--ink-soft);
   white-space: pre-wrap;
+}
+
+.gemini-mark {
+  display: inline-flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 30%, #8ab4f8, transparent 45%),
+    linear-gradient(135deg, #4d8dff, #1a73e8);
+  box-shadow: 0 0 24px rgba(77, 141, 255, 0.35);
 }

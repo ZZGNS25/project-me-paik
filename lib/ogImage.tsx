@@ -6,7 +6,6 @@ import { SITE_TAGLINE } from "@/lib/site";
 export const alt = `EarRole — ${SITE_TAGLINE}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const runtime = "nodejs";
 
 async function loadFont(text: string, weight: number) {
   const css = await fetch(

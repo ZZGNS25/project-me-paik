@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "EarRole · 이어롤",
-  description: "잇고, 잘 듣고, 역할을 플레이하는 개인용 스토리 롤플 채팅",
+  description: "듣고, 잇고, 연기하다. 캐릭터 설정이 이어지는 개인용 스토리 롤플 채팅",
 };
 
 export default function RootLayout({

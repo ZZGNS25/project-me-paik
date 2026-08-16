@@ -65,7 +65,9 @@ export default function AppFrame({ children }: AppFrameProps) {
               <button
                 type="button"
                 className="side-item"
-                onClick={auth.signOut}
+                onClick={() => {
+                  void auth.signOut().then(() => router.replace("/"));
+                }}
                 disabled={auth.busy}
               >
                 로그아웃

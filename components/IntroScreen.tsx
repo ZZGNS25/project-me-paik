@@ -11,11 +11,11 @@ export default function IntroScreen() {
   useEffect(() => {
     if (sessionStorage.getItem(INTRO_KEY) === "1") return;
     setPhase("in");
-    const leave = window.setTimeout(() => setPhase("out"), 1500);
+    const leave = window.setTimeout(() => setPhase("out"), 2600);
     const done = window.setTimeout(() => {
       sessionStorage.setItem(INTRO_KEY, "1");
       setPhase("hidden");
-    }, 2100);
+    }, 3300);
     return () => {
       window.clearTimeout(leave);
       window.clearTimeout(done);
@@ -29,7 +29,7 @@ export default function IntroScreen() {
       <div className="intro-mark">
         <EarRoleMark size={88} />
         <p className="brand-en">EarRole</p>
-        <p className="intro-kicker">잇고 · 듣고 · 연기하다</p>
+        <p className="intro-kicker">듣고, 잇고, 연기하다.</p>
       </div>
     </div>
   );

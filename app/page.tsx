@@ -33,7 +33,7 @@ function HomeBody() {
       <PageShell>
         <main className="paper-card login-card mt-10 px-7 py-10">
           <BrandLockup />
-          <p className="login-kicker">잇고 · 듣고 · 연기하다</p>
+          <p className="login-kicker">듣고, 잇고, 연기하다.</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">
             이야기가 끊기지 않게
           </h1>

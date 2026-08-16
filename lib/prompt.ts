@@ -1,7 +1,7 @@
 import { SHORT_TERM_TURNS } from "./constants";
-import type { PlayState } from "./types";
+import type { PromptState } from "./types";
 
-export function buildPinnedRules(state: PlayState) {
+export function buildPinnedRules(state: PromptState) {
   const character = state.character.name.trim() || "캐릭터";
   const user = state.userPersona.name.trim() || "유저";
 
@@ -14,7 +14,7 @@ export function buildPinnedRules(state: PlayState) {
 짧게: 나레이션 1~3문장 + 대사 2~5줄. 소설처럼 길게 쓰지 않는다.`;
 }
 
-export function buildChatPrompt(state: PlayState, userText: string) {
+export function buildChatPrompt(state: PromptState, userText: string) {
   const recent = state.shortTermBuffer
     .slice(-SHORT_TERM_TURNS * 2)
     .map((message) =>
@@ -61,7 +61,7 @@ export function buildChatPrompt(state: PlayState, userText: string) {
   ].join("\n");
 }
 
-export function buildSummaryPrompt(state: PlayState) {
+export function buildSummaryPrompt(state: PromptState) {
   const recent = state.shortTermBuffer
     .map((message) =>
       message.role === "user"

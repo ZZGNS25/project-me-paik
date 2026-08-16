@@ -40,6 +40,16 @@ export type PlayState = {
   cloudSessionId: string | null;
 };
 
+export type PromptState = Pick<
+  PlayState,
+  | "character"
+  | "userPersona"
+  | "worldSetting"
+  | "storySummary"
+  | "castNotes"
+  | "shortTermBuffer"
+>;
+
 export type ParsedLine =
   | { kind: "narration"; text: string }
   | { kind: "speech"; name: string; text: string }

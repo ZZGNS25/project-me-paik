@@ -5,20 +5,22 @@ import { useEffect } from "react";
 import AppHeader from "@/components/AppHeader";
 import CharField from "@/components/CharField";
 import PageShell from "@/components/PageShell";
+import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
 import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
 
 export default function SetupPage() {
   const router = useRouter();
+  const auth = useAuth();
   const play = usePlayState();
 
   useEffect(() => {
-    if (play.ready && !play.state.apiKey) {
+    if (auth.ready && !auth.user) {
       router.replace("/");
     }
-  }, [play.ready, play.state.apiKey, router]);
+  }, [auth.ready, auth.user, router]);
 
-  if (!play.ready) {
+  if (!play.ready || !auth.ready) {
     return (
       <PageShell>
         <p className="mono-readout text-sm text-[var(--ink-dim)]">불러오는 중…</p>

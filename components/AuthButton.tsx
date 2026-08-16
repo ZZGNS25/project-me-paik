@@ -43,7 +43,7 @@ export default function AuthButton() {
         onClick={auth.signInWithGoogle}
         disabled={auth.busy}
       >
-        {auth.busy ? "연결 중…" : "Google로 클라우드 저장"}
+        {auth.busy ? "연결 중…" : "Google로 시작하기"}
       </button>
       {auth.error ? <p className="alert-error mt-2">{auth.error}</p> : null}
     </div>

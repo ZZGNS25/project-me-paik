@@ -10,8 +10,7 @@ import PageShell from "@/components/PageShell";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
 import { savePlayToCloud } from "@/lib/cloud";
-import { generateGeminiText } from "@/lib/gemini";
-import { buildChatPrompt, buildSummaryPrompt } from "@/lib/prompt";
+import { requestGenerate } from "@/lib/geminiClient";
 
 export default function ChatPage() {
   const router = useRouter();
@@ -22,17 +21,17 @@ export default function ChatPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!play.ready) return;
-    if (!play.state.apiKey) {
+    if (!play.ready || !auth.ready) return;
+    if (!auth.user) {
       router.replace("/");
       return;
     }
     if (!play.state.character.name) {
       router.replace("/setup");
     }
-  }, [play.ready, play.state.apiKey, play.state.character.name, router]);
+  }, [play.ready, auth.ready, auth.user, play.state.character.name, router]);
 
-  if (!play.ready) {
+  if (!play.ready || !auth.ready) {
     return (
       <PageShell wide>
         <p className="mono-readout text-sm text-[var(--ink-dim)]">불러오는 중…</p>
@@ -49,10 +48,7 @@ export default function ChatPage() {
     setDraft("");
 
     try {
-      const reply = await generateGeminiText(
-        play.state.apiKey,
-        buildChatPrompt(play.state, text),
-      );
+      const reply = await requestGenerate("chat", play.state, text);
       play.appendTurn(text, reply);
     } catch (err) {
       setDraft(text);
@@ -68,10 +64,7 @@ export default function ChatPage() {
     setError("");
 
     try {
-      const summary = await generateGeminiText(
-        play.state.apiKey,
-        buildSummaryPrompt(play.state),
-      );
+      const summary = await requestGenerate("summary", play.state);
       play.applySummary(summary);
     } catch (err) {
       setError(err instanceof Error ? err.message : "요약을 만들지 못했습니다.");

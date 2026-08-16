@@ -4,8 +4,6 @@ export const GEMINI_MODEL = "gemini-3.6-flash";
 export const GEMINI_MAX_OUTPUT_TOKENS = 400;
 export const SHORT_TERM_TURNS = 5;
 
-export const AI_STUDIO_KEY_URL = "https://aistudio.google.com/apikey";
-
 export const FIELD_LIMITS = {
   characterName: 20,
   oneLiner: 50,

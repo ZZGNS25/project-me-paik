@@ -1,8 +1,9 @@
 import { GEMINI_MAX_OUTPUT_TOKENS, GEMINI_MODEL } from "./constants";
 
-export async function generateGeminiText(apiKey: string, prompt: string) {
-  if (!apiKey.trim()) {
-    throw new Error("Gemini API 키가 없습니다.");
+export async function generateGeminiText(prompt: string) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("서버에 Gemini 키가 없습니다. GEMINI_API_KEY를 설정해 주세요.");
   }
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;

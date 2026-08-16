@@ -1,6 +1,6 @@
 export const STORAGE_KEY = "eorol-play-state";
 
-export const GEMINI_MODEL = "gemini-3.6-flash";
+export const GEMINI_MODEL = "gemini-3.7-flash";
 export const GEMINI_MAX_OUTPUT_TOKENS = 4096;
 export const GEMINI_SUMMARY_OUTPUT_TOKENS = 768;
 export const SHORT_TERM_TURNS = 3;
@@ -53,6 +53,7 @@ export function createEmptySetting(
   return {
     id,
     title: "",
+    shareId: null,
     updatedAt: new Date().toISOString(),
     character: { ...EMPTY_CHARACTER },
     userPersona: { ...EMPTY_USER },

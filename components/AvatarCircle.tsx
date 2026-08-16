@@ -10,6 +10,7 @@ type AvatarCircleProps = {
   name?: string;
   size?: AvatarSize;
   editable?: boolean;
+  compact?: boolean;
   onChange?: (photo: string) => void;
 };
 
@@ -24,6 +25,7 @@ export default function AvatarCircle({
   name = "",
   size = "md",
   editable = false,
+  compact = false,
   onChange,
 }: AvatarCircleProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -58,7 +60,7 @@ export default function AvatarCircle({
   }
 
   return (
-    <span className="avatar-edit">
+    <span className={`avatar-edit ${compact ? "is-compact" : ""}`}>
       <button
         type="button"
         className={`avatar-circle is-editable ${SIZE_CLASS[size]}`}

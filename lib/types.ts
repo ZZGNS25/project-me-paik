@@ -11,6 +11,7 @@ export type CastNote = {
   id: string;
   name: string;
   note: string;
+  photo: string;
 };
 
 export type StoryPin = {
@@ -53,6 +54,7 @@ export type PlayState = {
 export type SettingRecord = Omit<PlayState, "apiKey"> & {
   id: string;
   title: string;
+  shareId: string | null;
   updatedAt: string;
 };
 

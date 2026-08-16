@@ -50,7 +50,7 @@ export function useAuth() {
     const { error: oauthError } = await getSupabase().auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: window.location.href,
         queryParams: { prompt: "select_account" },
       },
     });

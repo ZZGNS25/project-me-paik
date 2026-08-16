@@ -40,7 +40,12 @@ export function parseImport(raw: string): SettingRecord[] {
     ...empty,
     ...item,
     title: item.title ?? "",
+    shareId: null,
     storyPins: normalizePins(item.storyPins),
+    castNotes: (item.castNotes ?? []).map((note) => ({
+      ...note,
+      photo: note.photo ?? "",
+    })),
     cloudSessionId: null,
   }));
 }

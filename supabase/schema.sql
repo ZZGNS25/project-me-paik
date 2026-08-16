@@ -42,6 +42,7 @@ create table if not exists public.eorol_cast_notes (
   session_id uuid not null references public.eorol_play_sessions (id) on delete cascade,
   name text not null default '',
   note text not null default '',
+  photo text not null default '',
   created_at timestamptz not null default now()
 );
 
@@ -62,14 +63,33 @@ create index if not exists eorol_cast_notes_session_idx
 create index if not exists eorol_chat_messages_session_idx
   on public.eorol_chat_messages (session_id, created_at);
 
+create table if not exists public.eorol_shares (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  title text not null default '',
+  character_name text not null default '',
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists eorol_shares_user_updated_idx
+  on public.eorol_shares (user_id, updated_at desc);
+
 drop trigger if exists eorol_play_sessions_updated_at on public.eorol_play_sessions;
 create trigger eorol_play_sessions_updated_at
 before update on public.eorol_play_sessions
 for each row execute function public.eorol_set_updated_at();
 
+drop trigger if exists eorol_shares_updated_at on public.eorol_shares;
+create trigger eorol_shares_updated_at
+before update on public.eorol_shares
+for each row execute function public.eorol_set_updated_at();
+
 alter table public.eorol_play_sessions enable row level security;
 alter table public.eorol_cast_notes enable row level security;
 alter table public.eorol_chat_messages enable row level security;
+alter table public.eorol_shares enable row level security;
 
 create policy "eorol_own_sessions"
 on public.eorol_play_sessions
@@ -119,3 +139,28 @@ with check (
       and s.user_id = auth.uid()
   )
 );
+
+create policy "eorol_shares_public_read"
+on public.eorol_shares
+for select
+to anon, authenticated
+using (true);
+
+create policy "eorol_shares_own_insert"
+on public.eorol_shares
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "eorol_shares_own_update"
+on public.eorol_shares
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create policy "eorol_shares_own_delete"
+on public.eorol_shares
+for delete
+to authenticated
+using (auth.uid() = user_id);

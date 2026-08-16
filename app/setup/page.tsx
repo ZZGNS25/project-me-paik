@@ -9,6 +9,7 @@ import CharField from "@/components/CharField";
 import MemoryPanel from "@/components/MemoryPanel";
 import PageShell from "@/components/PageShell";
 import { useConfirm } from "@/components/ConfirmDialog";
+import ShareButton from "@/components/ShareButton";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { deletePlayFromCloud } from "@/lib/cloud";
@@ -165,6 +166,7 @@ function SetupBody() {
             >
               가져오기
             </button>
+            <ShareButton className="btn-secondary" />
             {play.settings.length > 1 ? (
               <button
                 type="button"

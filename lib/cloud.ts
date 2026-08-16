@@ -82,6 +82,7 @@ export async function savePlayToCloud(userId: string, state: PlayState) {
         session_id: sessionId,
         name: note.name,
         note: note.note,
+        photo: note.photo ?? "",
       })),
     );
     if (castError) throw new Error(castError.message);
@@ -206,6 +207,7 @@ async function loadPlayBySession(row: SessionRow) {
       id: note.id,
       name: note.name,
       note: note.note,
+      photo: note.photo ?? "",
     })),
     chatLog,
     shortTermBuffer: chatLog.slice(-SHORT_TERM_TURNS * 2),

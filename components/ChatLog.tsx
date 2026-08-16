@@ -5,7 +5,7 @@ import AvatarCircle from "@/components/AvatarCircle";
 import MarkupText from "@/components/MarkupText";
 import PrologueCard from "@/components/PrologueCard";
 import { isUserSpeaker, parseModelReply } from "@/lib/parseMessage";
-import type { ChatMessage } from "@/lib/types";
+import type { CastNote, ChatMessage } from "@/lib/types";
 
 type ChatLogProps = {
   messages: ChatMessage[];
@@ -14,6 +14,7 @@ type ChatLogProps = {
   characterName?: string;
   userPhoto?: string;
   userName?: string;
+  castNotes?: CastNote[];
   pendingUserText?: string;
   streamingText?: string;
   actionsDisabled?: boolean;
@@ -31,6 +32,7 @@ export default function ChatLog({
   characterName,
   userPhoto,
   userName,
+  castNotes = [],
   pendingUserText,
   streamingText,
   actionsDisabled = false,
@@ -97,6 +99,7 @@ export default function ChatLog({
                   characterPhoto={characterPhoto}
                   userName={userName}
                   userPhoto={userPhoto}
+                  castNotes={castNotes}
                   fromUser
                 />
               ) : null}
@@ -107,6 +110,7 @@ export default function ChatLog({
                   characterPhoto={characterPhoto}
                   userName={userName}
                   userPhoto={userPhoto}
+                  castNotes={castNotes}
                 />
               ) : null}
               {showActions && !pendingUserText && !streamingText ? (
@@ -152,6 +156,7 @@ export default function ChatLog({
               characterPhoto={characterPhoto}
               userName={userName}
               userPhoto={userPhoto}
+              castNotes={castNotes}
               fromUser
             />
           ) : null}
@@ -162,6 +167,7 @@ export default function ChatLog({
               characterPhoto={characterPhoto}
               userName={userName}
               userPhoto={userPhoto}
+              castNotes={castNotes}
               streaming
             />
           ) : pendingUserText ? (
@@ -206,6 +212,7 @@ function PlayLines({
   characterPhoto,
   userName,
   userPhoto,
+  castNotes = [],
   fromUser = false,
   streaming = false,
 }: {
@@ -214,6 +221,7 @@ function PlayLines({
   characterPhoto?: string;
   userName?: string;
   userPhoto?: string;
+  castNotes?: CastNote[];
   fromUser?: boolean;
   streaming?: boolean;
 }) {
@@ -239,7 +247,8 @@ function PlayLines({
           ? userPhoto
           : samePerson(speaker, characterName)
             ? characterPhoto
-            : "";
+            : castNotes.find((note) => samePerson(note.name, speaker))?.photo ||
+              "";
         const label = mine ? userName || "나" : speaker || characterName;
 
         return (

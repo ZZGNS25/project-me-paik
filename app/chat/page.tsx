@@ -9,6 +9,7 @@ import Composer from "@/components/Composer";
 import StoryExtrasPanel from "@/components/StoryExtrasPanel";
 import PageShell from "@/components/PageShell";
 import { useConfirm } from "@/components/ConfirmDialog";
+import ShareButton from "@/components/ShareButton";
 import { useCloudSync, usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { requestGenerateStream } from "@/lib/geminiClient";
@@ -142,6 +143,7 @@ function ChatBody() {
             />
           </div>
           <div className="flex shrink-0 items-center gap-1">
+            <ShareButton />
             <button
               type="button"
               className="btn-quiet"
@@ -182,6 +184,7 @@ function ChatBody() {
           characterName={play.state.character.name}
           userPhoto={play.state.userPersona.photo}
           userName={play.state.userPersona.name}
+          castNotes={play.state.castNotes}
           pendingUserText={pendingUser}
           streamingText={streamingReply}
           actionsDisabled={Boolean(busy)}

@@ -34,7 +34,9 @@ export default function GuidePanel() {
           말투·금지·고정 사건은 그대로입니다.
         </li>
         <li>
-          로그인한 이야기는 클라우드에 자동으로 남습니다. 브라우저를 바꾸면 설정에서{" "}
+          로그인한 이야기는 클라우드에 자동으로 남습니다. 설정이나 채팅의{" "}
+          <strong className="text-[var(--ink)]">공유</strong>는 캐릭터·세계관 링크만
+          복사합니다. 대화는 들어가지 않습니다. 브라우저를 바꾸면{" "}
           <strong className="text-[var(--ink)]">내보내기/가져오기</strong>로 옮길 수 있습니다.
         </li>
       </ol>

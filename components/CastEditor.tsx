@@ -1,4 +1,5 @@
 import { FIELD_LIMITS } from "@/lib/constants";
+import AvatarCircle from "@/components/AvatarCircle";
 import type { CastNote } from "@/lib/types";
 
 type CastEditorProps = {
@@ -28,15 +29,23 @@ export default function CastEditor({
         </p>
       ) : (
         notes.map((note) => (
-          <div key={note.id} className="grid gap-3 sm:grid-cols-[8rem_1fr_auto]">
-            <input
-              className="field-input mt-0"
-              placeholder="이름"
-              value={note.name}
-              maxLength={FIELD_LIMITS.castName}
-              onChange={(event) => onUpdate(note.id, "name", event.target.value)}
+          <div key={note.id} className="cast-row">
+            <AvatarCircle
+              src={note.photo}
+              name={note.name}
+              size="md"
+              editable
+              compact
+              onChange={(photo) => onUpdate(note.id, "photo", photo)}
             />
-            <div className="min-w-0">
+            <div className="cast-row-fields">
+              <input
+                className="field-input mt-0"
+                placeholder="이름"
+                value={note.name}
+                maxLength={FIELD_LIMITS.castName}
+                onChange={(event) => onUpdate(note.id, "name", event.target.value)}
+              />
               <input
                 className="field-input mt-0"
                 placeholder="한 줄 메모"
@@ -44,13 +53,13 @@ export default function CastEditor({
                 maxLength={FIELD_LIMITS.castNote}
                 onChange={(event) => onUpdate(note.id, "note", event.target.value)}
               />
-              <p className="mt-1 text-right text-xs text-[var(--ink-dim)]">
+              <p className="text-right text-xs text-[var(--ink-dim)]">
                 {note.note.length}/{FIELD_LIMITS.castNote}
               </p>
             </div>
             <button
               type="button"
-              className="btn-danger self-center"
+              className="btn-danger self-start"
               onClick={() => onRemove(note.id)}
             >
               삭제

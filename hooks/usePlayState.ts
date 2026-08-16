@@ -11,7 +11,14 @@ import {
   sanitizeSummary,
   syncBuffer,
 } from "@/lib/memory";
-import { clip, loadStore, saveStore, toPlayState } from "@/lib/storage";
+import {
+  backfillPresetMeta,
+  clip,
+  loadStore,
+  saveStore,
+  toPlayState,
+} from "@/lib/storage";
+import type { ShareSnapshot } from "@/lib/share";
 import type {
   AppStore,
   CastNote,
@@ -196,7 +203,7 @@ export function usePlayState() {
     updateStore((prev) =>
       patchCurrent(prev, (current) => ({
         ...current,
-        castNotes: [...current.castNotes, { id: newId(), name: "", note: "" }],
+        castNotes: [...current.castNotes, { id: newId(), name: "", note: "", photo: "" }],
       })),
     );
   }
@@ -207,6 +214,7 @@ export function usePlayState() {
         ...current,
         castNotes: current.castNotes.map((note) => {
           if (note.id !== id || key === "id") return note;
+          if (key === "photo") return { ...note, photo: value };
           const max =
             key === "name" ? FIELD_LIMITS.castName : FIELD_LIMITS.castNote;
           return { ...note, [key]: clip(value, max) };
@@ -401,6 +409,7 @@ export function usePlayState() {
           ...item,
           id: newId(),
           title: item.title ?? "",
+          shareId: null,
           storyPins: normalizePins(item.storyPins),
           cloudSessionId: null,
           updatedAt: new Date().toISOString(),
@@ -422,16 +431,19 @@ export function usePlayState() {
     const existing = prev.settings.find(
       (item) => item.cloudSessionId === partial.cloudSessionId,
     );
-    const mapped: SettingRecord = withForbidden({
-      ...(existing ?? createEmptySetting(newId())),
-      ...partial,
-      title: existing?.title ?? "",
-      id: existing?.id ?? newId(),
-      storyPins: normalizePins(partial.storyPins),
-      shortTermBuffer: partial.shortTermBuffer ?? syncBuffer(partial.chatLog ?? []),
-      cloudSessionId: partial.cloudSessionId,
-      updatedAt: new Date().toISOString(),
-    });
+    const mapped: SettingRecord = withForbidden(
+      backfillPresetMeta({
+        ...(existing ?? createEmptySetting(newId())),
+        ...partial,
+        title: existing?.title ?? "",
+        shareId: existing?.shareId ?? null,
+        id: existing?.id ?? newId(),
+        storyPins: normalizePins(partial.storyPins),
+        shortTermBuffer: partial.shortTermBuffer ?? syncBuffer(partial.chatLog ?? []),
+        cloudSessionId: partial.cloudSessionId,
+        updatedAt: new Date().toISOString(),
+      }),
+    );
 
     if (existing) {
       return {
@@ -477,7 +489,7 @@ export function usePlayState() {
             }
           : current.character;
 
-        return {
+        return backfillPresetMeta({
           ...current,
           ...partial,
           character,
@@ -487,7 +499,7 @@ export function usePlayState() {
             syncBuffer(partial.chatLog ?? current.chatLog),
           prologue: partial.prologue?.trim() ? partial.prologue : current.prologue,
           id: current.id,
-        };
+        });
       }),
     );
   }
@@ -604,6 +616,45 @@ export function usePlayState() {
     }));
   }
 
+  function setShareId(shareId: string | null) {
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({ ...current, shareId })),
+    );
+  }
+
+  function openFromShare(snapshot: ShareSnapshot) {
+    const setting = withForbidden(
+      backfillPresetMeta({
+        ...createEmptySetting(newId()),
+        title: snapshot.title ?? "",
+        shareId: null,
+        character: snapshot.character,
+        userPersona: snapshot.userPersona,
+        worldSetting: snapshot.worldSetting,
+        prologue: snapshot.prologue,
+        castNotes: snapshot.castNotes.map((note) => ({
+          id: newId(),
+          name: note.name,
+          note: note.note,
+          photo: note.photo ?? "",
+        })),
+      }),
+    );
+    updateStore((prev) => {
+      const blank =
+        prev.settings.length === 1 &&
+        !prev.settings[0].character.name.trim() &&
+        prev.settings[0].chatLog.length === 0;
+      const next = {
+        ...prev,
+        currentSettingId: setting.id,
+        settings: blank ? [setting] : [...prev.settings, setting],
+      };
+      saveStore(next);
+      return next;
+    });
+  }
+
   return {
     state,
     ready,
@@ -643,6 +694,8 @@ export function usePlayState() {
     unlinkCloudSession,
     deleteSetting,
     renameSetting,
+    setShareId,
+    openFromShare,
   };
 }
 

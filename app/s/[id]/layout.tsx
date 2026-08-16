@@ -22,11 +22,6 @@ export async function generateMetadata({
     share?.snapshot.worldSetting.trim().slice(0, 160) ||
     SITE_DESCRIPTION;
   const url = shareUrl(id, SITE_URL);
-  const photo = share?.snapshot.character.photo ?? "";
-  const image =
-    photo.startsWith("http") || photo.startsWith("/")
-      ? photo
-      : "/earrole-mark.png";
 
   return {
     title,
@@ -39,13 +34,11 @@ export async function generateMetadata({
       siteName: SITE_NAME,
       title,
       description,
-      images: [{ url: image, alt: share?.characterName || SITE_NAME }],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: [image],
     },
   };
 }

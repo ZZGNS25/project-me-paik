@@ -6,7 +6,9 @@ type IconName =
   | "regen"
   | "trash"
   | "close"
-  | "check";
+  | "check"
+  | "resend"
+  | "suggest";
 
 type IconProps = {
   name: IconName;
@@ -25,6 +27,11 @@ const PATHS: Record<IconName, string[]> = {
   trash: ["M5 7h14", "M9.5 7V5.5h5V7", "M8.2 7l.8 12.2h6l.8-12.2"],
   close: ["M6 6l12 12", "M18 6 6 18"],
   check: ["M5 12.5 9.8 17 19 7"],
+  resend: ["M5 12h12", "M13 7l5 5-5 5"],
+  suggest: [
+    "M12 3.5l1.2 3.6H17l-3 2.2 1.2 3.6L12 10.7 8.8 12.9l1.2-3.6-3-2.2h3.8L12 3.5Z",
+    "M18.5 14.5l.6 1.7H21l-1.5 1.1.6 1.7-1.6-1.1-1.6 1.1.6-1.7-1.5-1.1h1.9l.6-1.7Z",
+  ],
 };
 
 export default function Icon({ name, size = 18 }: IconProps) {

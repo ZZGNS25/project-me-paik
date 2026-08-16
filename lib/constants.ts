@@ -3,6 +3,7 @@ export const STORAGE_KEY = "eorol-play-state";
 export const GEMINI_MODEL = "gemini-3.7-flash";
 export const GEMINI_MAX_OUTPUT_TOKENS = 4096;
 export const GEMINI_SUMMARY_OUTPUT_TOKENS = 768;
+export const GEMINI_SUGGEST_OUTPUT_TOKENS = 400;
 export const SHORT_TERM_TURNS = 3;
 export const COMPRESS_EVERY_TURNS = 30;
 export const PERSONAS_MAX = 12;

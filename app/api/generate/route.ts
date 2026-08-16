@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { GEMINI_SUMMARY_OUTPUT_TOKENS } from "@/lib/constants";
+import { GEMINI_SUGGEST_OUTPUT_TOKENS, GEMINI_SUMMARY_OUTPUT_TOKENS } from "@/lib/constants";
 import { generateGeminiText, streamGeminiText } from "@/lib/gemini";
-import { buildChatPrompt, buildSummaryPrompt } from "@/lib/prompt";
+import { buildChatPrompt, buildSuggestPrompt, buildSummaryPrompt } from "@/lib/prompt";
 import { requireUser } from "@/lib/requireUser";
 import type { PromptState } from "@/lib/types";
 
@@ -50,6 +50,15 @@ export async function POST(request: Request) {
       const text = await generateGeminiText(
         buildSummaryPrompt(body.state),
         GEMINI_SUMMARY_OUTPUT_TOKENS,
+      );
+      return NextResponse.json({ text });
+    }
+
+    if (body.mode === "suggest") {
+      const hint = String(body.userText ?? "").trim().slice(0, USER_TEXT_MAX);
+      const text = await generateGeminiText(
+        buildSuggestPrompt(body.state, hint),
+        GEMINI_SUGGEST_OUTPUT_TOKENS,
       );
       return NextResponse.json({ text });
     }

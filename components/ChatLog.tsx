@@ -20,6 +20,7 @@ type ChatLogProps = {
   streamingText?: string;
   actionsDisabled?: boolean;
   onTruncateFrom?: (messageId: string) => void;
+  onResend?: (userMessageId: string, text: string) => void;
   onRegenerate?: (userMessageId: string) => void;
   onPinTurn?: (user: ChatMessage, model?: ChatMessage) => void;
   onEditMessage?: (messageId: string, content: string) => void;
@@ -40,6 +41,7 @@ export default function ChatLog({
   streamingText,
   actionsDisabled = false,
   onTruncateFrom,
+  onResend,
   onRegenerate,
   onPinTurn,
   onEditMessage,
@@ -53,7 +55,7 @@ export default function ChatLog({
   const [editDraft, setEditDraft] = useState("");
   const hasThread = messages.length > 0 || Boolean(pendingUserText);
   const showActions = Boolean(
-    onTruncateFrom || onRegenerate || onPinTurn || onEditMessage,
+    onTruncateFrom || onResend || onRegenerate || onPinTurn || onEditMessage,
   );
 
   function measure() {
@@ -141,9 +143,9 @@ export default function ChatLog({
                   onStartEdit={() => startEdit(turn.user.id, turn.user.content)}
                   onSaveEdit={saveEdit}
                   onCancelEdit={cancelEdit}
-                  onRegenerate={
-                    onRegenerate && regenId
-                      ? () => onRegenerate(regenId)
+                  onResend={
+                    onResend && regenId
+                      ? () => onResend(regenId, turn.user.content)
                       : undefined
                   }
                   onPin={onPinTurn ? () => onPinTurn(turn.user, model) : undefined}
@@ -259,6 +261,7 @@ function PlayLines({
   onStartEdit,
   onSaveEdit,
   onCancelEdit,
+  onResend,
   onRegenerate,
   onPin,
   onTruncate,
@@ -281,6 +284,7 @@ function PlayLines({
   onStartEdit?: () => void;
   onSaveEdit?: () => void;
   onCancelEdit?: () => void;
+  onResend?: () => void;
   onRegenerate?: () => void;
   onPin?: () => void;
   onTruncate?: () => void;
@@ -407,13 +411,25 @@ function PlayLines({
               <Icon name="edit" size={15} />
             </button>
           ) : null}
+          {onResend ? (
+            <button
+              type="button"
+              className="icon-btn is-tiny"
+              disabled={actionsDisabled}
+              onClick={onResend}
+              aria-label="이 말로 다시"
+              title="이 말로 다시"
+            >
+              <Icon name="resend" size={15} />
+            </button>
+          ) : null}
           {onRegenerate ? (
             <button
               type="button"
               className="icon-btn is-tiny"
               disabled={actionsDisabled}
               onClick={onRegenerate}
-              aria-label="답 다시 생성"
+              aria-label="다시 생성"
               title="다시 생성"
             >
               <Icon name="regen" size={15} />

@@ -3,7 +3,6 @@ import MotionRoot from "@/components/MotionRoot";
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
-  SITE_TAGLINE,
   SITE_TITLE,
   SITE_URL,
 } from "@/lib/site";
@@ -33,18 +32,11 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [
-      {
-        url: "/earrole-mark.png",
-        alt: `EarRole — ${SITE_TAGLINE}`,
-      },
-    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/earrole-mark.png"],
   },
   icons: {
     icon: "/earrole-mark.png",

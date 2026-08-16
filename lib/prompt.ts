@@ -115,6 +115,63 @@ export function buildChatPrompt(state: PromptState, userText: string) {
   return blocks.filter((line) => line !== "").join("\n");
 }
 
+export function buildSuggestPrompt(state: PromptState, hint = "") {
+  const character = state.character.name.trim() || "캐릭터";
+  const user = state.userPersona.name.trim() || "유저";
+  const started = state.shortTermBuffer.length > 0;
+  const recent = state.shortTermBuffer
+    .slice(-SHORT_TERM_TURNS * 2)
+    .map((message) =>
+      message.role === "user"
+        ? `입력:\n${message.content}`
+        : `응답:\n${message.content}`,
+    )
+    .join("\n\n");
+
+  return [
+    `[역할]`,
+    `너는 ${user}의 다음 입력을 대신 쓴다. 채팅 입력창에 넣을 텍스트만 출력한다.`,
+    `이것은 ${character}의 답이 아니다.`,
+    "",
+    `[규칙]`,
+    `- ${character}의 대사·나레이션·속마음을 쓰지 마라.`,
+    `- ${user}의 말·짧은 행동만 쓴다.`,
+    `- 형식: @${user}: 대사 / @:짧은 장면 / *행동*`,
+    `- 최근 장면 직후만 잇는다. 처음부터 다시 시작하지 마라.`,
+    `- 한 턴분. 대사 1~3번. 나레이션은 있어도 두 문장 안.`,
+    `- 안내·설명·따옴표 설명·코드블록 금지.`,
+    `- ${user}의 설정과 최근 말투를 따른다.`,
+    "",
+    "[세계관]",
+    clip(state.worldSetting, 800) || "(없음)",
+    "",
+    "[유저]",
+    `이름: ${user}`,
+    state.userPersona.setting.trim()
+      ? clip(state.userPersona.setting, FIELD_LIMITS.userSetting)
+      : "",
+    "",
+    "[상대]",
+    `이름: ${character}`,
+    state.character.oneLiner.trim() ? `한 줄: ${state.character.oneLiner}` : "",
+    "",
+    "[요약]",
+    clip(state.storySummary, 400) || "(아직 없음)",
+    "",
+    "[최근 대화]",
+    recent || "(없음)",
+    !started && state.character.openingSituation.trim()
+      ? `\n[시작 상황]\n${clip(state.character.openingSituation, 200)}`
+      : "",
+    "",
+    hint.trim()
+      ? `[힌트]\n유저가 이미 적었다. 이 뜻을 지키되 입력창 형식으로 다듬어라.\n${clip(hint, 400)}`
+      : "[힌트]\n없음. 맥락만 보고 다음 말을 써라.",
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+}
+
 export function buildSummaryPrompt(state: PromptState) {
   const recent = state.shortTermBuffer
     .map((message) =>

@@ -26,13 +26,21 @@ import { STORY_PERSONA_EDIT } from "@/lib/persona";
 import { storyTitle } from "@/lib/storyTitle";
 import type { ChatMessage, PlayState } from "@/lib/types";
 
+function cleanSuggest(raw: string) {
+  return raw
+    .replace(/^```[\w]*\s*/, "")
+    .replace(/\s*```$/, "")
+    .trim()
+    .slice(0, 2000);
+}
+
 function ChatBody() {
   const router = useRouter();
   const play = usePlay();
   const cloud = useCloudSync();
   const auth = useAuth();
   const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState<"chat" | null>(null);
+  const [busy, setBusy] = useState<"chat" | "suggest" | null>(null);
   const [error, setError] = useState("");
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [pickingPersona, setPickingPersona] = useState(false);
@@ -133,7 +141,7 @@ function ChatBody() {
     });
   }
 
-  function regenerate(userMessageId: string, textOverride?: string) {
+  function regenerate(userMessageId: string, textOverride?: string, asResend = false) {
     const run = () => {
       const rewound = play.rewindForRegen(userMessageId);
       if (rewound) void sendMessage(textOverride ?? rewound.text, rewound.state);
@@ -143,29 +151,32 @@ function ChatBody() {
       return;
     }
     confirm.ask({
-      message: "이 뒤의 대화가 사라지고 답을 다시 씁니다.",
-      confirmLabel: "다시 쓰기",
+      message: asResend
+        ? "지금 적힌 내 말을 기준으로 상대의 답을 다시 받습니다. 이 뒤의 대화는 사라집니다."
+        : "내 말은 그대로 두고, 상대의 답만 다시 생성합니다. 이 뒤의 대화는 사라집니다.",
+      confirmLabel: asResend ? "이 말로 다시" : "다시 생성",
       danger: true,
       run,
     });
   }
 
-  function saveEditedMessage(id: string, content: string) {
-    const log = play.state.chatLog;
-    const index = log.findIndex((item) => item.id === id);
-    const item = log[index];
-    if (!item) return;
-
-    if (item.role === "user") {
-      const lastPair =
-        log[index + 1]?.role === "model" && index + 1 === log.length - 1;
-      if (lastPair || index === log.length - 1) {
-        regenerate(id, content);
-        return;
-      }
+  async function suggestMyLine() {
+    if (sending.current) return;
+    sending.current = true;
+    setBusy("suggest");
+    setError("");
+    try {
+      const text = cleanSuggest(
+        await requestGenerate("suggest", play.state, draft),
+      );
+      if (!text) throw new Error("내 말을 만들지 못했습니다.");
+      setDraft(text);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "내 말을 만들지 못했습니다.");
+    } finally {
+      sending.current = false;
+      setBusy(null);
     }
-
-    play.updateMessage(id, content);
   }
 
   function pinTurn(user: ChatMessage, model?: ChatMessage) {
@@ -286,9 +297,10 @@ function ChatBody() {
           streamingText={streamingReply}
           actionsDisabled={Boolean(busy)}
           onTruncateFrom={truncateFrom}
-          onRegenerate={regenerate}
+          onResend={(id, text) => regenerate(id, text, true)}
+          onRegenerate={(id) => regenerate(id)}
           onPinTurn={pinTurn}
-          onEditMessage={saveEditedMessage}
+          onEditMessage={(id, content) => play.updateMessage(id, content)}
           onPickMe={openPersonaPicker}
         />
 
@@ -316,6 +328,16 @@ function ChatBody() {
               <button
                 type="button"
                 className="icon-btn"
+                disabled={Boolean(busy)}
+                onClick={() => void suggestMyLine()}
+                aria-label={busy === "suggest" ? "쓰는 중" : "대신 쓰기"}
+                title="대신 쓰기"
+              >
+                <Icon name="suggest" />
+              </button>
+              <button
+                type="button"
+                className="icon-btn"
                 disabled={Boolean(busy) || compressing || play.state.shortTermBuffer.length === 0}
                 onClick={() => void compressMemory()}
                 aria-label={compressing ? "압축 중" : "압축"}
@@ -339,7 +361,11 @@ function ChatBody() {
               onChange={setDraft}
               onSubmit={() => void sendMessage()}
               disabled={Boolean(busy)}
-              placeholder="@나: 내 말  ·  @이름: 그 인물 말"
+              placeholder={
+                busy === "suggest"
+                  ? "맥락에 맞게 쓰는 중…"
+                  : "@나: 내 말  ·  @이름: 그 인물 말"
+              }
             />
             <p className="composer-hint">@: 장면 · @나: 내 말 · @이름: 그 인물 · *행동*</p>
           </div>

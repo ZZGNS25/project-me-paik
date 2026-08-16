@@ -35,7 +35,7 @@ function applyChunk(full: string, chunk: string) {
 }
 
 export async function requestGenerate(
-  mode: "chat" | "summary",
+  mode: "chat" | "summary" | "suggest",
   state: PlayState | PromptState,
   userText?: string,
 ) {

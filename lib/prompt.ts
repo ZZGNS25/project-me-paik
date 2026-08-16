@@ -18,13 +18,14 @@ export function buildPinnedRules(state: PromptState) {
 유저가 @: 로 쓴 것은 나레이션이다.
 유저가 *이렇게* 쓴 것은 행동·속마음이다.
 나레이션은 차갑고 짧은 반말. ~다/~었다. 합니다·습니다 금지.
-나레이션은 @: 로 시작하는 줄을 2~4개 쓴다. 각 줄은 한 문장.
+나레이션은 @: 로 시작하는 줄을 4~7개 쓴다. 각 줄은 한 문장.
 대사는 @이름: 대사 형식. 말투를 따르되 짧고 차갑게.
 안내문·설명조·하십시오·바랍니다 금지. 한 줄에 한 말만.
-대사는 1~3줄. 같은 인물을 여러 칸으로 나누어 설명하지 마라.
+대사는 3~6줄. 같은 인물을 여러 칸으로 나누어 설명하지 마라.
 동작·속마음은 *이렇게* 쓴다.
 다른 기호·OOC 설명은 금지한다.
 한 줄로 끝내지 마라. 문장을 중간에 끊지 마라.
+장면이 보이게 충분히 써라. 숨·시선·거리·공기까지 이어서 보여라.
 나쁜 나레이션: @:그녀는 고개를 끄덕였습니다.
 좋은 나레이션: @:그녀는 짧게 고개를 끄덕였다.
 나쁜 대사: @${character}: 제 뒤를 세 걸음 이상 떨어지지 말고 따라오십시오.
@@ -85,6 +86,13 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     "[등장인물]",
     cast || "(없음)",
     "",
+    "[고정된 사건]",
+    state.storyPins
+      ?.filter((pin) => pin.text.trim())
+      .map((pin) => `- ${clip(pin.text, 160)}`)
+      .join("\n") || "(없음)",
+    "고정된 사건은 요약·최근 대화보다 우선한다. 말투·금지를 바꾸지 마라.",
+    "",
     "[요약]",
     clip(state.storySummary, 500) || "(아직 없음)",
     "",
@@ -94,7 +102,7 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     "[유저 말]",
     userText,
     !started && state.prologue.trim()
-      ? "\n프롤로그 직후 장면을 @:나레이션 2~4줄과 @이름:대사 1~3줄로 보여라."
+      ? "\n프롤로그 직후 장면을 @:나레이션 4~7줄과 @이름:대사 3~6줄로 충분히 보여라."
       : "",
   ];
 
@@ -110,12 +118,21 @@ export function buildSummaryPrompt(state: PromptState) {
     )
     .join("\n");
 
-  return `아래 기존 요약과 최근 대화만 보고, 스토리 진행 상황만 800자 안으로 요약하라.
-세계관·캐릭터 말투·금지는 넣지 마라.
+  return `아래 기존 요약과 최근 대화만 보고, 스토리에서 일어난 일만 800자 안으로 요약하라.
+세계관·캐릭터 설정·말투·금지·외형은 넣지 마라. 다시 쓰지도 마라.
+고정된 사건은 이미 따로 있으니 요약에 반복하지 마라.
 형식:
 진행중:
 결정된 것:
 미결:
+
+[고정된 사건]
+${
+    state.storyPins
+      ?.filter((pin) => pin.text.trim())
+      .map((pin) => `- ${pin.text}`)
+      .join("\n") || "(없음)"
+  }
 
 [기존 요약]
 ${state.storySummary.trim() || "(없음)"}

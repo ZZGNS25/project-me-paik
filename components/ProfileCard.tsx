@@ -5,6 +5,8 @@ type ProfileCardProps = {
   oneLiner?: string;
   photo?: string;
   meta?: string;
+  status?: string;
+  statusIdle?: boolean;
   size?: "sm" | "md" | "lg";
 };
 
@@ -13,6 +15,8 @@ export default function ProfileCard({
   oneLiner,
   photo,
   meta,
+  status,
+  statusIdle = false,
   size = "sm",
 }: ProfileCardProps) {
   return (
@@ -23,7 +27,9 @@ export default function ProfileCard({
         {oneLiner ? (
           <p className="mt-0.5 truncate text-sm text-[var(--ink-dim)]">{oneLiner}</p>
         ) : null}
-        {meta ? (
+        {status ? (
+          <p className={`chat-status ${statusIdle ? "is-idle" : ""}`}>{status}</p>
+        ) : meta ? (
           <p className="mt-0.5 text-xs text-[var(--blue-soft)]">{meta}</p>
         ) : null}
       </div>

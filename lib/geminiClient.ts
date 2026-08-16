@@ -8,6 +8,7 @@ function toPromptState(state: PlayState | PromptState): PromptState {
     worldSetting: state.worldSetting,
     prologue: "prologue" in state ? state.prologue : "",
     storySummary: state.storySummary,
+    storyPins: "storyPins" in state ? state.storyPins : [],
     castNotes: state.castNotes,
     shortTermBuffer: state.shortTermBuffer,
   };

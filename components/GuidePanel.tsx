@@ -1,6 +1,6 @@
 export default function GuidePanel() {
   return (
-    <div className="mx-auto w-full max-w-2xl px-6 py-12">
+    <div className="page-scroll mx-auto w-full max-w-2xl px-6 py-12">
       <p className="label-caps">안내</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight">EarRole 쓰는 법</h1>
       <p className="mt-3 text-sm text-[var(--ink-dim)]">
@@ -22,11 +22,17 @@ export default function GuidePanel() {
         </li>
         <li>
           예전에 하던 이야기는 왼쪽 <strong className="text-[var(--ink)]">이야기</strong>에서
-          골라 이어갑니다. 마지막 말은 고치거나 지울 수 있습니다.
+          골라 이어갑니다. 어긋난 지점은 <strong className="text-[var(--ink)]">여기부터 삭제</strong>나{" "}
+          <strong className="text-[var(--ink)]">답 다시 생성</strong>으로 돌아갑니다.
         </li>
         <li>
-          이야기가 길어지면 설정 아래 <strong className="text-[var(--ink)]">기억 압축</strong>으로
-          사건만 짧게 남기세요.
+          중요한 일은 <strong className="text-[var(--ink)]">사건 고정</strong>으로 남기세요.
+          길어지면 설정에서 <strong className="text-[var(--ink)]">기억 압축</strong>을 해도
+          말투·금지·고정 사건은 그대로입니다.
+        </li>
+        <li>
+          로그인한 이야기는 클라우드에 자동으로 남습니다. 브라우저를 바꾸면 설정에서{" "}
+          <strong className="text-[var(--ink)]">내보내기/가져오기</strong>로 옮길 수 있습니다.
         </li>
       </ol>
     </div>

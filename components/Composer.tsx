@@ -15,7 +15,7 @@ export default function Composer({
   onChange,
   onSubmit,
   disabled = false,
-  placeholder = "캐릭터에게 말을 걸어 보세요",
+  placeholder = "말을 이어 보세요",
 }: ComposerProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 

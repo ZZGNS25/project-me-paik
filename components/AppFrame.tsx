@@ -33,7 +33,7 @@ export default function AppFrame({ children }: AppFrameProps) {
     <div className="app-frame">
       <aside className="side-rail">
         <Link href="/" className="side-brand">
-          <BrandLockup />
+          <BrandLockup compact layout="row" />
         </Link>
 
         <button
@@ -56,12 +56,10 @@ export default function AppFrame({ children }: AppFrameProps) {
           ))}
         </nav>
 
-        <div className="mt-auto space-y-2 pt-4">
+        <div className="side-account">
           {auth.user ? (
             <>
-              <p className="truncate px-3 text-xs text-[var(--ink-dim)]">
-                {auth.user.email}
-              </p>
+              <p className="side-account-email">{auth.user.email}</p>
               <button
                 type="button"
                 className="side-item"

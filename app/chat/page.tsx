@@ -8,18 +8,19 @@ import ProfileCard from "@/components/ProfileCard";
 import Composer from "@/components/Composer";
 import StoryExtrasPanel from "@/components/StoryExtrasPanel";
 import PageShell from "@/components/PageShell";
+import { useCloudSync, usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { usePlayState } from "@/hooks/usePlayState";
-import { savePlayToCloud } from "@/lib/cloud";
 import { requestGenerateStream } from "@/lib/geminiClient";
 import { takePendingMessage } from "@/lib/pending";
+import type { ChatMessage, PlayState } from "@/lib/types";
 
 function ChatBody() {
   const router = useRouter();
-  const play = usePlayState();
+  const play = usePlay();
+  const cloud = useCloudSync();
   const auth = useAuth();
   const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState<"chat" | "cloud" | null>(null);
+  const [busy, setBusy] = useState<"chat" | null>(null);
   const [error, setError] = useState("");
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [pendingUser, setPendingUser] = useState("");
@@ -54,7 +55,7 @@ function ChatBody() {
     );
   }
 
-  async function sendMessage(text = draft.trim()) {
+  async function sendMessage(text = draft.trim(), state: PlayState = play.state) {
     if (!text || sending.current) return;
 
     sending.current = true;
@@ -65,7 +66,7 @@ function ChatBody() {
     setStreamingReply("");
 
     try {
-      const reply = await requestGenerateStream(play.state, text, setStreamingReply);
+      const reply = await requestGenerateStream(state, text, setStreamingReply);
       play.appendTurn(text, reply);
       setPendingUser("");
       setStreamingReply("");
@@ -80,21 +81,37 @@ function ChatBody() {
     }
   }
 
-  async function saveCloud() {
-    if (!auth.user) return;
-    setBusy("cloud");
-    setError("");
-    try {
-      const id = await savePlayToCloud(auth.user.id, play.state);
-      play.setCloudSessionId(id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "클라우드 저장에 실패했습니다.");
-    } finally {
-      setBusy(null);
-    }
+  function confirmLaterTurns(fromId: string) {
+    const index = play.state.chatLog.findIndex((item) => item.id === fromId);
+    return index >= 0 && index < play.state.chatLog.length - 2
+      ? window.confirm("이 뒤의 대화가 사라집니다. 계속할까요?")
+      : true;
+  }
+
+  function truncateFrom(messageId: string) {
+    if (!confirmLaterTurns(messageId)) return;
+    play.truncateFrom(messageId);
+  }
+
+  function regenerate(userMessageId: string) {
+    if (!confirmLaterTurns(userMessageId)) return;
+    const rewound = play.rewindForRegen(userMessageId);
+    if (rewound) void sendMessage(rewound.text, rewound.state);
+  }
+
+  function pinTurn(user: ChatMessage, model?: ChatMessage) {
+    play.pinTurn(user, model);
   }
 
   const listening = busy === "chat";
+  const cloudLabel =
+    cloud.status === "saving"
+      ? "저장 중…"
+      : cloud.status === "error"
+        ? "저장 실패"
+        : cloud.status === "saved"
+          ? "저장됨"
+          : "자동 저장";
 
   return (
     <AppFrame>
@@ -103,28 +120,27 @@ function ChatBody() {
           <div className="min-w-0">
             <ProfileCard
               name={play.state.character.name || "채팅"}
-              oneLiner={play.state.character.oneLiner}
               photo={play.state.character.photo}
+              status={listening ? "듣는 중" : "대기 중"}
+              statusIdle={!listening}
             />
-            <p className={`chat-status ${listening ? "" : "is-idle"}`}>
-              {listening ? "듣고 쓰는 중…" : "이야기를 기다리고 있어요"}
-            </p>
           </div>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
-              className="ghost-link"
+              className="top-action"
               onClick={() => setExtrasOpen((open) => !open)}
             >
-              {extrasOpen ? "닫기" : "인물·설정 추가"}
+              {extrasOpen ? "닫기" : "인물 추가"}
             </button>
             <button
               type="button"
-              className="ghost-link"
-              onClick={saveCloud}
-              disabled={busy === "cloud"}
+              className={`top-action ${cloud.status === "error" ? "is-danger" : ""}`}
+              onClick={() => void cloud.saveNow()}
+              disabled={cloud.status === "saving"}
+              title={cloud.error || "이야기가 바뀌면 클라우드에 자동으로 남깁니다."}
             >
-              {busy === "cloud" ? "저장 중…" : "클라우드 저장"}
+              {cloudLabel}
             </button>
           </div>
         </div>
@@ -149,27 +165,46 @@ function ChatBody() {
           userName={play.state.userPersona.name}
           pendingUserText={pendingUser}
           streamingText={streamingReply}
-          onEditLast={
-            busy
-              ? undefined
-              : () => {
-                  const text = play.popLastUserMessage();
-                  if (text) setDraft(text);
-                }
-          }
-          onDeleteLast={busy ? undefined : play.deleteLastTurn}
+          actionsDisabled={Boolean(busy)}
+          onTruncateFrom={truncateFrom}
+          onRegenerate={regenerate}
+          onPinTurn={pinTurn}
         />
 
         <div className="composer-dock">
-          <div className="mx-auto w-full max-w-3xl">
+          <div className="mx-auto w-full max-w-2xl">
             {error ? <p className="alert-error mb-3">{error}</p> : null}
+            {play.state.chatLog.length > 0 && !pendingUser && !streamingReply ? (
+              <div className="chat-actions">
+                <button
+                  type="button"
+                  className="ghost-link"
+                  disabled={Boolean(busy)}
+                  onClick={() => {
+                    const text = play.popLastUserMessage();
+                    if (text) setDraft(text);
+                  }}
+                >
+                  마지막 말 수정
+                </button>
+                <button
+                  type="button"
+                  className="ghost-link is-danger"
+                  disabled={Boolean(busy)}
+                  onClick={play.deleteLastTurn}
+                >
+                  마지막 턴 삭제
+                </button>
+              </div>
+            ) : null}
             <Composer
               value={draft}
               onChange={setDraft}
               onSubmit={() => void sendMessage()}
               disabled={Boolean(busy)}
-              placeholder="@:나레이션  @이름:대사  *행동*"
+              placeholder="말을 이어 보세요"
             />
+            <p className="composer-hint">나레이션 @: · 대사 @이름: · 행동 *이렇게*</p>
           </div>
         </div>
       </div>

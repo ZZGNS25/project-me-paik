@@ -4,6 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FIELD_LIMITS, createEmptySetting, createEmptyStore } from "@/lib/constants";
 import { buildForbidden } from "@/lib/forbidden";
 import { WORLD_PRESETS, settingFromPreset, type PresetId } from "@/lib/presets";
+import {
+  normalizePins,
+  pinTextFromTurn,
+  recountTurns,
+  sanitizeSummary,
+  syncBuffer,
+} from "@/lib/memory";
 import { clip, loadStore, saveStore, toPlayState } from "@/lib/storage";
 import type {
   AppStore,
@@ -217,6 +224,15 @@ export function usePlayState() {
     );
   }
 
+  function withLog(current: SettingRecord, chatLog: ChatMessage[]): SettingRecord {
+    return {
+      ...current,
+      chatLog,
+      shortTermBuffer: syncBuffer(chatLog),
+      turnCount: recountTurns(chatLog),
+    };
+  }
+
   function lastTurn(log: ChatMessage[]) {
     if (log.length === 0) {
       return { ids: [] as string[], userText: "" };
@@ -234,22 +250,64 @@ export function usePlayState() {
   }
 
   function removeLastTurn() {
-    let userText = "";
-    updateStore((prev) =>
-      patchCurrent(prev, (current) => {
-        const turn = lastTurn(current.chatLog);
-        userText = turn.userText;
-        if (turn.ids.length === 0) return current;
-        const ids = new Set(turn.ids);
-        return {
-          ...current,
-          chatLog: current.chatLog.filter((item) => !ids.has(item.id)),
-          shortTermBuffer: current.shortTermBuffer.filter((item) => !ids.has(item.id)),
-          turnCount: Math.max(0, current.turnCount - 1),
-        };
-      }),
+    const current =
+      store.settings.find((item) => item.id === store.currentSettingId) ??
+      store.settings[0];
+    if (!current) return "";
+    const turn = lastTurn(current.chatLog);
+    if (turn.ids.length === 0) return "";
+    const ids = new Set(turn.ids);
+    const nextStore = patchCurrent(store, (item) =>
+      withLog(
+        item,
+        item.chatLog.filter((message) => !ids.has(message.id)),
+      ),
     );
-    return userText;
+    saveStore(nextStore);
+    setStore(nextStore);
+    return turn.userText;
+  }
+
+  function truncateFrom(messageId: string) {
+    const current =
+      store.settings.find((item) => item.id === store.currentSettingId) ??
+      store.settings[0];
+    if (!current) return;
+    const index = current.chatLog.findIndex((item) => item.id === messageId);
+    if (index < 0) return;
+    let start = index;
+    if (
+      current.chatLog[index].role === "model" &&
+      current.chatLog[index - 1]?.role === "user"
+    ) {
+      start = index - 1;
+    }
+    const nextStore = patchCurrent(store, (item) =>
+      withLog(item, item.chatLog.slice(0, start)),
+    );
+    saveStore(nextStore);
+    setStore(nextStore);
+  }
+
+  function rewindForRegen(userMessageId: string): {
+    text: string;
+    state: PlayState;
+  } | null {
+    const current =
+      store.settings.find((item) => item.id === store.currentSettingId) ??
+      store.settings[0];
+    if (!current) return null;
+    const index = current.chatLog.findIndex((item) => item.id === userMessageId);
+    if (index < 0 || current.chatLog[index].role !== "user") return null;
+    const nextStore = patchCurrent(store, (item) =>
+      withLog(item, item.chatLog.slice(0, index)),
+    );
+    saveStore(nextStore);
+    setStore(nextStore);
+    return {
+      text: current.chatLog[index].content,
+      state: toPlayState(nextStore),
+    };
   }
 
   function deleteLastTurn() {
@@ -289,10 +347,106 @@ export function usePlayState() {
     updateStore((prev) =>
       patchCurrent(prev, (current) => ({
         ...current,
-        storySummary: clip(summary, FIELD_LIMITS.storySummary),
+        storySummary: clip(sanitizeSummary(summary), FIELD_LIMITS.storySummary),
         shortTermBuffer: [],
       })),
     );
+  }
+
+  function addStoryPin(text: string) {
+    const value = clip(text.trim(), FIELD_LIMITS.storyPin);
+    if (!value) return;
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => {
+        const pins = current.storyPins ?? [];
+        if (pins.length >= FIELD_LIMITS.storyPinsMax) return current;
+        return {
+          ...current,
+          storyPins: [...pins, { id: newId(), text: value }],
+        };
+      }),
+    );
+  }
+
+  function pinTurn(user: ChatMessage, model?: ChatMessage) {
+    addStoryPin(pinTextFromTurn(user, model));
+  }
+
+  function updateStoryPin(id: string, text: string) {
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        storyPins: current.storyPins.map((pin) =>
+          pin.id === id ? { ...pin, text: clip(text, FIELD_LIMITS.storyPin) } : pin,
+        ),
+      })),
+    );
+  }
+
+  function removeStoryPin(id: string) {
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        storyPins: current.storyPins.filter((pin) => pin.id !== id),
+      })),
+    );
+  }
+
+  function importSettings(incoming: SettingRecord[]) {
+    if (incoming.length === 0) return;
+    updateStore((prev) => {
+      const next = incoming.map((item) =>
+        withForbidden({
+          ...createEmptySetting(newId()),
+          ...item,
+          id: newId(),
+          storyPins: normalizePins(item.storyPins),
+          cloudSessionId: null,
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+      return {
+        ...prev,
+        currentSettingId: next[0].id,
+        settings: [...prev.settings, ...next],
+      };
+    });
+  }
+
+  function addFromCloud(partial: Partial<PlayState> & { cloudSessionId: string }) {
+    updateStore((prev) => {
+      const existing = prev.settings.find(
+        (item) => item.cloudSessionId === partial.cloudSessionId,
+      );
+      const mapped: SettingRecord = withForbidden({
+        ...(existing ?? createEmptySetting(newId())),
+        ...partial,
+        id: existing?.id ?? newId(),
+        storyPins: normalizePins(partial.storyPins),
+        shortTermBuffer: partial.shortTermBuffer ?? syncBuffer(partial.chatLog ?? []),
+        cloudSessionId: partial.cloudSessionId,
+        updatedAt: new Date().toISOString(),
+      });
+
+      if (existing) {
+        return {
+          ...prev,
+          settings: prev.settings.map((item) =>
+            item.id === existing.id ? mapped : item,
+          ),
+        };
+      }
+
+      const blank =
+        prev.settings.length === 1 &&
+        !prev.settings[0].character.name.trim() &&
+        prev.settings[0].chatLog.length === 0;
+      return {
+        ...prev,
+        currentSettingId: blank ? mapped.id : prev.currentSettingId,
+        settings: blank ? [mapped] : [...prev.settings, mapped],
+      };
+    });
   }
 
   function hydrateFromCloud(partial: Partial<PlayState>) {
@@ -312,6 +466,10 @@ export function usePlayState() {
           ...current,
           ...partial,
           character,
+          storyPins: normalizePins(partial.storyPins ?? current.storyPins),
+          shortTermBuffer:
+            partial.shortTermBuffer ??
+            syncBuffer(partial.chatLog ?? current.chatLog),
           prologue: partial.prologue?.trim() ? partial.prologue : current.prologue,
           id: current.id,
         };
@@ -410,6 +568,7 @@ export function usePlayState() {
     ready,
     settings: store.settings,
     currentSettingId: store.currentSettingId,
+    updatedAt: state && store.settings.find((item) => item.id === store.currentSettingId)?.updatedAt,
     updateCharacter,
     resetForbidden,
     updateUser,
@@ -424,7 +583,15 @@ export function usePlayState() {
     appendTurn,
     deleteLastTurn,
     popLastUserMessage,
+    truncateFrom,
+    rewindForRegen,
     applySummary,
+    addStoryPin,
+    pinTurn,
+    updateStoryPin,
+    removeStoryPin,
+    importSettings,
+    addFromCloud,
     hydrateFromCloud,
     setCloudSessionId,
     startNewStory,

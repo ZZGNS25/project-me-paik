@@ -8,8 +8,8 @@ import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
 import PageShell from "@/components/PageShell";
 import ProfileCard from "@/components/ProfileCard";
+import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { usePlayState } from "@/hooks/usePlayState";
 import { withWaGwa } from "@/lib/korean";
 import type { SettingRecord } from "@/lib/types";
 
@@ -17,7 +17,7 @@ function HomeBody() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
-  const play = usePlayState();
+  const play = usePlay();
   const view = searchParams.get("view");
 
   if (!auth.ready || !play.ready) {
@@ -79,7 +79,7 @@ function HomeBody() {
       ) : view === "history" ? (
         <HistoryPanel play={play} />
       ) : (
-        <div className="mx-auto w-full max-w-2xl overflow-y-auto px-6 py-10">
+        <div className="page-scroll mx-auto w-full max-w-2xl px-6 py-10">
           <div className="page-hero">
             <p className="label-caps">이야기</p>
             <h1 className="mt-2 text-3xl font-semibold">어떤 이야기를 이을까요?</h1>

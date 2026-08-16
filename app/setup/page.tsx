@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
 import AvatarCircle from "@/components/AvatarCircle";
@@ -8,11 +8,12 @@ import CastEditor from "@/components/CastEditor";
 import CharField from "@/components/CharField";
 import MemoryPanel from "@/components/MemoryPanel";
 import PageShell from "@/components/PageShell";
+import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { usePlayState } from "@/hooks/usePlayState";
 import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
 import { requestGenerate } from "@/lib/geminiClient";
 import { WORLD_PRESETS } from "@/lib/presets";
+import { downloadExport, parseImport } from "@/lib/transfer";
 import type { SettingRecord } from "@/lib/types";
 
 function isPresetNamed(setting: SettingRecord) {
@@ -34,10 +35,11 @@ function SetupBody() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
-  const play = usePlayState();
+  const play = usePlay();
   const [compressing, setCompressing] = useState(false);
   const [error, setError] = useState("");
   const [picked, setPicked] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
   const newToken = searchParams.get("new");
 
   useEffect(() => {
@@ -107,7 +109,7 @@ function SetupBody() {
   return (
     <AppFrame>
       <form
-        className="mx-auto w-full max-w-3xl space-y-6 overflow-y-auto px-6 py-8"
+        className="page-scroll mx-auto w-full max-w-3xl space-y-6 px-6 py-8"
         onSubmit={(event) => {
           event.preventDefault();
           if (canStart) router.push("/chat");
@@ -125,6 +127,50 @@ function SetupBody() {
                 반영됩니다.
               </p>
             ) : null}
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => downloadExport(play.settings)}
+            >
+              내보내기
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => importRef.current?.click()}
+            >
+              가져오기
+            </button>
+            <input
+              ref={importRef}
+              type="file"
+              accept="application/json"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (!file) return;
+                void file.text().then((raw) => {
+                  try {
+                    const imported = parseImport(raw);
+                    if (imported.length === 0) {
+                      throw new Error("가져올 설정이 없습니다.");
+                    }
+                    play.importSettings(imported);
+                    setPicked(true);
+                    setError("");
+                  } catch (err) {
+                    setError(
+                      err instanceof Error
+                        ? err.message
+                        : "설정 파일을 읽지 못했습니다.",
+                    );
+                  }
+                });
+              }}
+            />
           </div>
         </div>
 
@@ -384,6 +430,9 @@ function SetupBody() {
                   onSummaryChange={play.setStorySummary}
                   onCompress={compressMemory}
                   compressing={compressing}
+                  onAddPin={play.addStoryPin}
+                  onUpdatePin={play.updateStoryPin}
+                  onRemovePin={play.removeStoryPin}
                 />
               </div>
             </details>

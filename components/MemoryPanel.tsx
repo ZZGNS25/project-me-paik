@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import { FIELD_LIMITS } from "@/lib/constants";
-import type { PlayState } from "@/lib/types";
+import type { PlayState, StoryPin } from "@/lib/types";
 import CharField from "./CharField";
 import ProfileCard from "./ProfileCard";
 
@@ -8,6 +11,9 @@ type MemoryPanelProps = {
   onSummaryChange: (value: string) => void;
   onCompress: () => void;
   compressing: boolean;
+  onAddPin?: (text: string) => void;
+  onUpdatePin?: (id: string, text: string) => void;
+  onRemovePin?: (id: string) => void;
 };
 
 export default function MemoryPanel({
@@ -15,7 +21,19 @@ export default function MemoryPanel({
   onSummaryChange,
   onCompress,
   compressing,
+  onAddPin,
+  onUpdatePin,
+  onRemovePin,
 }: MemoryPanelProps) {
+  const [pinDraft, setPinDraft] = useState("");
+
+  function addPin() {
+    const text = pinDraft.trim();
+    if (!text || !onAddPin) return;
+    onAddPin(text);
+    setPinDraft("");
+  }
+
   return (
     <aside className="paper-panel flex flex-col gap-5 overflow-y-auto p-5">
       <section>
@@ -38,6 +56,9 @@ export default function MemoryPanel({
             <dd>{state.character.forbidden || "—"}</dd>
           </div>
         </dl>
+        <p className="mt-3 text-xs text-[var(--ink-dim)]">
+          말투와 금지는 요약과 따로 유지됩니다.
+        </p>
       </section>
 
       <section>
@@ -64,6 +85,52 @@ export default function MemoryPanel({
       </section>
 
       <section>
+        <p className="label-caps">고정된 사건</p>
+        <p className="mt-2 text-xs text-[var(--ink-dim)]">
+          중요 사건만 남기세요. 기억 압축을 해도 지워지지 않습니다.
+        </p>
+        <ul className="mt-3 space-y-2">
+          {state.storyPins.length === 0 ? (
+            <li className="text-sm text-[var(--ink-dim)]">아직 없습니다.</li>
+          ) : (
+            state.storyPins.map((pin) => (
+              <PinRow
+                key={pin.id}
+                pin={pin}
+                onChange={onUpdatePin}
+                onRemove={onRemovePin}
+              />
+            ))
+          )}
+        </ul>
+        {onAddPin ? (
+          <div className="mt-3 flex gap-2">
+            <input
+              className="field-input mt-0"
+              value={pinDraft}
+              maxLength={FIELD_LIMITS.storyPin}
+              placeholder="예: 한강 게이트가 하나 더 열렸다"
+              onChange={(event) => setPinDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  addPin();
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="btn-secondary shrink-0"
+              onClick={addPin}
+              disabled={!pinDraft.trim() || state.storyPins.length >= FIELD_LIMITS.storyPinsMax}
+            >
+              고정
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      <section>
         <CharField
           label="스토리 요약"
           value={state.storySummary}
@@ -86,5 +153,35 @@ export default function MemoryPanel({
         </button>
       </section>
     </aside>
+  );
+}
+
+function PinRow({
+  pin,
+  onChange,
+  onRemove,
+}: {
+  pin: StoryPin;
+  onChange?: (id: string, text: string) => void;
+  onRemove?: (id: string) => void;
+}) {
+  return (
+    <li className="flex items-start gap-2">
+      <input
+        className="field-input mt-0"
+        value={pin.text}
+        maxLength={FIELD_LIMITS.storyPin}
+        onChange={(event) => onChange?.(pin.id, event.target.value)}
+      />
+      {onRemove ? (
+        <button
+          type="button"
+          className="ghost-link is-danger shrink-0 pt-2"
+          onClick={() => onRemove(pin.id)}
+        >
+          삭제
+        </button>
+      ) : null}
+    </li>
   );
 }

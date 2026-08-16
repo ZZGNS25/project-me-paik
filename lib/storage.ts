@@ -1,5 +1,6 @@
 import { createEmptyPlayState, createEmptySetting, createEmptyStore } from "./constants";
 import { buildForbidden } from "./forbidden";
+import { normalizePins } from "./memory";
 import { WORLD_PRESETS } from "./presets";
 import type { AppStore, PlayState, SettingRecord } from "./types";
 import { STORAGE_KEY } from "./constants";
@@ -31,6 +32,7 @@ function applyForbidden(record: SettingRecord): SettingRecord {
   return {
     ...record,
     prologue: record.prologue ?? "",
+    storyPins: normalizePins(record.storyPins),
     userPersona: {
       ...record.userPersona,
       photo: record.userPersona.photo ?? "",
@@ -71,6 +73,7 @@ export function toPlayState(store: AppStore): PlayState {
     worldSetting: current.worldSetting,
     prologue: current.prologue ?? "",
     storySummary: current.storySummary,
+    storyPins: normalizePins(current.storyPins),
     castNotes: current.castNotes,
     chatLog: current.chatLog,
     shortTermBuffer: current.shortTermBuffer,
@@ -98,6 +101,7 @@ function migrateLegacy(parsed: PlayState): AppStore {
     worldSetting: parsed.worldSetting ?? "",
     prologue: parsed.prologue ?? "",
     storySummary: parsed.storySummary ?? "",
+    storyPins: normalizePins(parsed.storyPins),
     castNotes: parsed.castNotes ?? [],
     chatLog: parsed.chatLog ?? [],
     shortTermBuffer: parsed.shortTermBuffer ?? [],

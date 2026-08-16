@@ -13,6 +13,11 @@ export type CastNote = {
   note: string;
 };
 
+export type StoryPin = {
+  id: string;
+  text: string;
+};
+
 export type CharacterProfile = {
   name: string;
   oneLiner: string;
@@ -37,6 +42,7 @@ export type PlayState = {
   worldSetting: string;
   prologue: string;
   storySummary: string;
+  storyPins: StoryPin[];
   castNotes: CastNote[];
   chatLog: ChatMessage[];
   shortTermBuffer: ChatMessage[];
@@ -62,6 +68,7 @@ export type PromptState = Pick<
   | "worldSetting"
   | "prologue"
   | "storySummary"
+  | "storyPins"
   | "castNotes"
   | "shortTermBuffer"
 >;

@@ -1,5 +1,7 @@
+import { SHORT_TERM_TURNS } from "./constants";
+import { normalizePins } from "./memory";
 import { getSupabase } from "./supabase";
-import type { CastNote, ChatMessage, PlayState } from "./types";
+import type { CastNote, ChatMessage, PlayState, StoryPin } from "./types";
 
 type SessionRow = {
   id: string;
@@ -14,6 +16,7 @@ type SessionRow = {
   world_setting: string;
   prologue?: string;
   story_summary: string;
+  story_pins?: string;
   character_photo?: string;
   user_photo?: string;
   turn_count: number;
@@ -40,7 +43,9 @@ function toSessionPayload(userId: string, state: PlayState) {
     user_name: state.userPersona.name,
     user_setting: state.userPersona.setting,
     world_setting: state.worldSetting,
+    prologue: state.prologue,
     story_summary: state.storySummary,
+    story_pins: JSON.stringify(state.storyPins ?? []),
     character_photo: state.character.photo,
     user_photo: state.userPersona.photo,
     turn_count: state.turnCount,
@@ -154,6 +159,15 @@ async function loadPlayBySession(row: SessionRow) {
       .order("created_at", { ascending: true }),
   ]);
 
+  const chatLog = toChatLog(
+    (messages ?? []) as {
+      id: string;
+      role: ChatMessage["role"];
+      content: string;
+      created_at: string;
+    }[],
+  );
+
   return {
     cloudSessionId: row.id,
     character: {
@@ -174,19 +188,34 @@ async function loadPlayBySession(row: SessionRow) {
     worldSetting: row.world_setting,
     prologue: row.prologue ?? "",
     storySummary: row.story_summary,
+    storyPins: parsePins(row.story_pins),
     turnCount: row.turn_count,
     castNotes: ((notes ?? []) as CastNote[]).map((note) => ({
       id: note.id,
       name: note.name,
       note: note.note,
     })),
-    chatLog: ((messages ?? []) as { id: string; role: ChatMessage["role"]; content: string; created_at: string }[]).map(
-      (message) => ({
-        id: message.id,
-        role: message.role,
-        content: message.content,
-        createdAt: message.created_at,
-      }),
-    ),
+    chatLog,
+    shortTermBuffer: chatLog.slice(-SHORT_TERM_TURNS * 2),
   };
+}
+
+function toChatLog(
+  messages: { id: string; role: ChatMessage["role"]; content: string; created_at: string }[],
+): ChatMessage[] {
+  return messages.map((message) => ({
+    id: message.id,
+    role: message.role,
+    content: message.content,
+    createdAt: message.created_at,
+  }));
+}
+
+function parsePins(raw?: string): StoryPin[] {
+  if (!raw?.trim()) return [];
+  try {
+    return normalizePins(JSON.parse(raw) as unknown);
+  } catch {
+    return [];
+  }
 }

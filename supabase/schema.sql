@@ -28,6 +28,7 @@ create table if not exists public.eorol_play_sessions (
   world_setting text not null default '',
   prologue text not null default '',
   story_summary text not null default '',
+  story_pins text not null default '[]',
   character_photo text not null default '',
   user_photo text not null default '',
   turn_count integer not null default 0,

@@ -41,7 +41,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
   const localStories = play.settings.filter((item) => item.character.name.trim());
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-6 py-12">
+    <div className="page-scroll mx-auto w-full max-w-2xl px-6 py-12">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="label-caps">내 기록</p>

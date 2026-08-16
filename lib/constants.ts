@@ -1,7 +1,7 @@
 export const STORAGE_KEY = "eorol-play-state";
 
 export const GEMINI_MODEL = "gemini-3.6-flash";
-export const GEMINI_MAX_OUTPUT_TOKENS = 2048;
+export const GEMINI_MAX_OUTPUT_TOKENS = 4096;
 export const GEMINI_SUMMARY_OUTPUT_TOKENS = 768;
 export const SHORT_TERM_TURNS = 3;
 
@@ -17,6 +17,8 @@ export const FIELD_LIMITS = {
   worldSetting: 1600,
   prologue: 1200,
   storySummary: 800,
+  storyPin: 160,
+  storyPinsMax: 12,
   castName: 32,
   castNote: 150,
   castNotesTotal: 900,
@@ -55,6 +57,7 @@ export function createEmptySetting(
     worldSetting: "",
     prologue: "",
     storySummary: "",
+    storyPins: [],
     castNotes: [],
     chatLog: [],
     shortTermBuffer: [],
@@ -81,6 +84,7 @@ export function createEmptyPlayState(): import("./types").PlayState {
     worldSetting: setting.worldSetting,
     prologue: setting.prologue,
     storySummary: setting.storySummary,
+    storyPins: setting.storyPins,
     castNotes: setting.castNotes,
     chatLog: setting.chatLog,
     shortTermBuffer: setting.shortTermBuffer,

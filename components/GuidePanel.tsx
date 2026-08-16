@@ -129,8 +129,9 @@ export default function GuidePanel() {
         <p className="label-caps">채팅에서</p>
         <ul className="mt-3 text-sm leading-relaxed text-[var(--ink-soft)]">
           <li>
-            <strong className="text-[var(--ink)]">저장</strong>은 지금 대화를 클라우드에
-            바로 남깁니다. 로그인되어 있으면 평소에도 자동으로 남습니다.
+            대화는 로그인되어 있으면 알아서 클라우드에 남습니다. 메뉴 맨 아래{" "}
+            <strong className="text-[var(--ink)]">지금 남기기</strong>는 창을 닫기 전에
+            지금 밀어 넣고 싶을 때만 씁니다.
           </li>
           <li>
             <strong className="text-[var(--ink)]">공유</strong>를 누르면 다른 앱, 링크 복사,
@@ -138,23 +139,33 @@ export default function GuidePanel() {
             빠집니다.
           </li>
           <li>
-            <strong className="text-[var(--ink)]">새로</strong>는 같은 세계와 역할로 새
-            대화를 엽니다. 지금 대화가 있으면 저장할지 묻습니다.{" "}
-            <strong className="text-[var(--ink)]">저장</strong>하면 지금 이야기는 남기고
-            복사본으로 이어갑니다. <strong className="text-[var(--ink)]">저장 안 함</strong>은
-            지금 대화를 비웁니다.
+            <strong className="text-[var(--ink)]">새로하기</strong>는 같은 세계와 역할로
+            빈 대화를 엽니다. 지금 대화가 있으면 남길지 묻습니다.{" "}
+            <strong className="text-[var(--ink)]">남기고 새로</strong>는 이 대화를 이어하기에
+            두고 빈 대화를 엽니다. <strong className="text-[var(--ink)]">지우고 새로</strong>는
+            이 대화를 비웁니다.
+          </li>
+          <li>
+            <strong className="text-[var(--ink)]">이어하기</strong>는 남긴 대화 목록을 보고
+            골라 그 장면부터 잇습니다.
+          </li>
+          <li>
+            <strong className="text-[var(--ink)]">이야기 삭제</strong>는 지금 이 이야기를
+            지웁니다. 세계와 대화가 함께 사라지고, 다른 이야기는 그대로입니다.
           </li>
           <li>
             왼쪽 <strong className="text-[var(--ink)]">새 이야기</strong>는 세계와 역할을
-            처음부터 다시 만듭니다. 역시 지금 대화를 저장할지 묻습니다.
+            처음부터 다시 만듭니다. 역시 지금 대화를 남길지 묻습니다.
           </li>
           <li>
             입력창 위 <strong className="text-[var(--ink)]">나</strong>, 내 말의 이름·얼굴을
-            누르면 프로필 목록이 열립니다. 프로필이 없으면 그 자리에서 만들 수 있습니다.
+            누르면 프로필 목록이 먼저 열립니다. 줄을 누르면 이 이야기의 나가 바뀌고,
+            연필은 프로필을 고칩니다.
           </li>
           <li>
-            위쪽 <strong className="text-[var(--ink)]">메뉴</strong>에 저장, 공유, 새로하기,
-            대화 프로필, 인물 추가, 압축, 고정이 있습니다.
+            위쪽 <strong className="text-[var(--ink)]">메뉴</strong>에 대화 프로필, 새로하기,
+            이어하기, 공유, 인물 추가, 압축, 고정, 이야기 삭제가 있습니다. 압축과 고정은
+            입력창 위에도 있습니다.
           </li>
           <li>
             어긋난 지점은 그 말의 <strong className="text-[var(--ink)]">여기부터 삭제</strong>로
@@ -169,12 +180,14 @@ export default function GuidePanel() {
         <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">
           최근 몇 턴은 그대로 보고, 그보다 앞선 일은 요약으로 남깁니다. 서른 턴마다
           기억이 조용히 압축됩니다. 말하는 중에는 기다리지 않습니다. 필요할 때는
-          메뉴의 <strong className="text-[var(--ink)]">압축</strong>을 눌러도 됩니다.
+          입력창 위나 메뉴의 <strong className="text-[var(--ink)]">압축</strong>을 눌러도
+          됩니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
           잊히면 안 되는 일은 <strong className="text-[var(--ink)]">고정</strong>하세요.
-          말 옆의 사건 고정은 그 한 턴을, 메뉴의 고정은 마지막 턴을 남깁니다. 설정 화면의
-          기억 칸에서 직접 적을 수도 있습니다. 고정된 사건은 요약보다 우선합니다.
+          말 옆의 사건 고정은 그 한 턴을, 입력창 위·메뉴의 고정은 마지막 턴을 남깁니다.
+          설정 화면의 기억 칸에서 직접 적을 수도 있습니다. 고정된 사건은 요약보다
+          우선합니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
           말투, 금지, 세계관, 고정된 사건은 압축해도 그대로입니다.
@@ -184,10 +197,11 @@ export default function GuidePanel() {
       <section className="guide-section">
         <p className="label-caps">기록</p>
         <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">
-          예전에 하던 이야기는 왼쪽 <strong className="text-[var(--ink)]">이야기</strong>에서
-          고르거나, <strong className="text-[var(--ink)]">내 기록</strong>에서 클라우드
-          목록을 열어 이어갑니다. 로그인한 이야기는 클라우드에 자동으로 남습니다.
-          클라우드에서 지울 수도 있고, 이 브라우저에서만 지울 수도 있습니다.
+          예전에 하던 이야기는 채팅 메뉴의 <strong className="text-[var(--ink)]">이어하기</strong>,
+          왼쪽 <strong className="text-[var(--ink)]">이야기</strong>, 또는{" "}
+          <strong className="text-[var(--ink)]">내 기록</strong>에서 고릅니다. 로그인한
+          이야기는 클라우드에 자동으로 남습니다. 클라우드에서 지울 수도 있고, 이
+          브라우저에서만 지울 수도 있습니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
           설정의 <strong className="text-[var(--ink)]">기록 내려받기</strong>는 세계관과

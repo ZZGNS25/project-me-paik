@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import AvatarCircle from "@/components/AvatarCircle";
 import CharField from "@/components/CharField";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -20,15 +21,34 @@ const EMPTY_DRAFT = {
 
 type ProfilesPanelProps = {
   play: PlayController;
+  returnHref?: string | null;
+  editId?: string | null;
 };
 
-export default function ProfilesPanel({ play }: ProfilesPanelProps) {
+export default function ProfilesPanel({
+  play,
+  returnHref,
+  editId,
+}: ProfilesPanelProps) {
+  const router = useRouter();
   const confirm = useConfirm();
-  const [draft, setDraft] = useState(EMPTY_DRAFT);
+  const [draft, setDraft] = useState(() => {
+    if (!editId) return { ...EMPTY_DRAFT };
+    const persona = play.personas.find((item) => item.id === editId);
+    if (!persona) return { ...EMPTY_DRAFT };
+    return {
+      id: persona.id,
+      label: persona.label,
+      name: persona.name,
+      setting: persona.setting,
+      photo: persona.photo,
+    };
+  });
   const editing = Boolean(draft.id);
   const canSave =
     Boolean(draft.name.trim()) &&
     (editing || play.personas.length < PERSONAS_MAX);
+  const returnLabel = returnHref === "/setup" ? "설정으로" : "이야기로";
 
   function openNew() {
     setDraft({ ...EMPTY_DRAFT });
@@ -74,23 +94,29 @@ export default function ProfilesPanel({ play }: ProfilesPanelProps) {
       <div className="page-scroll mx-auto w-full max-w-2xl px-6 py-12">
         <p className="label-caps">프로필</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">내가 누구인지</h1>
+        {returnHref ? (
+          <button
+            type="button"
+            className="btn-secondary mt-4"
+            onClick={() => router.push(returnHref)}
+          >
+            {returnLabel}
+          </button>
+        ) : null}
         <p className="mt-3 text-sm text-[var(--ink-dim)]">
           이야기는 세계와 역할입니다. 프로필은 나와 따로 만들어 두고, 새 이야기를 시작할
           때 고릅니다. 여기서 고쳐도 이미 진행 중인 대화는 바뀌지 않습니다.
         </p>
 
         <section className="mt-8">
-          <div className="flex items-end justify-between gap-3">
-            <p className="label-caps">목록</p>
-            <button type="button" className="btn-secondary" onClick={openNew}>
-              새 프로필
-            </button>
-          </div>
+          <p className="label-caps">목록</p>
           <div className="mt-3">
             <PersonaList
               personas={play.personas}
               activeId={draft.id || null}
               onPick={openExisting}
+              onEdit={openExisting}
+              onAdd={openNew}
               onRemove={(id) => {
                 const persona = play.personas.find((item) => item.id === id);
                 if (persona) remove(persona);
@@ -143,14 +169,25 @@ export default function ProfilesPanel({ play }: ProfilesPanelProps) {
             placeholder="나이, 성격, 숨기는 것, 이 몸이 아는 것"
             hint="세계관은 적지 마세요. 내가 누구인지만 적습니다."
           />
-          <button
-            type="button"
-            className="btn-primary w-full"
-            disabled={!canSave}
-            onClick={save}
-          >
-            {editing ? "프로필 저장" : "프로필 만들기"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={!canSave}
+              onClick={save}
+            >
+              {editing ? "프로필 저장" : "프로필 만들기"}
+            </button>
+            {returnHref ? (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => router.push(returnHref)}
+              >
+                {returnLabel}
+              </button>
+            ) : null}
+          </div>
         </section>
       </div>
       {confirm.dialog}

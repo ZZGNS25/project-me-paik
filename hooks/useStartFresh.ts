@@ -51,9 +51,10 @@ export function useStartFresh() {
     }
 
     confirm.ask({
-      message: "지금 대화를 저장할까요?",
-      confirmLabel: "저장",
-      altLabel: "저장 안 함",
+      message:
+        "지금 대화를 목록에 남기고, 같은 세계로 빈 대화를 열까요? 지우면 이 대화는 사라집니다.",
+      confirmLabel: "남기고 새로",
+      altLabel: "지우고 새로",
       run: async () => {
         await cloud.saveNow();
         runNew(mode);

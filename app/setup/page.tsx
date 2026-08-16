@@ -369,7 +369,7 @@ function SetupBody() {
                   <button
                     type="button"
                     className="btn-secondary"
-                    onClick={() => router.push("/?view=profiles")}
+                    onClick={() => router.push("/?view=profiles&from=setup")}
                   >
                     프로필 먼저 만들기
                   </button>
@@ -381,12 +381,14 @@ function SetupBody() {
                         ?.personaId ?? null
                     }
                     onPick={play.applyPersona}
+                    onAdd={() => router.push("/?view=profiles&from=setup")}
+                    onEdit={(id) => router.push(`/?view=profiles&from=setup&edit=${id}`)}
                   />
                 )}
                 <button
                   type="button"
                   className="btn-quiet"
-                  onClick={() => router.push("/?view=profiles")}
+                  onClick={() => router.push("/?view=profiles&from=setup")}
                 >
                   프로필 목록
                 </button>

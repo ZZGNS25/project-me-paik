@@ -678,11 +678,20 @@ export function usePlayState() {
 
   function deleteSetting(id: string) {
     updateStore((prev) => {
-      if (prev.settings.length <= 1) return prev;
-      const settings = prev.settings.filter((item) => item.id !== id);
+      const remaining = prev.settings.filter((item) => item.id !== id);
+      if (remaining.length === 0) {
+        const setting = withForbidden(createEmptySetting(newId()));
+        const next = {
+          ...prev,
+          currentSettingId: setting.id,
+          settings: [setting],
+        };
+        saveStore(next);
+        return next;
+      }
       const currentSettingId =
-        prev.currentSettingId === id ? settings[0].id : prev.currentSettingId;
-      const next = { ...prev, settings, currentSettingId };
+        prev.currentSettingId === id ? remaining[0].id : prev.currentSettingId;
+      const next = { ...prev, settings: remaining, currentSettingId };
       saveStore(next);
       return next;
     });

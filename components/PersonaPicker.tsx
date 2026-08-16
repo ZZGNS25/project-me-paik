@@ -10,22 +10,22 @@ type PersonaPickerProps = {
   selectedId?: string | null;
   copy?: string;
   skipLabel?: string;
-  manageLabel?: string;
   onPick: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onAdd?: () => void;
   onSkip?: () => void;
-  onManage?: () => void;
   onCancel: () => void;
 };
 
 export default function PersonaPicker({
   personas,
   selectedId,
-  copy = "이 이야기에서 나는 누구인가요?",
+  copy,
   skipLabel,
-  manageLabel = "프로필 목록",
   onPick,
+  onEdit,
+  onAdd,
   onSkip,
-  onManage,
   onCancel,
 }: PersonaPickerProps) {
   const [mounted, setMounted] = useState(false);
@@ -49,30 +49,27 @@ export default function PersonaPicker({
       className="confirm-layer"
       role="dialog"
       aria-modal="true"
-      aria-label="유저 프로필 고르기"
+      aria-label="내 대화 프로필"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onCancel();
       }}
     >
       <div className="confirm-card persona-picker">
-        <p className="label-caps">나</p>
-        <p className="confirm-copy">{copy}</p>
+        <p className="label-caps">내 대화 프로필</p>
+        {copy ? <p className="confirm-copy">{copy}</p> : null}
         <div className="mt-4">
           <PersonaList
             personas={personas}
             activeId={selectedId}
             onPick={onPick}
+            onEdit={onEdit}
+            onAdd={onAdd}
           />
         </div>
         <div className="confirm-actions">
           <button type="button" className="btn-quiet" onClick={onCancel}>
-            취소
+            닫기
           </button>
-          {onManage ? (
-            <button type="button" className="btn-quiet" onClick={onManage}>
-              {personas.length === 0 ? "프로필 만들기" : manageLabel}
-            </button>
-          ) : null}
           {onSkip && skipLabel ? (
             <button type="button" className="btn-quiet" onClick={onSkip}>
               {skipLabel}

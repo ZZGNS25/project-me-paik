@@ -326,8 +326,15 @@ body {
   font-size: 0.75rem;
 }
 
+.sheet-foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 1.1rem;
+}
+
 .sheet-close {
-  margin-top: 1.1rem;
   width: 100%;
   border: 1px solid rgba(77, 141, 255, 0.16);
   border-radius: 14px;
@@ -336,11 +343,15 @@ body {
   color: var(--ink-soft);
 }
 
+.sheet-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .me-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  margin-bottom: 0.55rem;
   border: 1px solid rgba(77, 141, 255, 0.22);
   border-radius: 999px;
   background: rgba(12, 16, 24, 0.72);
@@ -1176,9 +1187,89 @@ button.chat-speaker.is-me {
 
 .persona-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 0.5rem;
   align-items: center;
+}
+
+.persona-add {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid rgba(77, 141, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(12, 16, 24, 0.55);
+  padding: 0.7rem 0.75rem;
+  color: var(--ink);
+  font-weight: 600;
+  text-align: left;
+}
+
+.persona-face {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.persona-check {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  width: 0.9rem;
+  height: 0.9rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #7c6af7;
+  color: #fff;
+  font-size: 0.55rem;
+  line-height: 1;
+}
+
+.persona-edit {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--ink-dim);
+  box-shadow: none;
+}
+
+.persona-edit:hover {
+  color: var(--ink);
+}
+
+.persona-desc {
+  display: -webkit-box;
+  margin-top: 0.2rem;
+  overflow: hidden;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.continue-pick {
+  width: 100%;
+  border: 1px solid rgba(77, 141, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(12, 16, 24, 0.55);
+  padding: 0.7rem;
+  text-align: left;
+}
+
+.continue-pick.is-active {
+  border-color: rgba(77, 141, 255, 0.55);
+}
+
+.composer-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.55rem;
 }
 
 .persona-pick {

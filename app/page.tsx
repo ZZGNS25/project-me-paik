@@ -144,7 +144,17 @@ function HomeBody() {
       ) : view === "history" ? (
         <HistoryPanel play={play} />
       ) : view === "profiles" ? (
-        <ProfilesPanel play={play} />
+        <ProfilesPanel
+          play={play}
+          returnHref={
+            searchParams.get("from") === "chat"
+              ? "/chat"
+              : searchParams.get("from") === "setup"
+                ? "/setup"
+                : null
+          }
+          editId={searchParams.get("edit")}
+        />
       ) : (
         <div className="page-scroll mx-auto w-full max-w-3xl px-6 py-10">
           <div className="page-hero">
@@ -261,6 +271,14 @@ function HomeBody() {
           const pending = pendingStart;
           setPendingStart(null);
           goPreset(pending.presetId, pending.next, id);
+        }}
+        onAdd={() => {
+          setPendingStart(null);
+          router.push("/?view=profiles");
+        }}
+        onEdit={(id) => {
+          setPendingStart(null);
+          router.push(`/?view=profiles&edit=${id}`);
         }}
         onSkip={() => {
           const pending = pendingStart;

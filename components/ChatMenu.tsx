@@ -9,20 +9,22 @@ type ChatMenuProps = {
   saveLabel: string;
   saveDisabled?: boolean;
   extrasOpen?: boolean;
-  compressing?: boolean;
-  compressDisabled?: boolean;
-  pinLabel: string;
-  pinDisabled?: boolean;
   editDisabled?: boolean;
-  deleteDisabled?: boolean;
+  deleteLastDisabled?: boolean;
+  compressing?: boolean;
+  pinLabel?: string;
+  pinDisabled?: boolean;
+  compressDisabled?: boolean;
   onPickProfile: () => void;
   onSave: () => void;
   onFresh: () => void;
+  onContinue: () => void;
   onExtras: () => void;
   onCompress: () => void;
   onPin: () => void;
   onEditLast: () => void;
   onDeleteLast: () => void;
+  onDeleteStory: () => void;
   onClose: () => void;
 };
 
@@ -31,20 +33,22 @@ export default function ChatMenu({
   saveLabel,
   saveDisabled = false,
   extrasOpen = false,
-  compressing = false,
-  compressDisabled = false,
-  pinLabel,
-  pinDisabled = false,
   editDisabled = false,
-  deleteDisabled = false,
+  deleteLastDisabled = false,
+  compressing = false,
+  pinLabel = "고정",
+  pinDisabled = false,
+  compressDisabled = false,
   onPickProfile,
   onSave,
   onFresh,
+  onContinue,
   onExtras,
   onCompress,
   onPin,
   onEditLast,
   onDeleteLast,
+  onDeleteStory,
   onClose,
 }: ChatMenuProps) {
   const [mounted, setMounted] = useState(false);
@@ -78,7 +82,7 @@ export default function ChatMenu({
         <button type="button" className="sheet-row" onClick={onPickProfile}>
           <span>
             <span className="sheet-row-title">대화 프로필</span>
-            <span className="sheet-row-hint">미리 만든 나 중에서 고릅니다.</span>
+            <span className="sheet-row-hint">목록에서 나를 고릅니다.</span>
           </span>
           <span className="sheet-row-value">
             {profileName}
@@ -88,17 +92,15 @@ export default function ChatMenu({
         <button type="button" className="sheet-row" onClick={onFresh}>
           <span>
             <span className="sheet-row-title">새로하기</span>
-            <span className="sheet-row-hint">지금 대화를 저장할지 묻습니다.</span>
+            <span className="sheet-row-hint">같은 세계로 대화를 처음부터 다시 엽니다.</span>
           </span>
         </button>
-        <button
-          type="button"
-          className="sheet-row"
-          disabled={saveDisabled}
-          onClick={onSave}
-        >
-          <span className="sheet-row-title">저장</span>
-          <span className="sheet-row-value">{saveLabel}</span>
+        <button type="button" className="sheet-row" onClick={onContinue}>
+          <span>
+            <span className="sheet-row-title">이어하기</span>
+            <span className="sheet-row-hint">남긴 대화를 골라 이어갑니다.</span>
+          </span>
+          <span className="sheet-row-value">›</span>
         </button>
         <ShareButton align="row" />
         <button type="button" className="sheet-row" onClick={onExtras}>
@@ -116,7 +118,7 @@ export default function ChatMenu({
         >
           <span>
             <span className="sheet-row-title">압축</span>
-            <span className="sheet-row-hint">지난 장면을 요약으로 남깁니다.</span>
+            <span className="sheet-row-hint">앞선 장면을 요약으로 남깁니다.</span>
           </span>
           <span className="sheet-row-value">{compressing ? "압축 중…" : ""}</span>
         </button>
@@ -128,9 +130,9 @@ export default function ChatMenu({
         >
           <span>
             <span className="sheet-row-title">고정</span>
-            <span className="sheet-row-hint">마지막 턴을 잊지 않게 둡니다.</span>
+            <span className="sheet-row-hint">마지막 턴을 기억에 남깁니다.</span>
           </span>
-          <span className="sheet-row-value">{pinLabel === "고정됨" ? "고정됨" : ""}</span>
+          <span className="sheet-row-value">{pinLabel === "고정" ? "" : pinLabel}</span>
         </button>
         <button
           type="button"
@@ -143,14 +145,34 @@ export default function ChatMenu({
         <button
           type="button"
           className="sheet-row is-danger"
-          disabled={deleteDisabled}
+          disabled={deleteLastDisabled}
           onClick={onDeleteLast}
         >
           <span className="sheet-row-title">마지막 턴 삭제</span>
         </button>
-        <button type="button" className="sheet-close" onClick={onClose}>
-          닫기
+        <button
+          type="button"
+          className="sheet-row is-danger"
+          onClick={onDeleteStory}
+        >
+          <span>
+            <span className="sheet-row-title">이야기 삭제</span>
+            <span className="sheet-row-hint">이 세계와 대화를 목록에서 지웁니다.</span>
+          </span>
         </button>
+        <div className="sheet-foot">
+          <button
+            type="button"
+            className="sheet-close"
+            disabled={saveDisabled}
+            onClick={onSave}
+          >
+            {saveLabel || "지금 남기기"}
+          </button>
+          <button type="button" className="sheet-close" onClick={onClose}>
+            닫기
+          </button>
+        </div>
       </div>
     </div>,
     document.body,

@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+:root {
+  --background: #14110e;
+  --foreground: #f3e6d4;
+  --paper: #1c1814;
+  --paper-2: #241e18;
+  --ink: #f3e6d4;
+  --ink-soft: #cbbba6;
+  --ink-dim: #8a7a68;
+  --amber: #d4a574;
+  --amber-soft: #e6c39a;
+  --line: rgba(212, 165, 116, 0.18);
+  --danger: #e07a6a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans-kr);
+  --font-serif: var(--font-serif-kr);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans-kr), system-ui, sans-serif;
+}
+
+.font-serif {
+  font-family: var(--font-serif-kr), serif;
+}
+
+.paper-bg {
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(212, 165, 116, 0.12), transparent 60%),
+    var(--background);
+}
+
+.paper-panel,
+.paper-card {
+  background: linear-gradient(180deg, var(--paper-2), var(--paper));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.label-caps {
+  color: var(--amber);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.mono-readout {
+  font-variant-numeric: tabular-nums;
+}
+
+.field-input {
+  margin-top: 0.45rem;
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0.7rem 0.85rem;
+  color: var(--ink);
+  outline: none;
+}
+
+.field-input:focus {
+  border-color: rgba(212, 165, 116, 0.55);
+}
+
+.btn-primary,
+.btn-secondary {
+  border-radius: 999px;
+  padding: 0.75rem 1.15rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: opacity 0.15s ease;
+}
+
+.btn-primary {
+  background: var(--amber);
+  color: #2a1d12;
+}
+
+.btn-secondary {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.ghost-link {
+  color: var(--amber-soft);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.alert-error {
+  border-radius: 10px;
+  background: rgba(224, 122, 106, 0.12);
+  padding: 0.65rem 0.8rem;
+  color: var(--danger);
+  font-size: 0.8rem;
+}
+
+.bubble-user,
+.bubble-model {
+  border-radius: 16px;
+  padding: 0.75rem 0.9rem;
+  line-height: 1.55;
+}
+
+.bubble-user {
+  background: rgba(212, 165, 116, 0.16);
+}
+
+.bubble-model {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+}
+
+.narration {
+  color: var(--ink-dim);
+  font-style: italic;
+  line-height: 1.65;
+}
+
+.fallback-box {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.8rem;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}

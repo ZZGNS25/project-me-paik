@@ -25,7 +25,7 @@ export default function AuthButton() {
         </span>
         <button
           type="button"
-          className="ghost-link"
+          className="btn-quiet"
           onClick={auth.signOut}
           disabled={auth.busy}
         >
@@ -39,7 +39,7 @@ export default function AuthButton() {
     <div className="text-right">
       <button
         type="button"
-        className="ghost-link"
+        className="btn-primary"
         onClick={auth.signInWithGoogle}
         disabled={auth.busy}
       >

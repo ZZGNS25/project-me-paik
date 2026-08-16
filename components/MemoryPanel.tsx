@@ -176,7 +176,7 @@ function PinRow({
       {onRemove ? (
         <button
           type="button"
-          className="ghost-link is-danger shrink-0 pt-2"
+          className="btn-danger shrink-0"
           onClick={() => onRemove(pin.id)}
         >
           삭제

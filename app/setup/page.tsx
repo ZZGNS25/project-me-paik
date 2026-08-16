@@ -328,7 +328,7 @@ function SetupBody() {
                   />
                   <button
                     type="button"
-                    className="ghost-link mt-2"
+                    className="btn-quiet mt-2"
                     onClick={play.resetForbidden}
                   >
                     자동으로 다시 채우기
@@ -375,10 +375,12 @@ function SetupBody() {
                   <CharField
                     label="유저 설정"
                     multiline
+                    rows={6}
                     value={play.state.userPersona.setting}
                     max={FIELD_LIMITS.userSetting}
                     onChange={(value) => play.updateUser("setting", value)}
-                    placeholder="나는 누구인지"
+                    placeholder="나는 누구인지, 관계, 숨기는 것"
+                    hint="캐릭터 칸을 줄인 만큼 여기에 더 적을 수 있습니다."
                   />
                 </div>
               </div>
@@ -390,12 +392,12 @@ function SetupBody() {
                 <CharField
                   label="세계관"
                   multiline
-                  rows={7}
+                  rows={9}
                   value={play.state.worldSetting}
                   max={FIELD_LIMITS.worldSetting}
                   onChange={play.setWorldSetting}
                   placeholder={WORLD_PLACEHOLDER}
-                  hint="세계관은 요약에 넣지 않고, 매 턴 그대로 주입됩니다."
+                  hint="세계관은 요약에 넣지 않고, 매 턴 그대로 주입됩니다. 규칙과 지명을 여기 모아 두세요."
                 />
                 <CharField
                   label="프롤로그"

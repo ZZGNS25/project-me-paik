@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 import AvatarCircle from "@/components/AvatarCircle";
 import MarkupText from "@/components/MarkupText";
 import PrologueCard from "@/components/PrologueCard";
-import { parseModelReply } from "@/lib/parseMessage";
-import type { ChatMessage, ParsedLine } from "@/lib/types";
+import { isUserSpeaker, parseModelReply } from "@/lib/parseMessage";
+import type { ChatMessage } from "@/lib/types";
 
 type ChatLogProps = {
   messages: ChatMessage[];
@@ -65,17 +65,22 @@ export default function ChatLog({
         {groupTurns(messages).map((turn) => (
           <div key={turn.user.id} className="chat-thread">
             {turn.user.role === "user" ? (
-              <UserBlock
-                text={turn.user.content}
-                photo={userPhoto}
-                name={userName}
+              <PlayLines
+                content={turn.user.content}
+                characterName={characterName}
+                characterPhoto={characterPhoto}
+                userName={userName}
+                userPhoto={userPhoto}
+                fromUser
               />
             ) : null}
             {turn.model ? (
-              <ModelBlock
+              <PlayLines
                 content={turn.model.content}
-                photo={characterPhoto}
-                name={characterName}
+                characterName={characterName}
+                characterPhoto={characterPhoto}
+                userName={userName}
+                userPhoto={userPhoto}
               />
             ) : null}
             {showActions && !pendingUserText && !streamingText ? (
@@ -83,7 +88,7 @@ export default function ChatLog({
                 {onTruncateFrom ? (
                   <button
                     type="button"
-                    className="ghost-link is-danger"
+                    className="btn-danger"
                     disabled={actionsDisabled}
                     onClick={() => onTruncateFrom(turn.user.id)}
                   >
@@ -93,7 +98,7 @@ export default function ChatLog({
                 {onRegenerate && turn.user.role === "user" ? (
                   <button
                     type="button"
-                    className="ghost-link"
+                    className="btn-quiet"
                     disabled={actionsDisabled}
                     onClick={() => onRegenerate(turn.user.id)}
                   >
@@ -103,7 +108,7 @@ export default function ChatLog({
                 {onPinTurn ? (
                   <button
                     type="button"
-                    className="ghost-link"
+                    className="btn-quiet"
                     disabled={actionsDisabled}
                     onClick={() => onPinTurn(turn.user, turn.model)}
                   >
@@ -115,13 +120,22 @@ export default function ChatLog({
           </div>
         ))}
         {pendingUserText ? (
-          <UserBlock text={pendingUserText} photo={userPhoto} name={userName} />
+          <PlayLines
+            content={pendingUserText}
+            characterName={characterName}
+            characterPhoto={characterPhoto}
+            userName={userName}
+            userPhoto={userPhoto}
+            fromUser
+          />
         ) : null}
         {streamingText ? (
-          <ModelBlock
+          <PlayLines
             content={streamingText}
-            photo={characterPhoto}
-            name={characterName}
+            characterName={characterName}
+            characterPhoto={characterPhoto}
+            userName={userName}
+            userPhoto={userPhoto}
             streaming
           />
         ) : pendingUserText ? (
@@ -150,99 +164,77 @@ function groupTurns(messages: ChatMessage[]) {
   return turns;
 }
 
-function splitLines(lines: ParsedLine[]) {
-  return {
-    narrations: lines.filter((line) => line.kind === "narration"),
-    speeches: lines.filter((line) => line.kind !== "narration"),
-  };
+function samePerson(a?: string, b?: string) {
+  return Boolean(a?.trim() && b?.trim() && a.trim() === b.trim());
 }
 
-function joinTexts(lines: ParsedLine[]) {
-  return lines
-    .map((line) => line.text)
-    .filter(Boolean)
-    .join("\n");
-}
-
-function UserBlock({
-  text,
-  photo,
-  name,
-}: {
-  text: string;
-  photo?: string;
-  name?: string;
-}) {
-  const { narrations, speeches } = splitLines(parseModelReply(text));
-  const scene = joinTexts(narrations);
-  const speech = joinTexts(speeches);
-
-  return (
-    <div className="appear chat-turn is-user">
-      {scene ? (
-        <p className="scene-narration is-user">
-          <MarkupText text={scene} />
-        </p>
-      ) : null}
-      {speech ? (
-        <div className="chat-speech is-user">
-          <div className="bubble-user">
-            <p className="whitespace-pre-wrap">
-              <MarkupText text={speech} />
-            </p>
-          </div>
-          <AvatarCircle src={photo} name={name || "나"} size="sm" />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function ModelBlock({
+function PlayLines({
   content,
-  photo,
-  name,
+  characterName,
+  characterPhoto,
+  userName,
+  userPhoto,
+  fromUser = false,
   streaming = false,
 }: {
   content: string;
-  photo?: string;
-  name?: string;
+  characterName?: string;
+  characterPhoto?: string;
+  userName?: string;
+  userPhoto?: string;
+  fromUser?: boolean;
   streaming?: boolean;
 }) {
   const lines = parseModelReply(content);
-  const { narrations, speeches } = splitLines(lines);
   const last = lines[lines.length - 1];
-  const scene = joinTexts(narrations);
-  const speech = joinTexts(speeches);
-  const speechKind = speeches.some((line) => line.kind === "fallback")
-    ? "fallback-box"
-    : "bubble-model";
 
   return (
-    <div className="appear chat-turn">
-      {scene ? (
-        <p
-          className={`scene-narration ${
-            streaming && last?.kind === "narration" ? "is-streaming" : ""
-          }`}
-        >
-          <MarkupText text={scene} />
-        </p>
-      ) : null}
-      {speech ? (
-        <div className="chat-speech">
-          <AvatarCircle src={photo} name={name} size="sm" />
-          <div
-            className={`${speechKind} ${
-              streaming && last?.kind !== "narration" ? "is-streaming" : ""
-            }`}
-          >
-            <p className="whitespace-pre-wrap">
-              <MarkupText text={speech} />
+    <div className="appear chat-turn-stack">
+      {lines.map((line, index) => {
+        const live = streaming && line === last;
+        if (line.kind === "narration") {
+          return (
+            <p key={index} className={`scene-narration ${live ? "is-streaming" : ""}`}>
+              <MarkupText text={line.text} />
             </p>
+          );
+        }
+
+        const speaker = line.kind === "speech" ? line.name : "";
+        const mine =
+          line.kind === "speech" ? isUserSpeaker(speaker, userName) : fromUser;
+        const photo = mine
+          ? userPhoto
+          : samePerson(speaker, characterName)
+            ? characterPhoto
+            : "";
+        const label = mine ? userName || "나" : speaker || characterName;
+
+        return (
+          <div
+            key={index}
+            className={`chat-turn ${mine ? "is-user" : ""}`}
+          >
+            <div className={`chat-speech ${mine ? "is-user" : ""}`}>
+              {mine ? null : <AvatarCircle src={photo} name={label} size="sm" />}
+              <div
+                className={`${
+                  mine
+                    ? "bubble-user"
+                    : line.kind === "fallback"
+                      ? "fallback-box"
+                      : "bubble-model"
+                } ${live ? "is-streaming" : ""}`}
+              >
+                <p className="whitespace-pre-wrap">
+                  <MarkupText text={line.text} />
+                </p>
+              </div>
+              {mine ? <AvatarCircle src={photo} name={label || "나"} size="sm" /> : null}
+            </div>
           </div>
-        </div>
-      ) : null}
+        );
+      })}
     </div>
   );
 }

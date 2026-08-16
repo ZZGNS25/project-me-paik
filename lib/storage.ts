@@ -1,9 +1,14 @@
-import { createEmptyPlayState, createEmptySetting, createEmptyStore } from "./constants";
+import {
+  FIELD_LIMITS,
+  STORAGE_KEY,
+  createEmptyPlayState,
+  createEmptySetting,
+  createEmptyStore,
+} from "./constants";
 import { buildForbidden } from "./forbidden";
 import { normalizePins } from "./memory";
 import { WORLD_PRESETS } from "./presets";
 import type { AppStore, PlayState, SettingRecord } from "./types";
-import { STORAGE_KEY } from "./constants";
 
 let lastSaved = "";
 
@@ -33,16 +38,24 @@ function applyForbidden(record: SettingRecord): SettingRecord {
     ...record,
     prologue: record.prologue ?? "",
     storyPins: normalizePins(record.storyPins),
+    worldSetting: clip(record.worldSetting ?? "", FIELD_LIMITS.worldSetting),
     userPersona: {
       ...record.userPersona,
       photo: record.userPersona.photo ?? "",
+      setting: clip(record.userPersona.setting ?? "", FIELD_LIMITS.userSetting),
     },
     character: {
       ...record.character,
       photo: record.character.photo ?? "",
+      speechStyle: clip(record.character.speechStyle ?? "", FIELD_LIMITS.speechStyle),
+      appearance: clip(record.character.appearance ?? "", FIELD_LIMITS.appearance),
+      openingSituation: clip(
+        record.character.openingSituation ?? "",
+        FIELD_LIMITS.openingSituation,
+      ),
       forbiddenManual,
       forbidden: forbiddenManual
-        ? record.character.forbidden
+        ? clip(record.character.forbidden, FIELD_LIMITS.forbidden)
         : buildForbidden({
             name: record.character.name,
             speechStyle: record.character.speechStyle,

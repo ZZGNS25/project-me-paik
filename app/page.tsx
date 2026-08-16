@@ -10,6 +10,7 @@ import PageShell from "@/components/PageShell";
 import ProfileCard from "@/components/ProfileCard";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { deletePlayFromCloud } from "@/lib/cloud";
 import { withWaGwa } from "@/lib/korean";
 import type { SettingRecord } from "@/lib/types";
 
@@ -68,6 +69,18 @@ function HomeBody() {
     router.push("/chat");
   }
 
+  async function removeStory(setting: SettingRecord) {
+    if (!window.confirm("이 이야기를 지울까요?")) return;
+    if (setting.cloudSessionId) {
+      try {
+        await deletePlayFromCloud(setting.cloudSessionId);
+      } catch {
+        // 로컬은 지운다.
+      }
+    }
+    play.deleteSetting(setting.id);
+  }
+
   const stories = play.settings.filter((item) => item.character.name.trim());
   const ongoing = stories.filter((item) => item.chatLog.length > 0);
   const notStarted = stories.filter((item) => item.chatLog.length === 0);
@@ -117,6 +130,15 @@ function HomeBody() {
                     >
                       대화 이어가기
                     </button>
+                    {play.settings.length > 1 ? (
+                      <button
+                        type="button"
+                        className="btn-danger"
+                        onClick={() => void removeStory(item)}
+                      >
+                        삭제
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -152,6 +174,15 @@ function HomeBody() {
                     >
                       대화 시작
                     </button>
+                    {play.settings.length > 1 ? (
+                      <button
+                        type="button"
+                        className="btn-danger"
+                        onClick={() => void removeStory(item)}
+                      >
+                        삭제
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -165,13 +196,22 @@ function HomeBody() {
             </p>
           ) : null}
 
-          <button
-            type="button"
-            className="btn-secondary mt-8 w-full"
-            onClick={() => router.push("/setup")}
-          >
-            설정으로
-          </button>
+          <div className="mt-8 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => router.push(`/setup?new=${Date.now()}`)}
+            >
+              새 이야기
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => router.push("/setup")}
+            >
+              설정으로
+            </button>
+          </div>
         </div>
       )}
     </AppFrame>

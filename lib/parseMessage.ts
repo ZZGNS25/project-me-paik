@@ -25,6 +25,16 @@ export function splitItalics(text: string): InlinePart[] {
   return parts.length > 0 ? parts : [{ text }];
 }
 
+const USER_SPEAKERS = new Set(["나", "유저", "me", "user"]);
+
+export function isUserSpeaker(name: string | undefined, userName?: string) {
+  const speaker = name?.trim() ?? "";
+  if (!speaker) return true;
+  if (USER_SPEAKERS.has(speaker.toLowerCase())) return true;
+  const me = userName?.trim() ?? "";
+  return Boolean(me) && speaker === me;
+}
+
 export function parseModelReply(raw: string): ParsedLine[] {
   const lines = raw.split(/\r?\n/);
   const parsed: ParsedLine[] = [];
@@ -52,7 +62,7 @@ export function parseModelReply(raw: string): ParsedLine[] {
       parsed.push({
         kind: "speech",
         name: mention[1].trim(),
-        text: mention[2].trim(),
+        text: unwrapSpeech(mention[2]),
       });
       continue;
     }
@@ -70,7 +80,7 @@ export function parseModelReply(raw: string): ParsedLine[] {
       parsed.push({
         kind: "speech",
         name: speech[1].trim(),
-        text: speech[2].trim(),
+        text: unwrapSpeech(speech[2]),
       });
       continue;
     }
@@ -80,6 +90,12 @@ export function parseModelReply(raw: string): ParsedLine[] {
 
   flushLeftover();
   return mergeSpeech(parsed.length > 0 ? parsed : [{ kind: "fallback", text: raw.trim() }]);
+}
+
+function unwrapSpeech(text: string) {
+  const trimmed = text.trim();
+  const wrapped = trimmed.match(/^\*([^*]+)\*$/);
+  return wrapped ? wrapped[1].trim() : trimmed;
 }
 
 function mergeSpeech(lines: ParsedLine[]): ParsedLine[] {

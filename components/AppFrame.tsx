@@ -62,7 +62,7 @@ export default function AppFrame({ children }: AppFrameProps) {
               <p className="side-account-email">{auth.user.email}</p>
               <button
                 type="button"
-                className="side-item"
+                className="btn-quiet w-full"
                 onClick={() => {
                   void auth.signOut().then(() => router.replace("/"));
                 }}

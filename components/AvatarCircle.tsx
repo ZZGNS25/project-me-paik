@@ -70,7 +70,7 @@ export default function AvatarCircle({
       {src ? (
         <button
           type="button"
-          className="ghost-link avatar-clear"
+          className="btn-quiet avatar-clear"
           onClick={() => onChange?.("")}
         >
           지우기

@@ -27,6 +27,7 @@ export type SessionSummary = {
   id: string;
   characterName: string;
   oneLiner: string;
+  photo: string;
   turnCount: number;
   updatedAt: string;
 };
@@ -120,7 +121,7 @@ export async function listPlaySessions(userId: string): Promise<SessionSummary[]
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("eorol_play_sessions")
-    .select("id, character_name, character_one_liner, turn_count, updated_at")
+    .select("id, character_name, character_one_liner, character_photo, turn_count, updated_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 
@@ -130,9 +131,20 @@ export async function listPlaySessions(userId: string): Promise<SessionSummary[]
     id: row.id,
     characterName: row.character_name || "이름 없음",
     oneLiner: row.character_one_liner,
+    photo: row.character_photo ?? "",
     turnCount: row.turn_count,
     updatedAt: row.updated_at ?? "",
   }));
+}
+
+export async function deletePlayFromCloud(sessionId: string) {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("eorol_play_sessions")
+    .delete()
+    .eq("id", sessionId);
+
+  if (error) throw new Error(error.message);
 }
 
 export async function loadPlayById(sessionId: string) {

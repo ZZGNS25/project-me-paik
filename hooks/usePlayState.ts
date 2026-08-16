@@ -413,40 +413,53 @@ export function usePlayState() {
     });
   }
 
-  function addFromCloud(partial: Partial<PlayState> & { cloudSessionId: string }) {
-    updateStore((prev) => {
-      const existing = prev.settings.find(
-        (item) => item.cloudSessionId === partial.cloudSessionId,
-      );
-      const mapped: SettingRecord = withForbidden({
-        ...(existing ?? createEmptySetting(newId())),
-        ...partial,
-        id: existing?.id ?? newId(),
-        storyPins: normalizePins(partial.storyPins),
-        shortTermBuffer: partial.shortTermBuffer ?? syncBuffer(partial.chatLog ?? []),
-        cloudSessionId: partial.cloudSessionId,
-        updatedAt: new Date().toISOString(),
-      });
+  function mergeCloudPlay(
+    prev: AppStore,
+    partial: Partial<PlayState> & { cloudSessionId: string },
+    select = false,
+  ) {
+    const existing = prev.settings.find(
+      (item) => item.cloudSessionId === partial.cloudSessionId,
+    );
+    const mapped: SettingRecord = withForbidden({
+      ...(existing ?? createEmptySetting(newId())),
+      ...partial,
+      id: existing?.id ?? newId(),
+      storyPins: normalizePins(partial.storyPins),
+      shortTermBuffer: partial.shortTermBuffer ?? syncBuffer(partial.chatLog ?? []),
+      cloudSessionId: partial.cloudSessionId,
+      updatedAt: new Date().toISOString(),
+    });
 
-      if (existing) {
-        return {
-          ...prev,
-          settings: prev.settings.map((item) =>
-            item.id === existing.id ? mapped : item,
-          ),
-        };
-      }
-
-      const blank =
-        prev.settings.length === 1 &&
-        !prev.settings[0].character.name.trim() &&
-        prev.settings[0].chatLog.length === 0;
+    if (existing) {
       return {
         ...prev,
-        currentSettingId: blank ? mapped.id : prev.currentSettingId,
-        settings: blank ? [mapped] : [...prev.settings, mapped],
+        currentSettingId: select ? mapped.id : prev.currentSettingId,
+        settings: prev.settings.map((item) =>
+          item.id === existing.id ? mapped : item,
+        ),
       };
-    });
+    }
+
+    const blank =
+      prev.settings.length === 1 &&
+      !prev.settings[0].character.name.trim() &&
+      prev.settings[0].chatLog.length === 0;
+    return {
+      ...prev,
+      currentSettingId: select || blank ? mapped.id : prev.currentSettingId,
+      settings: blank ? [mapped] : [...prev.settings, mapped],
+    };
+  }
+
+  function addFromCloud(partial: Partial<PlayState> & { cloudSessionId: string }) {
+    updateStore((prev) => mergeCloudPlay(prev, partial));
+  }
+
+  function openFromCloud(partial: Partial<PlayState> & { cloudSessionId: string }) {
+    const next = mergeCloudPlay(store, partial, true);
+    saveStore(next);
+    setStore(next);
   }
 
   function hydrateFromCloud(partial: Partial<PlayState>) {
@@ -551,6 +564,17 @@ export function usePlayState() {
     });
   }
 
+  function unlinkCloudSession(sessionId: string) {
+    updateStore((prev) => ({
+      ...prev,
+      settings: prev.settings.map((item) =>
+        item.cloudSessionId === sessionId
+          ? { ...item, cloudSessionId: null, updatedAt: new Date().toISOString() }
+          : item,
+      ),
+    }));
+  }
+
   function deleteSetting(id: string) {
     updateStore((prev) => {
       if (prev.settings.length <= 1) return prev;
@@ -592,12 +616,14 @@ export function usePlayState() {
     removeStoryPin,
     importSettings,
     addFromCloud,
+    openFromCloud,
     hydrateFromCloud,
     setCloudSessionId,
     startNewStory,
     createSetting,
     applyPreset,
     selectSetting,
+    unlinkCloudSession,
     deleteSetting,
   };
 }

@@ -128,14 +128,14 @@ function ChatBody() {
           <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
-              className="top-action"
+              className="btn-quiet"
               onClick={() => setExtrasOpen((open) => !open)}
             >
               {extrasOpen ? "닫기" : "인물 추가"}
             </button>
             <button
               type="button"
-              className={`top-action ${cloud.status === "error" ? "is-danger" : ""}`}
+              className={cloud.status === "error" ? "btn-danger" : "btn-quiet"}
               onClick={() => void cloud.saveNow()}
               disabled={cloud.status === "saving"}
               title={cloud.error || "이야기가 바뀌면 클라우드에 자동으로 남깁니다."}
@@ -178,7 +178,7 @@ function ChatBody() {
               <div className="chat-actions">
                 <button
                   type="button"
-                  className="ghost-link"
+                  className="btn-quiet"
                   disabled={Boolean(busy)}
                   onClick={() => {
                     const text = play.popLastUserMessage();
@@ -189,7 +189,7 @@ function ChatBody() {
                 </button>
                 <button
                   type="button"
-                  className="ghost-link is-danger"
+                  className="btn-danger"
                   disabled={Boolean(busy)}
                   onClick={play.deleteLastTurn}
                 >
@@ -202,9 +202,9 @@ function ChatBody() {
               onChange={setDraft}
               onSubmit={() => void sendMessage()}
               disabled={Boolean(busy)}
-              placeholder="말을 이어 보세요"
+              placeholder="@나: 내 말  ·  @이름: 그 인물 말"
             />
-            <p className="composer-hint">나레이션 @: · 대사 @이름: · 행동 *이렇게*</p>
+            <p className="composer-hint">@: 장면 · @나: 내 말 · @이름: 그 인물 · *행동*</p>
           </div>
         </div>
       </div>

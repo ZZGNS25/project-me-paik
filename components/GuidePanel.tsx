@@ -18,7 +18,10 @@ export default function GuidePanel() {
         <li>
           적을 때 <strong className="text-[var(--ink)]">@:나레이션</strong>,{" "}
           <strong className="text-[var(--ink)]">@이름:대사</strong>,{" "}
-          <strong className="text-[var(--ink)]">*행동*</strong>을 쓸 수 있습니다.
+          <strong className="text-[var(--ink)]">*행동*</strong>을 쓸 수 있습니다.{" "}
+          <strong className="text-[var(--ink)]">@서윤하:</strong>처럼 이름을 붙이면
+          그 인물의 말입니다. 내 말은 <strong className="text-[var(--ink)]">@나:</strong>나
+          이름 없이 적습니다.
         </li>
         <li>
           예전에 하던 이야기는 왼쪽 <strong className="text-[var(--ink)]">이야기</strong>에서

@@ -14,8 +14,10 @@ export function buildPinnedRules(state: PromptState) {
   return `[규칙]
 너는 ${character}의 시점과 행동만 서술한다.
 절대로 ${user}의 대사·감정·행동을 대신 쓰지 않는다.
-유저가 @이름: 으로 쓴 것은 그 인물을 지칭한 말이다.
 유저가 @: 로 쓴 것은 나레이션이다.
+유저가 @이름: 으로 쓴 것은 그 인물의 대사다. ${user}가 한 말이 아니다.
+@${character}: 로 적힌 줄은 ${character}가 이미 말한 것이다. 유저 대사로 바꾸지 마라.
+유저가 @${user}: 또는 이름 없이 쓴 말만 ${user}의 대사다.
 유저가 *이렇게* 쓴 것은 행동·속마음이다.
 나레이션은 차갑고 짧은 반말. ~다/~었다. 합니다·습니다 금지.
 나레이션은 @: 로 시작하는 줄을 4~7개 쓴다. 각 줄은 한 문장.
@@ -38,10 +40,10 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     .slice(-SHORT_TERM_TURNS * 2)
     .map((message) =>
       message.role === "user"
-        ? `유저: ${message.content}`
-        : `모델: ${message.content}`,
+        ? `입력:\n${message.content}`
+        : `응답:\n${message.content}`,
     )
-    .join("\n");
+    .join("\n\n");
 
   const cast = state.castNotes
     .filter((note) => note.name.trim() || note.note.trim())
@@ -52,7 +54,7 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     buildPinnedRules(state),
     "",
     "[세계관]",
-    clip(state.worldSetting, started ? 900 : 1600) || "(없음)",
+    clip(state.worldSetting, started ? 1200 : 2000) || "(없음)",
     "",
     "[프롤로그]",
     started
@@ -65,22 +67,22 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     `이름: ${state.character.name}`,
     state.character.oneLiner.trim() ? `한 줄: ${state.character.oneLiner}` : "",
     state.character.speechStyle.trim()
-      ? `말투: ${clip(state.character.speechStyle, 240)}`
+      ? `말투: ${clip(state.character.speechStyle, 200)}`
       : "",
     state.character.appearance.trim()
-      ? `외형: ${clip(state.character.appearance, started ? 160 : 400)}`
+      ? `외형: ${clip(state.character.appearance, started ? 160 : 300)}`
       : "",
     state.character.forbidden.trim()
       ? `금지: ${clip(state.character.forbidden, 400)}`
       : "",
     !started && state.character.openingSituation.trim()
-      ? `시작 상황: ${clip(state.character.openingSituation, 500)}`
+      ? `시작 상황: ${clip(state.character.openingSituation, 200)}`
       : "",
     "",
     "[유저]",
     `이름: ${state.userPersona.name || "유저"}`,
     state.userPersona.setting.trim()
-      ? clip(state.userPersona.setting, started ? 180 : 400)
+      ? clip(state.userPersona.setting, started ? 360 : 800)
       : "",
     "",
     "[등장인물]",
@@ -101,6 +103,7 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     "",
     "[유저 말]",
     userText,
+    "위 입력의 @이름: 줄은 그 인물이 한 말이다. 유저 대사로 읽지 마라.",
     !started && state.prologue.trim()
       ? "\n프롤로그 직후 장면을 @:나레이션 4~7줄과 @이름:대사 3~6줄로 충분히 보여라."
       : "",

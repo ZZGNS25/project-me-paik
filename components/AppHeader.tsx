@@ -20,7 +20,7 @@ export default function AppHeader({
         </h1>
       </div>
       {right ?? (
-        <Link href="/" className="ghost-link">
+        <Link href="/" className="btn-quiet">
           처음으로
         </Link>
       )}

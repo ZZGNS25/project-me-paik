@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import ProfileCard from "@/components/ProfileCard";
 import { useAuth } from "@/hooks/useAuth";
 import type { PlayController } from "@/hooks/usePlayState";
-import { listPlaySessions, loadPlayById, type SessionSummary } from "@/lib/cloud";
+import {
+  deletePlayFromCloud,
+  listPlaySessions,
+  loadPlayById,
+  type SessionSummary,
+} from "@/lib/cloud";
 
 export default function HistoryPanel({ play }: { play: PlayController }) {
   const router = useRouter();
@@ -28,8 +33,11 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
     setError("");
     try {
       const loaded = await loadPlayById(id);
-      if (!loaded) throw new Error("세션을 찾지 못했습니다.");
-      play.hydrateFromCloud(loaded);
+      if (!loaded?.cloudSessionId) throw new Error("세션을 찾지 못했습니다.");
+      play.openFromCloud({
+        ...loaded,
+        cloudSessionId: loaded.cloudSessionId,
+      });
       router.push(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "열기에 실패했습니다.");
@@ -38,7 +46,41 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
     }
   }
 
+  async function deleteSession(id: string) {
+    if (!window.confirm("클라우드에서 이 이야기를 지울까요?")) return;
+    setBusyId(id);
+    setError("");
+    try {
+      await deletePlayFromCloud(id);
+      play.unlinkCloudSession(id);
+      setSessions((current) => current.filter((item) => item.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "삭제에 실패했습니다.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteLocal(id: string, cloudSessionId: string | null) {
+    if (!window.confirm("이 브라우저에서 이 이야기를 지울까요?")) return;
+    if (cloudSessionId) {
+      try {
+        await deletePlayFromCloud(cloudSessionId);
+        setSessions((current) => current.filter((item) => item.id !== cloudSessionId));
+      } catch {
+        // 로컬은 지운다. 클라우드가 남아 있으면 아래 목록에서 다시 지울 수 있다.
+      }
+    }
+    play.deleteSetting(id);
+  }
+
   const localStories = play.settings.filter((item) => item.character.name.trim());
+  const localCloudIds = new Set(
+    localStories
+      .map((item) => item.cloudSessionId)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const remoteOnly = sessions.filter((item) => !localCloudIds.has(item.id));
 
   return (
     <div className="page-scroll mx-auto w-full max-w-2xl px-6 py-12">
@@ -102,8 +144,8 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
                 {play.settings.length > 1 ? (
                   <button
                     type="button"
-                    className="ghost-link"
-                    onClick={() => play.deleteSetting(item.id)}
+                    className="btn-danger"
+                    onClick={() => void deleteLocal(item.id, item.cloudSessionId)}
                   >
                     삭제
                   </button>
@@ -119,14 +161,19 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
       <div className="mt-3 space-y-3">
         {sessions.length === 0 ? (
           <p className="text-sm text-[var(--ink-dim)]">
-            채팅 화면에서 클라우드 저장을 누르면 여기에 쌓입니다.
+            로그인한 이야기는 여기에 자동으로 쌓입니다.
+          </p>
+        ) : remoteOnly.length === 0 ? (
+          <p className="text-sm text-[var(--ink-dim)]">
+            클라우드 이야기는 이미 이 브라우저에 있습니다.
           </p>
         ) : (
-          sessions.map((session) => (
+          remoteOnly.map((session) => (
             <div key={session.id} className="history-card">
               <ProfileCard
                 name={session.characterName}
                 oneLiner={session.oneLiner}
+                photo={session.photo}
                 meta={`${session.turnCount}턴${busyId === session.id ? " · 여는 중…" : ""}`}
               />
               <div className="mt-3 flex flex-wrap gap-2">
@@ -145,6 +192,14 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
                   onClick={() => void openSession(session.id, "/chat")}
                 >
                   대화 이어가기
+                </button>
+                <button
+                  type="button"
+                  className="btn-danger"
+                  disabled={busyId === session.id}
+                  onClick={() => void deleteSession(session.id)}
+                >
+                  삭제
                 </button>
               </div>
             </div>

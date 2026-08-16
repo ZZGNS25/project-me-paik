@@ -18,7 +18,7 @@ export default function CastEditor({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="label-caps">등장인물</p>
-        <button type="button" className="ghost-link" onClick={onAdd}>
+        <button type="button" className="btn-quiet" onClick={onAdd}>
           추가
         </button>
       </div>
@@ -45,7 +45,7 @@ export default function CastEditor({
             />
             <button
               type="button"
-              className="ghost-link self-center"
+              className="btn-danger self-center"
               onClick={() => onRemove(note.id)}
             >
               삭제

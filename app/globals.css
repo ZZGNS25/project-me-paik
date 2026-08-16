@@ -339,11 +339,18 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border: 0;
   border-radius: 999px;
   background: var(--paper-2);
   padding: 0.22rem 0.75rem 0.22rem 0.22rem;
   color: var(--ink);
+}
+
+.me-chip-hit {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
 }
 
 .me-chip .avatar-circle {
@@ -377,14 +384,6 @@ button.chat-speaker.is-me {
 
 .chat-bubbles.is-user {
   align-items: flex-end;
-}
-
-.chat-me-face {
-  display: flex;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
 }
 
 .bubble-user,
@@ -1069,11 +1068,11 @@ button.chat-speaker.is-me {
   color: #8a909a;
 }
 
-.avatar-circle.is-editable {
-  cursor: pointer;
+.avatar-circle.is-zoom {
+  cursor: zoom-in;
 }
 
-.avatar-circle.is-editable:hover {
+.avatar-circle.is-zoom:hover {
   border-color: rgba(255, 255, 255, 0.28);
 }
 
@@ -1084,12 +1083,55 @@ button.chat-speaker.is-me {
   gap: 0.35rem;
 }
 
+.avatar-edit-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.avatar-change,
 .avatar-clear {
   font-size: 0.75rem;
 }
 
+.avatar-edit.is-compact .avatar-change,
 .avatar-edit.is-compact .avatar-clear {
   font-size: 0.7rem;
+}
+
+.photo-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.photo-preview {
+  display: flex;
+  max-width: min(22rem, 100%);
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.photo-preview img {
+  width: min(18rem, 72vw);
+  height: min(18rem, 72vw);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #22262e;
+  object-fit: cover;
+}
+
+.photo-preview p {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .cast-row {
@@ -1125,7 +1167,7 @@ button.chat-speaker.is-me {
 
 .persona-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 0.5rem;
   align-items: center;
   border-bottom: 1px solid var(--line);

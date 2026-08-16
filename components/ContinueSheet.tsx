@@ -58,6 +58,7 @@ export default function ContinueSheet({
                     oneLiner={item.character.oneLiner}
                     photo={item.character.photo}
                     meta={`${item.turnCount}턴`}
+                    zoom={false}
                   />
                 </button>
               </li>

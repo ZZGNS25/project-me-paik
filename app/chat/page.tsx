@@ -22,6 +22,7 @@ import { COMPRESS_EVERY_TURNS } from "@/lib/constants";
 import { requestGenerate, requestGenerateStream } from "@/lib/geminiClient";
 import { recountTurns } from "@/lib/memory";
 import { takePendingMessage } from "@/lib/pending";
+import { STORY_PERSONA_EDIT } from "@/lib/persona";
 import { storyTitle } from "@/lib/storyTitle";
 import type { ChatMessage, PlayState } from "@/lib/types";
 
@@ -274,21 +275,23 @@ function ChatBody() {
           <div className="mx-auto w-full max-w-4xl">
             {error ? <p className="alert-error mb-3">{error}</p> : null}
             <div className="composer-tools">
-              <button
-                type="button"
-                className="me-chip"
-                onClick={openPersonaPicker}
-                title="이 이야기의 나"
-              >
+              <div className="me-chip">
                 <AvatarCircle
                   src={play.state.userPersona.photo}
                   name={meName}
                   size="sm"
                 />
-                <span className="me-chip-name">
-                  {play.state.userPersona.name.trim() || "나"}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  className="me-chip-hit"
+                  onClick={openPersonaPicker}
+                  title="이 이야기의 나"
+                >
+                  <span className="me-chip-name">
+                    {play.state.userPersona.name.trim() || "나"}
+                  </span>
+                </button>
+              </div>
               <button
                 type="button"
                 className="icon-btn"
@@ -412,10 +415,7 @@ function ChatBody() {
               setPickingPersona(false);
             }}
             onEdit={(id) => goProfile(id)}
-            onEditCurrent={() => {
-              setPickingPersona(false);
-              router.push("/setup");
-            }}
+            onEditCurrent={() => goProfile(STORY_PERSONA_EDIT)}
             onAdd={() => goProfile()}
             onCancel={() => setPickingPersona(false)}
           />

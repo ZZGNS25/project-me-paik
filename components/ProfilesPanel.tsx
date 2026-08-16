@@ -7,7 +7,7 @@ import CharField from "@/components/CharField";
 import { useConfirm } from "@/components/ConfirmDialog";
 import PersonaList from "@/components/PersonaList";
 import { FIELD_LIMITS, PERSONAS_MAX } from "@/lib/constants";
-import { personaTitle } from "@/lib/persona";
+import { personaTitle, STORY_PERSONA_EDIT } from "@/lib/persona";
 import type { PlayController } from "@/hooks/usePlayState";
 import type { SavedPersona } from "@/lib/types";
 
@@ -25,6 +25,21 @@ type ProfilesPanelProps = {
   editId?: string | null;
 };
 
+function storyDraft(play: PlayController) {
+  const setting = play.settings.find((item) => item.id === play.currentSettingId);
+  const linked = setting?.personaId
+    ? play.personas.find((item) => item.id === setting.personaId)
+    : undefined;
+  const user = play.state.userPersona;
+  return {
+    id: linked?.id ?? "",
+    label: linked?.label ?? "",
+    name: user.name,
+    setting: user.setting,
+    photo: user.photo,
+  };
+}
+
 export default function ProfilesPanel({
   play,
   returnHref,
@@ -32,7 +47,9 @@ export default function ProfilesPanel({
 }: ProfilesPanelProps) {
   const router = useRouter();
   const confirm = useConfirm();
+  const [editingNow, setEditingNow] = useState(editId === STORY_PERSONA_EDIT);
   const [draft, setDraft] = useState(() => {
+    if (editId === STORY_PERSONA_EDIT) return storyDraft(play);
     if (!editId) return { ...EMPTY_DRAFT };
     const persona = play.personas.find((item) => item.id === editId);
     if (!persona) return { ...EMPTY_DRAFT };
@@ -44,19 +61,23 @@ export default function ProfilesPanel({
       photo: persona.photo,
     };
   });
-  const editing = Boolean(draft.id);
+  const editing = editingNow || Boolean(draft.id);
   const canSave =
     Boolean(draft.name.trim()) &&
-    (editing || play.personas.length < PERSONAS_MAX);
+    (editingNow || editing || play.personas.length < PERSONAS_MAX);
   const returnLabel = returnHref === "/setup" ? "설정으로" : "이야기로";
 
   function openNew() {
+    setEditingNow(false);
     setDraft({ ...EMPTY_DRAFT });
   }
 
   function openExisting(id: string) {
     const persona = play.personas.find((item) => item.id === id);
     if (!persona) return;
+    const setting = play.settings.find((item) => item.id === play.currentSettingId);
+    if (editingNow && setting?.personaId === id) return;
+    setEditingNow(false);
     setDraft({
       id: persona.id,
       label: persona.label,
@@ -67,6 +88,16 @@ export default function ProfilesPanel({
   }
 
   function save() {
+    if (editingNow) {
+      const id = play.saveStoryPersona({
+        label: draft.label,
+        name: draft.name,
+        setting: draft.setting,
+        photo: draft.photo,
+      });
+      if (id && draft.id !== id) setDraft((current) => ({ ...current, id }));
+      return;
+    }
     play.upsertPersona({
       id: draft.id || undefined,
       label: draft.label,
@@ -104,8 +135,9 @@ export default function ProfilesPanel({
           </button>
         ) : null}
         <p className="mt-3 text-sm text-[var(--ink-dim)]">
-          이야기는 세계와 역할입니다. 프로필은 나와 따로 만들어 두고, 새 이야기를 시작할
-          때 고릅니다. 여기서 고쳐도 이미 진행 중인 대화는 바뀌지 않습니다.
+          {editingNow
+            ? "지금 이 이야기에서 쓰는 나입니다. 저장하면 다음 대사부터 바뀌고, 목록에도 남습니다."
+            : "이야기는 세계와 역할입니다. 프로필은 나와 따로 만들어 두고, 새 이야기를 시작할 때 고릅니다. 여기서 고쳐도 이미 진행 중인 대화는 바뀌지 않습니다."}
         </p>
 
         <section className="mt-8">
@@ -126,7 +158,9 @@ export default function ProfilesPanel({
         </section>
 
         <section className="mt-10 space-y-4">
-          <p className="label-caps">{editing ? "프로필 수정" : "새 프로필"}</p>
+          <p className="label-caps">
+            {editingNow ? "지금 프로필 수정" : editing ? "프로필 수정" : "새 프로필"}
+          </p>
           <div className="flex items-start gap-4">
             <div>
               <p className="text-sm font-medium text-[var(--ink)]">사진</p>

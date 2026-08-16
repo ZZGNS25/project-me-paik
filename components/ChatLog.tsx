@@ -315,18 +315,7 @@ function PlayLines({
                 </div>
               </div>
               {mine ? (
-                onPickMe ? (
-                  <button
-                    type="button"
-                    className="chat-me-face"
-                    onClick={onPickMe}
-                    aria-label="프로필 고르기"
-                  >
-                    <AvatarCircle src={photo} name={label || "나"} size="sm" />
-                  </button>
-                ) : (
-                  <AvatarCircle src={photo} name={label || "나"} size="sm" />
-                )
+                <AvatarCircle src={photo} name={label || "나"} size="sm" />
               ) : null}
             </div>
           </div>

@@ -80,13 +80,13 @@ export default function PersonaPicker({
           <div className="persona-now">
             <p className="label-caps">지금</p>
             <div className="persona-item is-active">
-              <button type="button" className="persona-pick" onClick={onCancel}>
-                <span className="persona-face">
-                  <AvatarCircle src={current.photo} name={nowName} size="sm" />
-                  <span className="persona-check" aria-hidden="true">
-                    ✓
-                  </span>
+              <span className="persona-face">
+                <AvatarCircle src={current.photo} name={nowName} size="sm" />
+                <span className="persona-check" aria-hidden="true">
+                  ✓
                 </span>
+              </span>
+              <button type="button" className="persona-pick" onClick={onCancel}>
                 <span className="min-w-0">
                   <span className="block truncate font-medium">{nowName}</span>
                   {nowSetting ? <span className="persona-desc">{nowSetting}</span> : null}

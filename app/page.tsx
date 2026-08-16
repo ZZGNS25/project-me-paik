@@ -222,16 +222,16 @@ function HomeBody() {
             <div className="cast-grid">
               {WORLD_PRESETS.map((preset) => (
                 <article key={preset.id} className="cast-card">
+                  <AvatarCircle
+                    src={preset.character.photo}
+                    name={preset.character.name}
+                    size="lg"
+                  />
                   <button
                     type="button"
                     className="cast-start"
                     onClick={() => startPreset(preset.id, "/chat")}
                   >
-                    <AvatarCircle
-                      src={preset.character.photo}
-                      name={preset.character.name}
-                      size="lg"
-                    />
                     <p className="cast-world">{preset.label}</p>
                     <h2 className="cast-name">{preset.character.name}</h2>
                     <p className="cast-blurb">{preset.character.oneLiner}</p>

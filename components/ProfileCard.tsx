@@ -12,6 +12,7 @@ type ProfileCardProps = {
   status?: string;
   statusIdle?: boolean;
   size?: "sm" | "md" | "lg";
+  zoom?: boolean;
   onRename?: (title: string) => void;
 };
 
@@ -23,6 +24,7 @@ export default function ProfileCard({
   status,
   statusIdle = false,
   size = "sm",
+  zoom = true,
   onRename,
 }: ProfileCardProps) {
   const [editing, setEditing] = useState(false);
@@ -36,7 +38,7 @@ export default function ProfileCard({
 
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <AvatarCircle src={photo} name={name} size={size} />
+      <AvatarCircle src={photo} name={name} size={size} zoom={zoom} />
       <div className="min-w-0">
         {editing && onRename ? (
           <form

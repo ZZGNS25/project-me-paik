@@ -41,19 +41,19 @@ export default function PersonaList({
         const active = persona.id === activeId;
         return (
           <li key={persona.id} className={`persona-item ${active ? "is-active" : ""}`}>
+            <span className="persona-face">
+              <AvatarCircle
+                src={persona.photo}
+                name={persona.name || persona.label}
+                size="sm"
+              />
+              {active ? (
+                <span className="persona-check" aria-hidden="true">
+                  ✓
+                </span>
+              ) : null}
+            </span>
             <button type="button" className="persona-pick" onClick={() => onPick(persona.id)}>
-              <span className="persona-face">
-                <AvatarCircle
-                  src={persona.photo}
-                  name={persona.name || persona.label}
-                  size="sm"
-                />
-                {active ? (
-                  <span className="persona-check" aria-hidden="true">
-                    ✓
-                  </span>
-                ) : null}
-              </span>
               <span className="min-w-0">
                 <span className="block truncate font-medium">{personaTitle(persona)}</span>
                 <span className="persona-desc">

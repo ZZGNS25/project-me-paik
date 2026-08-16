@@ -192,24 +192,27 @@ function SetupBody() {
           </p>
           <div className="scenario-row mt-4">
             {WORLD_PRESETS.map((preset) => (
-              <button
+              <div
                 key={preset.id}
-                type="button"
                 className={`scenario-pick ${
                   activePreset?.id === preset.id ? "is-active" : ""
                 }`}
-                onClick={() => {
-                  play.applyPreset(preset.id);
-                  setPicked(true);
-                }}
               >
                 <AvatarCircle
                   src={preset.character.photo}
                   name={preset.character.name}
                   size="lg"
                 />
-                <span>{preset.character.name}</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    play.applyPreset(preset.id);
+                    setPicked(true);
+                  }}
+                >
+                  {preset.character.name}
+                </button>
+              </div>
             ))}
             {customSettings.map((setting) => {
               const selected = setting.id === play.currentSettingId;
@@ -218,19 +221,11 @@ function SetupBody() {
                   key={setting.id}
                   className={`scenario-pick ${selected ? "is-active" : ""}`}
                 >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      play.selectSetting(setting.id);
-                      setPicked(true);
-                    }}
-                  >
-                    <AvatarCircle
-                      src={setting.character.photo}
-                      name={setting.character.name}
-                      size="lg"
-                    />
-                  </button>
+                  <AvatarCircle
+                    src={setting.character.photo}
+                    name={setting.character.name}
+                    size="lg"
+                  />
                   {selected ? (
                     <input
                       className="scenario-name"
@@ -285,7 +280,7 @@ function SetupBody() {
                     />
                   </div>
                   <p className="mt-2 text-xs text-[var(--ink-dim)]">
-                    원을 눌러 사진을 바꿀 수 있습니다.
+                    사진을 누르면 크게 봅니다. 바꾸기는 아래에서.
                   </p>
                 </div>
                 <div className="min-w-0 flex-1 space-y-4">

@@ -589,6 +589,80 @@ export function usePlayState() {
     });
   }
 
+  function saveStoryPersona(input: {
+    label: string;
+    name: string;
+    setting: string;
+    photo: string;
+  }) {
+    const name = input.name.trim();
+    if (!name) return;
+    const label = input.label.trim() || name;
+    let savedId: string | null = null;
+
+    updateStore((prev) => {
+      const current =
+        prev.settings.find((item) => item.id === prev.currentSettingId) ??
+        prev.settings[0];
+      if (!current) return prev;
+
+      const personas = prev.personas ?? [];
+      const existing = current.personaId
+        ? personas.find((item) => item.id === current.personaId)
+        : undefined;
+      const nextPersona: SavedPersona | undefined = existing
+        ? {
+            ...existing,
+            label: clip(label, FIELD_LIMITS.personaLabel),
+            name: clip(name, FIELD_LIMITS.userName),
+            setting: clip(input.setting, FIELD_LIMITS.userSetting),
+            photo: input.photo ?? "",
+            updatedAt: new Date().toISOString(),
+          }
+        : personas.length < PERSONAS_MAX
+          ? {
+              id: newId(),
+              label: clip(label, FIELD_LIMITS.personaLabel),
+              name: clip(name, FIELD_LIMITS.userName),
+              setting: clip(input.setting, FIELD_LIMITS.userSetting),
+              photo: input.photo ?? "",
+              updatedAt: new Date().toISOString(),
+            }
+          : undefined;
+      const nextPersonas = nextPersona
+        ? existing
+          ? personas.map((item) =>
+              item.id === existing.id ? nextPersona : item,
+            )
+          : [...personas, nextPersona]
+        : personas;
+      const personaId = nextPersona?.id ?? current.personaId;
+      savedId = personaId;
+
+      return {
+        ...prev,
+        lastPersonaId: personaId ?? prev.lastPersonaId,
+        personas: nextPersonas,
+        settings: prev.settings.map((item) =>
+          item.id === current.id
+            ? {
+                ...item,
+                personaId,
+                userPersona: {
+                  name: clip(name, FIELD_LIMITS.userName),
+                  setting: clip(input.setting, FIELD_LIMITS.userSetting),
+                  photo: input.photo ?? "",
+                },
+                updatedAt: new Date().toISOString(),
+              }
+            : item,
+        ),
+      };
+    });
+
+    return savedId;
+  }
+
   function deletePersona(id: string) {
     updateStore((prev) => ({
       ...prev,
@@ -791,6 +865,7 @@ export function usePlayState() {
     selectSetting,
     upsertPersona,
     applyPersona,
+    saveStoryPersona,
     deletePersona,
     unlinkCloudSession,
     deleteSetting,

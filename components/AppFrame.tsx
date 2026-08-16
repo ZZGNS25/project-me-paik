@@ -9,10 +9,10 @@ import { useStartFresh } from "@/hooks/useStartFresh";
 
 const NAV = [
   { href: "/", view: null, label: "이야기" },
+  { href: "/setup", view: null, label: "시나리오" },
   { href: "/?view=profiles", view: "profiles", label: "프로필" },
   { href: "/?view=history", view: "history", label: "내 기록" },
   { href: "/?view=guide", view: "guide", label: "안내" },
-  { href: "/setup", view: null, label: "설정" },
 ] as const;
 
 type AppFrameProps = {
@@ -42,7 +42,7 @@ export default function AppFrame({ children }: AppFrameProps) {
         </Link>
 
         <button type="button" className="side-new" onClick={fresh.startStory}>
-          새 이야기
+          새 시나리오
         </button>
 
         <nav className="mt-2 flex flex-1 flex-col gap-1">

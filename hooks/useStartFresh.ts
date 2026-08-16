@@ -4,6 +4,16 @@ import { useRouter } from "next/navigation";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useCloudSync, usePlay } from "@/hooks/PlayProvider";
 import { deletePlayFromCloud } from "@/lib/cloud";
+import type { SettingRecord } from "@/lib/types";
+
+function isUnusedBlank(setting: SettingRecord) {
+  return (
+    !setting.character.name.trim() &&
+    !setting.character.photo &&
+    !setting.worldSetting.trim() &&
+    setting.chatLog.length === 0
+  );
+}
 
 export function useStartFresh() {
   const play = usePlay();
@@ -11,42 +21,21 @@ export function useStartFresh() {
   const router = useRouter();
   const confirm = useConfirm();
 
-  function hasOngoing() {
-    return play.state.chatLog.length > 0;
+  function openBlankScenario() {
+    const unused = play.settings.find(isUnusedBlank);
+    if (unused) play.selectSetting(unused.id);
+    else play.createSetting();
+    router.push("/setup?focus=1");
   }
 
-  function runNew(mode: "story" | "chat") {
-    if (mode === "chat" && play.state.character.name.trim()) {
-      play.forkCurrentSetting();
-      router.push("/chat");
-      return;
-    }
-    play.createSetting();
-    router.push("/setup");
+  function startStory() {
+    openBlankScenario();
   }
 
-  function runDiscard(mode: "story" | "chat") {
-    if (mode === "chat" && play.state.character.name.trim()) {
-      const sessionId = play.state.cloudSessionId;
-      play.startNewStory();
-      if (sessionId) {
-        void deletePlayFromCloud(sessionId).catch(() => undefined);
-      }
-      router.push("/chat");
-      return;
-    }
-    play.createSetting();
-    router.push("/setup");
-  }
-
-  function start(mode: "story" | "chat") {
-    if (!hasOngoing()) {
-      if (mode === "chat") {
-        if (play.state.character.name.trim()) router.push("/chat");
-        else router.push("/setup");
-        return;
-      }
-      runNew("story");
+  function startChat() {
+    if (play.state.chatLog.length === 0) {
+      if (play.state.character.name.trim()) router.push("/chat");
+      else router.push("/setup?focus=1");
       return;
     }
 
@@ -57,15 +46,23 @@ export function useStartFresh() {
       altLabel: "지우고 새로",
       run: async () => {
         await cloud.saveNow();
-        runNew(mode);
+        play.forkCurrentSetting();
+        router.push("/chat");
       },
-      runAlt: () => runDiscard(mode),
+      runAlt: () => {
+        const sessionId = play.state.cloudSessionId;
+        play.startNewStory();
+        if (sessionId) {
+          void deletePlayFromCloud(sessionId).catch(() => undefined);
+        }
+        router.push("/chat");
+      },
     });
   }
 
   return {
-    startStory: () => start("story"),
-    startChat: () => start("chat"),
+    startStory,
+    startChat,
     dialog: confirm.dialog,
   };
 }

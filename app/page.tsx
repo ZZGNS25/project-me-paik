@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
 import AvatarCircle from "@/components/AvatarCircle";
@@ -8,7 +8,6 @@ import BrandLockup from "@/components/BrandLockup";
 import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
 import PageShell from "@/components/PageShell";
-import PersonaPicker from "@/components/PersonaPicker";
 import ProfileCard from "@/components/ProfileCard";
 import ProfilesPanel from "@/components/ProfilesPanel";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -16,7 +15,7 @@ import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useStartFresh } from "@/hooks/useStartFresh";
 import { deletePlayFromCloud } from "@/lib/cloud";
-import { WORLD_PRESETS, type PresetId } from "@/lib/presets";
+import { WORLD_PRESETS } from "@/lib/presets";
 import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
 
@@ -28,10 +27,6 @@ function HomeBody() {
   const view = searchParams.get("view");
   const confirm = useConfirm();
   const fresh = useStartFresh();
-  const [pendingStart, setPendingStart] = useState<{
-    presetId: PresetId;
-    next: "/chat" | "/setup";
-  } | null>(null);
 
   if (!auth.ready || !play.ready) {
     return (
@@ -103,38 +98,10 @@ function HomeBody() {
     play.deleteSetting(setting.id);
   }
 
-  const ongoing = play.settings.filter(
-    (item) => item.character.name.trim() && item.chatLog.length > 0,
-  );
-
-  function goPreset(
-    presetId: PresetId,
-    next: "/chat" | "/setup",
-    personaId?: string | null,
-  ) {
-    const preset = WORLD_PRESETS.find((item) => item.id === presetId);
-    if (!preset) return;
-    const unused = play.settings.find(
-      (item) =>
-        item.character.name.trim() === preset.character.name &&
-        item.chatLog.length === 0,
-    );
-    if (unused) {
-      play.selectSetting(unused.id);
-      if (personaId) play.applyPersona(personaId);
-    } else {
-      play.applyPreset(presetId, personaId);
-    }
-    router.push(next);
-  }
-
-  function startPreset(presetId: PresetId, next: "/chat" | "/setup") {
-    if (play.personas.length > 0) {
-      setPendingStart({ presetId, next });
-      return;
-    }
-    goPreset(presetId, next);
-  }
+  const ongoing = play.settings
+    .filter((item) => item.character.name.trim() && item.chatLog.length > 0)
+    .slice()
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
   return (
     <>
@@ -159,9 +126,9 @@ function HomeBody() {
         <div className="page-scroll mx-auto w-full max-w-3xl px-6 py-10">
           <div className="page-hero">
             <p className="label-caps">이야기</p>
-            <h1 className="mt-2 text-3xl font-semibold">어떤 이야기를 이을까요?</h1>
+            <h1 className="mt-2 text-3xl font-semibold">어떤 대화를 이을까요?</h1>
             <p className="mt-3 text-sm text-[var(--ink-dim)]">
-              하던 이야기는 위에서, 새 이야기는 아래 얼굴에서.
+              하던 대화만 모았습니다. 세계와 역할은 시나리오에서 고릅니다.
             </p>
           </div>
 
@@ -178,16 +145,6 @@ function HomeBody() {
                     onRename={(title) => play.renameSetting(item.id, title)}
                   />
                   <div className="story-actions">
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => {
-                        play.selectSetting(item.id);
-                        router.push("/setup");
-                      }}
-                    >
-                      설정
-                    </button>
                     <button
                       type="button"
                       className="btn-primary"
@@ -215,79 +172,35 @@ function HomeBody() {
                 </div>
               ))}
             </section>
-          ) : null}
-
-          <section className="mt-8">
-            <p className="label-caps">시작하기</p>
-            <div className="cast-grid">
-              {WORLD_PRESETS.map((preset) => (
-                <article key={preset.id} className="cast-card">
-                  <AvatarCircle
-                    src={preset.character.photo}
-                    name={preset.character.name}
-                    size="lg"
-                  />
-                  <button
-                    type="button"
-                    className="cast-start"
-                    onClick={() => startPreset(preset.id, "/chat")}
-                  >
-                    <p className="cast-world">{preset.label}</p>
-                    <h2 className="cast-name">{preset.character.name}</h2>
-                    <p className="cast-blurb">{preset.character.oneLiner}</p>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-quiet"
-                    onClick={() => startPreset(preset.id, "/setup")}
-                  >
-                    설정
-                  </button>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <div className="mt-8">
-            <button
-              type="button"
-              className="btn-quiet"
-              onClick={fresh.startStory}
-            >
-              내 세계관으로 만들기
-            </button>
-          </div>
+          ) : (
+            <section className="mt-8 space-y-3">
+              <p className="text-sm text-[var(--ink-dim)]">
+                아직 이은 대화가 없습니다. 시나리오에서 세계를 고르거나, 직접 만들어
+                보세요.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => router.push("/setup")}
+                >
+                  시나리오
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={fresh.startStory}
+                >
+                  새 시나리오
+                </button>
+              </div>
+            </section>
+          )}
         </div>
       )}
     </AppFrame>
     {confirm.dialog}
     {fresh.dialog}
-    {pendingStart ? (
-      <PersonaPicker
-        personas={play.personas}
-        selectedId={play.lastPersonaId}
-        skipLabel="없이 시작"
-        onPick={(id) => {
-          const pending = pendingStart;
-          setPendingStart(null);
-          goPreset(pending.presetId, pending.next, id);
-        }}
-        onAdd={() => {
-          setPendingStart(null);
-          router.push("/?view=profiles");
-        }}
-        onEdit={(id) => {
-          setPendingStart(null);
-          router.push(`/?view=profiles&edit=${id}`);
-        }}
-        onSkip={() => {
-          const pending = pendingStart;
-          setPendingStart(null);
-          goPreset(pending.presetId, pending.next, null);
-        }}
-        onCancel={() => setPendingStart(null)}
-      />
-    ) : null}
     </>
   );
 }

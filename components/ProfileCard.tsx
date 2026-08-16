@@ -14,6 +14,7 @@ type ProfileCardProps = {
   size?: "sm" | "md" | "lg";
   zoom?: boolean;
   onRename?: (title: string) => void;
+  onOpen?: () => void;
 };
 
 export default function ProfileCard({
@@ -26,6 +27,7 @@ export default function ProfileCard({
   size = "sm",
   zoom = true,
   onRename,
+  onOpen,
 }: ProfileCardProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(name);
@@ -66,6 +68,15 @@ export default function ProfileCard({
               setDraft(name);
               setEditing(true);
             }}
+          >
+            {label}
+          </button>
+        ) : onOpen ? (
+          <button
+            type="button"
+            className="story-name-edit"
+            title="이 시나리오"
+            onClick={onOpen}
           >
             {label}
           </button>

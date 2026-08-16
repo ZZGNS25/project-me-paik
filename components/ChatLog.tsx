@@ -22,7 +22,7 @@ type ChatLogProps = {
   onTruncateFrom?: (messageId: string) => void;
   onRegenerate?: (userMessageId: string) => void;
   onPinTurn?: (user: ChatMessage, model?: ChatMessage) => void;
-  onEditLast?: () => void;
+  onEditMessage?: (messageId: string, content: string) => void;
   onPickMe?: () => void;
 };
 
@@ -42,15 +42,19 @@ export default function ChatLog({
   onTruncateFrom,
   onRegenerate,
   onPinTurn,
-  onEditLast,
+  onEditMessage,
   onPickMe,
 }: ChatLogProps) {
   const feedRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const pinToBottom = useRef(true);
   const [away, setAway] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const hasThread = messages.length > 0 || Boolean(pendingUserText);
-  const showActions = Boolean(onTruncateFrom || onRegenerate || onPinTurn || onEditLast);
+  const showActions = Boolean(
+    onTruncateFrom || onRegenerate || onPinTurn || onEditMessage,
+  );
 
   function measure() {
     const el = feedRef.current;
@@ -74,6 +78,17 @@ export default function ChatLog({
     });
   }, [messages, pendingUserText, streamingText]);
 
+  function startEdit(id: string, content: string) {
+    setEditingId(id);
+    setEditDraft(content);
+  }
+
+  function saveEdit() {
+    if (!editingId || !editDraft.trim()) return;
+    onEditMessage?.(editingId, editDraft);
+    setEditingId(null);
+  }
+
   if (!hasThread) {
     return (
       <div className="chat-feed-wrap">
@@ -95,12 +110,15 @@ export default function ChatLog({
       <div className="chat-feed" ref={feedRef} onScroll={measure}>
         <div className="chat-feed-inner">
           {prologue?.trim() ? <PrologueCard text={prologue} compact /> : null}
-          {groupTurns(messages).map((turn, index, turns) => {
-            const last = index === turns.length - 1;
+          {groupTurns(messages).map((turn) => {
+            const model = turn.model;
+            const regenId =
+              turn.user.role === "user" && model ? turn.user.id : undefined;
             return (
             <div key={turn.user.id} className="chat-thread">
               {turn.user.role === "user" ? (
                 <PlayLines
+                  messageId={turn.user.id}
                   content={turn.user.content}
                   characterName={characterName}
                   characterPhoto={characterPhoto}
@@ -108,70 +126,48 @@ export default function ChatLog({
                   userPhoto={userPhoto}
                   castNotes={castNotes}
                   fromUser
+                  editing={editingId === turn.user.id}
+                  editDraft={editDraft}
+                  actionsDisabled={actionsDisabled}
+                  showActions={showActions && !pendingUserText && !streamingText}
                   onPickMe={onPickMe}
+                  onEditDraft={setEditDraft}
+                  onStartEdit={() => startEdit(turn.user.id, turn.user.content)}
+                  onSaveEdit={saveEdit}
+                  onCancelEdit={() => setEditingId(null)}
+                  onPin={onPinTurn ? () => onPinTurn(turn.user, model) : undefined}
+                  onTruncate={
+                    onTruncateFrom ? () => onTruncateFrom(turn.user.id) : undefined
+                  }
                 />
               ) : null}
-              {turn.model ? (
+              {model ? (
                 <PlayLines
-                  content={turn.model.content}
+                  messageId={model.id}
+                  content={model.content}
                   characterName={characterName}
                   characterPhoto={characterPhoto}
                   userName={userName}
                   userPhoto={userPhoto}
                   castNotes={castNotes}
+                  editing={editingId === model.id}
+                  editDraft={editDraft}
+                  actionsDisabled={actionsDisabled}
+                  showActions={showActions && !pendingUserText && !streamingText}
+                  onEditDraft={setEditDraft}
+                  onStartEdit={() => startEdit(model.id, model.content)}
+                  onSaveEdit={saveEdit}
+                  onCancelEdit={() => setEditingId(null)}
+                  onRegenerate={
+                    onRegenerate && regenId
+                      ? () => onRegenerate(regenId)
+                      : undefined
+                  }
+                  onPin={onPinTurn ? () => onPinTurn(turn.user, model) : undefined}
+                  onTruncate={
+                    onTruncateFrom ? () => onTruncateFrom(model.id) : undefined
+                  }
                 />
-              ) : null}
-              {showActions && !pendingUserText && !streamingText ? (
-                <div className="turn-actions">
-                  {last && onEditLast && turn.user.role === "user" ? (
-                    <button
-                      type="button"
-                      className="icon-btn is-tiny"
-                      disabled={actionsDisabled}
-                      onClick={onEditLast}
-                      aria-label="마지막 말 수정"
-                      title="수정"
-                    >
-                      <Icon name="edit" size={15} />
-                    </button>
-                  ) : null}
-                  {onRegenerate && turn.user.role === "user" ? (
-                    <button
-                      type="button"
-                      className="icon-btn is-tiny"
-                      disabled={actionsDisabled}
-                      onClick={() => onRegenerate(turn.user.id)}
-                      aria-label="답 다시 생성"
-                      title="다시 생성"
-                    >
-                      <Icon name="regen" size={15} />
-                    </button>
-                  ) : null}
-                  {onPinTurn ? (
-                    <button
-                      type="button"
-                      className="icon-btn is-tiny"
-                      disabled={actionsDisabled}
-                      onClick={() => onPinTurn(turn.user, turn.model)}
-                      aria-label="사건 고정"
-                      title="고정"
-                    >
-                      <Icon name="pin" size={15} />
-                    </button>
-                  ) : null}
-                  {onTruncateFrom ? (
-                    <button
-                      type="button"
-                      className="icon-btn is-tiny is-danger"
-                      disabled={actionsDisabled}
-                      onClick={() => onTruncateFrom(turn.user.id)}
-                      aria-label="여기부터 삭제"
-                      title="여기부터 삭제"
-                    >
-                      <Icon name="trash" size={15} />
-                    </button>
-                  ) : null}
-                </div>
               ) : null}
             </div>
             );
@@ -243,8 +239,20 @@ function PlayLines({
   castNotes = [],
   fromUser = false,
   streaming = false,
+  editing = false,
+  editDraft = "",
+  actionsDisabled = false,
+  showActions = false,
   onPickMe,
+  onEditDraft,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onRegenerate,
+  onPin,
+  onTruncate,
 }: {
+  messageId?: string;
   content: string;
   characterName?: string;
   characterPhoto?: string;
@@ -253,74 +261,166 @@ function PlayLines({
   castNotes?: CastNote[];
   fromUser?: boolean;
   streaming?: boolean;
+  editing?: boolean;
+  editDraft?: string;
+  actionsDisabled?: boolean;
+  showActions?: boolean;
   onPickMe?: () => void;
+  onEditDraft?: (value: string) => void;
+  onStartEdit?: () => void;
+  onSaveEdit?: () => void;
+  onCancelEdit?: () => void;
+  onRegenerate?: () => void;
+  onPin?: () => void;
+  onTruncate?: () => void;
 }) {
   const lines = parseModelReply(content);
   const last = lines[lines.length - 1];
 
   return (
-    <div className="appear chat-turn-stack">
-      {lines.map((line, index) => {
-        const live = streaming && line === last;
-        if (line.kind === "narration") {
-          return (
-            <p key={index} className={`scene-narration ${live ? "is-streaming" : ""}`}>
-              <MarkupText text={line.text} />
-            </p>
-          );
-        }
+    <div className={`chat-msg ${fromUser ? "is-user" : ""} ${editing ? "is-editing" : ""}`}>
+      {editing ? (
+        <div className={`chat-edit ${fromUser ? "is-user" : ""}`}>
+          <textarea
+            className="chat-edit-box"
+            value={editDraft}
+            rows={6}
+            autoFocus
+            onChange={(event) => onEditDraft?.(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") onCancelEdit?.();
+              if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                event.preventDefault();
+                onSaveEdit?.();
+              }
+            }}
+          />
+          <div className="chat-edit-actions">
+            <button type="button" className="btn-primary" onClick={onSaveEdit}>
+              저장
+            </button>
+            <button type="button" className="btn-quiet" onClick={onCancelEdit}>
+              취소
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="appear chat-turn-stack">
+          {lines.map((line, index) => {
+            const live = streaming && line === last;
+            if (line.kind === "narration") {
+              return (
+                <p key={index} className={`scene-narration ${live ? "is-streaming" : ""}`}>
+                  <MarkupText text={line.text} />
+                </p>
+              );
+            }
 
-        const speaker = line.kind === "speech" ? line.name : "";
-        const mine =
-          line.kind === "speech" ? isUserSpeaker(speaker, userName) : fromUser;
-        const photo = mine
-          ? userPhoto
-          : samePerson(speaker, characterName)
-            ? characterPhoto
-            : castNotes.find((note) => samePerson(note.name, speaker))?.photo ||
-              "";
-        const label = mine ? userName || "나" : speaker || characterName;
+            const speaker = line.kind === "speech" ? line.name : "";
+            const mine =
+              line.kind === "speech" ? isUserSpeaker(speaker, userName) : fromUser;
+            const photo = mine
+              ? userPhoto
+              : samePerson(speaker, characterName)
+                ? characterPhoto
+                : castNotes.find((note) => samePerson(note.name, speaker))?.photo ||
+                  "";
+            const label = mine ? userName || "나" : speaker || characterName;
 
-        return (
-          <div
-            key={index}
-            className={`chat-turn ${mine ? "is-user" : ""}`}
-          >
-            <div className={`chat-speech ${mine ? "is-user" : ""}`}>
-              {mine ? null : <AvatarCircle src={photo} name={label} size="sm" />}
-              <div className={`chat-bubbles ${mine ? "is-user" : ""}`}>
-                {mine && onPickMe ? (
-                  <button
-                    type="button"
-                    className="chat-speaker is-me"
-                    onClick={onPickMe}
-                  >
-                    {userName?.trim() || "나"}
-                  </button>
-                ) : (
-                  <p className="chat-speaker">{label}</p>
-                )}
-                <div
-                  className={`${
-                    mine
-                      ? "bubble-user"
-                      : line.kind === "fallback"
-                        ? "fallback-box"
-                        : "bubble-model"
-                  } ${live ? "is-streaming" : ""}`}
-                >
-                  <p className="whitespace-pre-wrap">
-                    <MarkupText text={line.text} />
-                  </p>
+            return (
+              <div
+                key={index}
+                className={`chat-turn ${mine ? "is-user" : ""}`}
+              >
+                <div className={`chat-speech ${mine ? "is-user" : ""}`}>
+                  {mine ? null : <AvatarCircle src={photo} name={label} size="sm" />}
+                  <div className={`chat-bubbles ${mine ? "is-user" : ""}`}>
+                    {mine && onPickMe ? (
+                      <button
+                        type="button"
+                        className="chat-speaker is-me"
+                        onClick={onPickMe}
+                      >
+                        {userName?.trim() || "나"}
+                      </button>
+                    ) : (
+                      <p className="chat-speaker">{label}</p>
+                    )}
+                    <div
+                      className={`${
+                        mine
+                          ? "bubble-user"
+                          : line.kind === "fallback"
+                            ? "fallback-box"
+                            : "bubble-model"
+                      } ${live ? "is-streaming" : ""}`}
+                    >
+                      <p className="whitespace-pre-wrap">
+                        <MarkupText text={line.text} />
+                      </p>
+                    </div>
+                  </div>
+                  {mine ? (
+                    <AvatarCircle src={photo} name={label || "나"} size="sm" />
+                  ) : null}
                 </div>
               </div>
-              {mine ? (
-                <AvatarCircle src={photo} name={label || "나"} size="sm" />
-              ) : null}
-            </div>
-          </div>
-        );
-      })}
+            );
+          })}
+        </div>
+      )}
+      {showActions && !editing ? (
+        <div className="chat-msg-actions">
+          {onStartEdit ? (
+            <button
+              type="button"
+              className="icon-btn is-tiny"
+              disabled={actionsDisabled}
+              onClick={onStartEdit}
+              aria-label="수정"
+              title="수정"
+            >
+              <Icon name="edit" size={15} />
+            </button>
+          ) : null}
+          {onRegenerate ? (
+            <button
+              type="button"
+              className="icon-btn is-tiny"
+              disabled={actionsDisabled}
+              onClick={onRegenerate}
+              aria-label="답 다시 생성"
+              title="다시 생성"
+            >
+              <Icon name="regen" size={15} />
+            </button>
+          ) : null}
+          {onPin ? (
+            <button
+              type="button"
+              className="icon-btn is-tiny"
+              disabled={actionsDisabled}
+              onClick={onPin}
+              aria-label="사건 고정"
+              title="고정"
+            >
+              <Icon name="pin" size={15} />
+            </button>
+          ) : null}
+          {onTruncate ? (
+            <button
+              type="button"
+              className="icon-btn is-tiny is-danger"
+              disabled={actionsDisabled}
+              onClick={onTruncate}
+              aria-label="여기부터 삭제"
+              title="여기부터 삭제"
+            >
+              <Icon name="trash" size={15} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

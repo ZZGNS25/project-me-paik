@@ -65,7 +65,7 @@ export default function ProfilesPanel({
   const canSave =
     Boolean(draft.name.trim()) &&
     (editingNow || editing || play.personas.length < PERSONAS_MAX);
-  const returnLabel = returnHref === "/setup" ? "설정으로" : "이야기로";
+  const returnLabel = returnHref === "/setup" ? "시나리오로" : "이야기로";
 
   function openNew() {
     setEditingNow(false);

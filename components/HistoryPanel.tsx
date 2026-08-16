@@ -43,7 +43,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
         ...loaded,
         cloudSessionId: loaded.cloudSessionId,
       });
-      router.push(next);
+      router.push(next === "/setup" ? "/setup?focus=1" : next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "열기에 실패했습니다.");
     } finally {
@@ -112,7 +112,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
           className="btn-secondary"
           onClick={fresh.startStory}
         >
-          새 설정
+          새 시나리오
         </button>
       </div>
 
@@ -142,10 +142,10 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
                   className="btn-secondary"
                   onClick={() => {
                     play.selectSetting(item.id);
-                    router.push("/setup");
+                    router.push(`/setup?id=${encodeURIComponent(item.id)}`);
                   }}
                 >
-                  설정
+                  시나리오
                 </button>
                 <button
                   type="button"
@@ -199,7 +199,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
                   disabled={busyId === session.id}
                   onClick={() => void openSession(session.id, "/setup")}
                 >
-                  설정
+                  시나리오
                 </button>
                 <button
                   type="button"

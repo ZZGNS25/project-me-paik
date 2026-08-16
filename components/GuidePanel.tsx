@@ -15,7 +15,7 @@ export default function GuidePanel() {
           로그인하면 클라우드에도 자동으로 남습니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
-          첫 화면에서 예시 세계관을 고르거나 <strong className="text-[var(--ink)]">새 이야기</strong>로
+          시나리오에서 예시 세계관을 고르거나 <strong className="text-[var(--ink)]">새 시나리오</strong>로
           직접 만듭니다. 프로필이 이미 있으면, 이 이야기에서 나는 누구인지 고릅니다.
           없이 시작해도 됩니다. 나중에 대화의 <strong className="text-[var(--ink)]">나</strong>를
           눌러 바꿀 수 있습니다.
@@ -28,16 +28,20 @@ export default function GuidePanel() {
       </section>
 
       <section className="guide-section">
-        <p className="label-caps">프로필과 이야기</p>
+        <p className="label-caps">프로필 · 시나리오 · 이야기</p>
         <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">
           <strong className="text-[var(--ink)]">프로필</strong>은 내가 누구인지입니다.
           이야기마다 다시 적지 않도록, 이름·설정·사진을 여러 개 만들어 둡니다. 목록
           제목은 짧게, 예: 헌터 — 20세. 설정은 1000자까지, 프로필은 12개까지입니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
-          <strong className="text-[var(--ink)]">이야기</strong>는 세계와 상대 역할입니다.
-          프로필을 고르면 그 내용이 이 이야기에만 복사됩니다. 목록 원본을 고쳐도 이미
-          시작한 대화는 바뀌지 않습니다.
+          <strong className="text-[var(--ink)]">시나리오</strong>는 세계와 상대 역할입니다.
+          예시에서 고르거나 직접 만듭니다. 프로필을 고르면 그 내용이 이 시나리오에만
+          복사됩니다. 목록 원본을 고쳐도 이미 시작한 대화는 바뀌지 않습니다.
+        </p>
+        <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
+          <strong className="text-[var(--ink)]">이야기</strong>는 그 세계에서 이어 가는
+          대화입니다. 하던 대화만 모아 두고, 상단 이름을 누르면 그 시나리오를 고칩니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
           대화에서 <strong className="text-[var(--ink)]">나</strong>를 누르면 지금 이
@@ -52,7 +56,7 @@ export default function GuidePanel() {
       </section>
 
       <section className="guide-section">
-        <p className="label-caps">설정에서 채울 것</p>
+        <p className="label-caps">시나리오에서 채울 것</p>
         <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">
           상대의 <strong className="text-[var(--ink)]">이름</strong>만 있으면 채팅을 열 수
           있습니다. 나머지는 적을수록 장면이 흔들리지 않습니다.
@@ -156,8 +160,8 @@ export default function GuidePanel() {
             지웁니다. 세계와 대화가 함께 사라지고, 다른 이야기는 그대로입니다.
           </li>
           <li>
-            왼쪽 <strong className="text-[var(--ink)]">새 이야기</strong>는 세계와 역할을
-            처음부터 다시 만듭니다. 역시 지금 대화를 남길지 묻습니다.
+            왼쪽 <strong className="text-[var(--ink)]">새 시나리오</strong>는 지금 세계와
+            따로, 빈 칸에서 나만의 세계와 역할을 만듭니다. 하던 이야기는 그대로입니다.
           </li>
           <li>
             입력창 위 <strong className="text-[var(--ink)]">나</strong>, 내 말의 이름·얼굴을
@@ -171,7 +175,8 @@ export default function GuidePanel() {
           </li>
           <li>
             어긋난 지점은 말 옆의 휴지로 그 이후를 지웁니다. 화살표는 그 입력에 대한
-            응답만 다시 받고, 연필은 마지막 말을 고칩니다.
+            응답만 다시 받고, 연필은 그 말을 고칩니다. 고친 뒤에는 다시 만들지 않습니다.
+            아이콘은 말풍선에 커서를 올리면 나타납니다.
           </li>
         </ul>
       </section>
@@ -187,7 +192,7 @@ export default function GuidePanel() {
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
           잊히면 안 되는 일은 <strong className="text-[var(--ink)]">고정</strong>하세요.
           말 옆의 고정은 그 한 턴을, 입력창 위·메뉴의 고정은 마지막 턴을 남깁니다.
-          설정 화면의 기억 칸에서 직접 적을 수도 있습니다. 고정된 사건은 요약보다
+          시나리오 화면의 기억 칸에서 직접 적을 수도 있습니다. 고정된 사건은 요약보다
           우선합니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
@@ -205,7 +210,7 @@ export default function GuidePanel() {
           브라우저에서만 지울 수도 있습니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
-          설정의 <strong className="text-[var(--ink)]">기록 내려받기</strong>는 세계관과
+          시나리오의 <strong className="text-[var(--ink)]">기록 내려받기</strong>는 세계관과
           대화를 텍스트 파일로 남깁니다. 다시 불러오는 파일이 아닙니다. 캐릭터와 세계관
           링크는 <strong className="text-[var(--ink)]">공유</strong>로 보냅니다.
         </p>

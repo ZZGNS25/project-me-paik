@@ -188,6 +188,72 @@ body {
   padding-left: 2.55rem;
 }
 
+.chat-msg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+  margin-top: 0.15rem;
+  padding-left: 2.55rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.14s ease;
+}
+
+.chat-msg.is-user .chat-msg-actions {
+  justify-content: flex-end;
+  padding-left: 0;
+  padding-right: 2.55rem;
+}
+
+.chat-msg:hover .chat-msg-actions,
+.chat-msg:focus-within .chat-msg-actions,
+.chat-msg.is-editing .chat-msg-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .chat-msg-actions {
+    opacity: 0.72;
+    pointer-events: auto;
+  }
+}
+
+.chat-edit {
+  display: grid;
+  gap: 0.45rem;
+  padding-left: 2.55rem;
+}
+
+.chat-edit.is-user {
+  padding-left: 0;
+  padding-right: 2.55rem;
+}
+
+.chat-edit-box {
+  width: 100%;
+  min-height: 6rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper-2);
+  padding: 0.7rem 0.85rem;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.chat-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chat-edit.is-user .chat-edit-actions {
+  justify-content: flex-end;
+}
+
 .icon-btn.is-tiny {
   width: 1.85rem;
   height: 1.85rem;
@@ -911,6 +977,10 @@ button.chat-speaker.is-me {
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+button.story-name-edit {
+  cursor: pointer;
 }
 
 .story-rename-input {

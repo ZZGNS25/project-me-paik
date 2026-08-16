@@ -10,14 +10,16 @@ import MemoryPanel from "@/components/MemoryPanel";
 import PageShell from "@/components/PageShell";
 import { useConfirm } from "@/components/ConfirmDialog";
 import ShareButton from "@/components/ShareButton";
+import ScenarioLibrary from "@/components/ScenarioLibrary";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { deletePlayFromCloud } from "@/lib/cloud";
 import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
 import { requestGenerate } from "@/lib/geminiClient";
 import { recountTurns } from "@/lib/memory";
-import { WORLD_PRESETS, isPresetNamed } from "@/lib/presets";
+import { isPresetNamed } from "@/lib/presets";
 import { downloadTranscript } from "@/lib/transcript";
+import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
 
 function isPresetSetting(setting: SettingRecord) {
@@ -41,8 +43,10 @@ function SetupBody() {
   const play = usePlay();
   const [compressing, setCompressing] = useState(false);
   const [error, setError] = useState("");
-  const [picked, setPicked] = useState(false);
   const newToken = searchParams.get("new");
+  const storyId = searchParams.get("id");
+  const fromChat = searchParams.get("from") === "chat";
+  const focused = Boolean(storyId) || fromChat || searchParams.get("focus") === "1";
   const confirm = useConfirm();
 
   useEffect(() => {
@@ -58,9 +62,16 @@ function SetupBody() {
     const unusedBlank = play.settings.find(isUnusedBlank);
     if (unusedBlank) play.selectSetting(unusedBlank.id);
     else play.createSetting();
-    setPicked(true);
-    router.replace("/setup");
+    router.replace("/setup?focus=1");
   }, [play.ready, newToken, play, router]);
+
+  useEffect(() => {
+    if (!play.ready || !storyId) return;
+    if (play.currentSettingId === storyId) return;
+    if (play.settings.some((item) => item.id === storyId)) {
+      play.selectSetting(storyId);
+    }
+  }, [play, play.ready, play.currentSettingId, storyId]);
 
   if (!play.ready || !auth.ready) {
     return (
@@ -72,28 +83,12 @@ function SetupBody() {
 
   const canStart = Boolean(play.state.character.name.trim());
   const storyStarted = play.state.chatLog.length > 0;
-  const editorOpen = picked || canStart || storyStarted;
-  const activePreset = WORLD_PRESETS.find(
-    (item) => item.character.name === play.state.character.name.trim(),
-  );
-  const customSettings = play.settings.filter((setting) => {
-    if (isPresetSetting(setting)) return false;
-    const onlyHiddenStarter =
-      !picked &&
-      play.settings.filter((item) => !isPresetSetting(item)).length === 1 &&
-      isUnusedBlank(setting);
-    return !onlyHiddenStarter;
-  });
-
-  function addScenario() {
-    const unusedBlank = play.settings.find(isUnusedBlank);
-    if (unusedBlank && customSettings.length === 0) {
-      play.selectSetting(unusedBlank.id);
-    } else {
-      play.createSetting();
-    }
-    setPicked(true);
-  }
+  const currentStory =
+    play.settings.find((item) => item.id === play.currentSettingId) ??
+    play.settings[0];
+  const storyName = currentStory
+    ? storyTitle(currentStory)
+    : play.state.character.name.trim() || "이 시나리오";
 
   async function removeStory(setting: SettingRecord) {
     if (setting.cloudSessionId) {
@@ -108,7 +103,7 @@ function SetupBody() {
 
   function askRemove(setting: SettingRecord) {
     confirm.ask({
-      message: "이 이야기를 지울까요?",
+      message: "이 시나리오를 지울까요? 대화가 있으면 함께 사라집니다.",
       confirmLabel: "삭제",
       danger: true,
       run: () => void removeStory(setting),
@@ -130,6 +125,14 @@ function SetupBody() {
     }
   }
 
+  if (!focused) {
+    return (
+      <AppFrame>
+        <ScenarioLibrary play={play} />
+      </AppFrame>
+    );
+  }
+
   return (
     <AppFrame>
       <form
@@ -141,10 +144,25 @@ function SetupBody() {
       >
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="label-caps">설정</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-              캐릭터와 세계관
-            </h1>
+            <p className="label-caps">시나리오</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight">{storyName}</h1>
+            {fromChat ? (
+              <button
+                type="button"
+                className="btn-secondary mt-4"
+                onClick={() => router.push("/chat")}
+              >
+                이야기로
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn-secondary mt-4"
+                onClick={() => router.push("/setup")}
+              >
+                목록으로
+              </button>
+            )}
             {storyStarted ? (
               <p className="mt-2 text-sm text-[var(--ink-dim)]">
                 이야기가 시작된 뒤에도 인물과 설정을 고칠 수 있습니다. 다음 턴부터
@@ -185,85 +203,6 @@ function SetupBody() {
           </div>
         </div>
 
-        <section>
-          <p className="label-caps">예시로 시작</p>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
-            대표 프로필을 누르면 그 설정이 열립니다.
-          </p>
-          <div className="scenario-row mt-4">
-            {WORLD_PRESETS.map((preset) => (
-              <div
-                key={preset.id}
-                className={`scenario-pick ${
-                  activePreset?.id === preset.id ? "is-active" : ""
-                }`}
-              >
-                <AvatarCircle
-                  src={preset.character.photo}
-                  name={preset.character.name}
-                  size="lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    play.applyPreset(preset.id);
-                    setPicked(true);
-                  }}
-                >
-                  {preset.character.name}
-                </button>
-              </div>
-            ))}
-            {customSettings.map((setting) => {
-              const selected = setting.id === play.currentSettingId;
-              return (
-                <div
-                  key={setting.id}
-                  className={`scenario-pick ${selected ? "is-active" : ""}`}
-                >
-                  <AvatarCircle
-                    src={setting.character.photo}
-                    name={setting.character.name}
-                    size="lg"
-                  />
-                  {selected ? (
-                    <input
-                      className="scenario-name"
-                      value={play.state.character.name}
-                      maxLength={FIELD_LIMITS.characterName}
-                      placeholder="이름"
-                      aria-label="시나리오 이름"
-                      onChange={(event) =>
-                        play.updateCharacter("name", event.target.value)
-                      }
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        play.selectSetting(setting.id);
-                        setPicked(true);
-                      }}
-                    >
-                      {setting.character.name.trim() || "새 시나리오"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-            <button
-              type="button"
-              className="scenario-add"
-              onClick={addScenario}
-            >
-              <span className="avatar-circle avatar-lg">+</span>
-              <span>시나리오 추가</span>
-            </button>
-          </div>
-        </section>
-
-        {editorOpen ? (
-          <>
             {error ? <p className="alert-error">{error}</p> : null}
             <section className="paper-card space-y-4 p-6">
               <p className="label-caps">필수 프로필</p>
@@ -454,8 +393,6 @@ function SetupBody() {
             <button type="submit" className="btn-primary w-full" disabled={!canStart}>
               {storyStarted ? "채팅으로 돌아가기" : "채팅 시작"}
             </button>
-          </>
-        ) : null}
       </form>
       {confirm.dialog}
     </AppFrame>

@@ -9,7 +9,6 @@ type ChatMenuProps = {
   saveLabel: string;
   saveDisabled?: boolean;
   extrasOpen?: boolean;
-  editDisabled?: boolean;
   deleteLastDisabled?: boolean;
   compressing?: boolean;
   pinLabel?: string;
@@ -22,7 +21,6 @@ type ChatMenuProps = {
   onExtras: () => void;
   onCompress: () => void;
   onPin: () => void;
-  onEditLast: () => void;
   onDeleteLast: () => void;
   onDeleteStory: () => void;
   onClose: () => void;
@@ -33,7 +31,6 @@ export default function ChatMenu({
   saveLabel,
   saveDisabled = false,
   extrasOpen = false,
-  editDisabled = false,
   deleteLastDisabled = false,
   compressing = false,
   pinLabel = "고정",
@@ -46,7 +43,6 @@ export default function ChatMenu({
   onExtras,
   onCompress,
   onPin,
-  onEditLast,
   onDeleteLast,
   onDeleteStory,
   onClose,
@@ -133,14 +129,6 @@ export default function ChatMenu({
             <span className="sheet-row-hint">마지막 턴을 기억에 남깁니다.</span>
           </span>
           <span className="sheet-row-value">{pinLabel === "고정" ? "" : pinLabel}</span>
-        </button>
-        <button
-          type="button"
-          className="sheet-row"
-          disabled={editDisabled}
-          onClick={onEditLast}
-        >
-          <span className="sheet-row-title">마지막 말 수정</span>
         </button>
         <button
           type="button"

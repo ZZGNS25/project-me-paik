@@ -226,6 +226,12 @@ function ChatBody() {
               photo={play.state.character.photo}
               status={listening ? "듣는 중" : "대기 중"}
               statusIdle={!listening}
+              onOpen={() => {
+                if (!play.currentSettingId) return;
+                router.push(
+                  `/setup?id=${encodeURIComponent(play.currentSettingId)}&from=chat`,
+                );
+              }}
             />
           </div>
           <button
@@ -264,10 +270,7 @@ function ChatBody() {
           onTruncateFrom={truncateFrom}
           onRegenerate={regenerate}
           onPinTurn={pinTurn}
-          onEditLast={() => {
-            const text = play.popLastUserMessage();
-            if (text) setDraft(text);
-          }}
+          onEditMessage={(id, content) => play.updateMessage(id, content)}
           onPickMe={openPersonaPicker}
         />
 
@@ -339,7 +342,6 @@ function ChatBody() {
             }
             saveDisabled={cloud.status === "saving"}
             extrasOpen={extrasOpen}
-            editDisabled={Boolean(busy) || !hasTurns}
             deleteLastDisabled={Boolean(busy) || !hasTurns}
             compressing={compressing}
             pinLabel={pinnedFlash ? "고정됨" : "고정"}
@@ -369,11 +371,6 @@ function ChatBody() {
             }}
             onPin={() => {
               pinLastTurn();
-              setMenuOpen(false);
-            }}
-            onEditLast={() => {
-              const text = play.popLastUserMessage();
-              if (text) setDraft(text);
               setMenuOpen(false);
             }}
             onDeleteLast={() => {

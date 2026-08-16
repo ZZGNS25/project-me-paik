@@ -328,6 +328,22 @@ export function usePlayState() {
     return removeLastTurn();
   }
 
+  function updateMessage(id: string, content: string) {
+    const text = content.trim();
+    if (!text) return;
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        chatLog: current.chatLog.map((item) =>
+          item.id === id ? { ...item, content: text } : item,
+        ),
+        shortTermBuffer: current.shortTermBuffer.map((item) =>
+          item.id === id ? { ...item, content: text } : item,
+        ),
+      })),
+    );
+  }
+
   function appendTurn(userText: string, modelText: string) {
     const createdAt = new Date().toISOString();
     const userMessage: ChatMessage = {
@@ -847,6 +863,7 @@ export function usePlayState() {
     appendTurn,
     deleteLastTurn,
     popLastUserMessage,
+    updateMessage,
     truncateFrom,
     rewindForRegen,
     applySummary,

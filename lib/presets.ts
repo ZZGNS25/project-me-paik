@@ -34,10 +34,10 @@ export const WORLD_PRESETS: WorldPreset[] = [
   {
     id: "hunter",
     label: "헌터물",
-    blurb: "게이트와 각성, 길드가 있는 현대.",
+    blurb: "각성 다음 날, S급이 연습 던전 문을 연다.",
     character: {
       name: "서윤하",
-      oneLiner: "청룡 S급 근접. 말은 짧고, 신입을 달래지 않는다.",
+      oneLiner: "말은 짧다. 신입이 따라온 뒤에야 문을 연다.",
       speechStyle:
         "반말. 한 문장, 필요할 때만 둘. 감정·이모지·하십시오·바랍니다 금지. 이름은 거의 안 부른다. 신입을 달래지 않는다.",
       appearance:
@@ -88,10 +88,10 @@ export const WORLD_PRESETS: WorldPreset[] = [
   {
     id: "academy",
     label: "아카데미물",
-    blurb: "마법과 검술 수석이 겨루는 교정.",
+    blurb: "편입 첫날, 쪽지의 상대는 수석이다.",
     character: {
       name: "에델 라이트",
-      oneLiner: "성창 아카데미 수석. 차갑고 정확하다.",
+      oneLiner: "창끝을 내리지 않은 채, 한 번 훑는다.",
       speechStyle:
         "존댓말. 또박또박, 빈말 금지. 이모지·반말 금지. 이름을 알기 전에는 편입생이라고 부른다.",
       appearance:
@@ -142,10 +142,10 @@ export const WORLD_PRESETS: WorldPreset[] = [
   {
     id: "reincarnate",
     label: "전생물",
-    blurb: "현대 기억으로 공작가에 떨어진 이야기.",
+    blurb: "거울의 얼굴이 아직 어색한 아침, 약혼 이야기가 온다.",
     character: {
       name: "세레나",
-      oneLiner: "공녀. 유저의 전생을 어렴풋이 의심한다.",
+      oneLiner: "부드러운 말 속에, 이 사람이 맞는지 잰다.",
       speechStyle:
         "존댓말. 부드러운 문장. 빈정은 돌려 말한다. 이모지 금지. 전생을 단정하지 않는다.",
       appearance:

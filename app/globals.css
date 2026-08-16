@@ -297,6 +297,56 @@ body {
   background: rgba(26, 115, 232, 0.12);
 }
 
+.scenario-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.scenario-pick,
+.scenario-add {
+  display: flex;
+  width: 5.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+.scenario-pick.is-active,
+.scenario-add.is-active {
+  color: var(--ink);
+}
+
+.scenario-pick.is-active .avatar-circle,
+.scenario-add.is-active .avatar-circle {
+  border-color: rgba(77, 141, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.28);
+}
+
+.scenario-add .avatar-circle {
+  border-style: dashed;
+  font-size: 1.6rem;
+  font-weight: 500;
+}
+
+.setup-fold {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(23, 27, 34, 0.96), rgba(18, 21, 27, 0.96));
+  padding: 1rem 1.25rem;
+}
+
+.setup-fold > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.setup-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
 .avatar-circle {
   display: inline-flex;
   align-items: center;

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { FIELD_LIMITS, createEmptySetting, createEmptyStore } from "@/lib/constants";
 import { buildForbidden } from "@/lib/forbidden";
+import { WORLD_PRESETS, settingFromPreset, type PresetId } from "@/lib/presets";
 import { clip, loadStore, saveStore, toPlayState } from "@/lib/storage";
 import type {
   AppStore,
@@ -232,6 +233,41 @@ export function usePlayState() {
     });
   }
 
+  function applyPreset(presetId: PresetId) {
+    const preset = WORLD_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+    const setting = settingFromPreset(preset, newId());
+    updateStore((prev) => {
+      const current =
+        prev.settings.find((item) => item.id === prev.currentSettingId) ??
+        prev.settings[0];
+      const blank =
+        current &&
+        !current.character.name.trim() &&
+        !current.worldSetting.trim() &&
+        current.chatLog.length === 0;
+
+      if (blank && current) {
+        const next = {
+          ...prev,
+          settings: prev.settings.map((item) =>
+            item.id === current.id ? { ...setting, id: current.id } : item,
+          ),
+        };
+        saveStore(next);
+        return next;
+      }
+
+      const next = {
+        ...prev,
+        currentSettingId: setting.id,
+        settings: [...prev.settings, setting],
+      };
+      saveStore(next);
+      return next;
+    });
+  }
+
   function createSetting() {
     const setting = withForbidden(createEmptySetting(newId()));
     updateStore((prev) => {
@@ -284,6 +320,7 @@ export function usePlayState() {
     setCloudSessionId,
     startNewStory,
     createSetting,
+    applyPreset,
     selectSetting,
     deleteSetting,
   };

@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
 import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
 import { requestGenerate } from "@/lib/geminiClient";
+import { WORLD_PRESETS } from "@/lib/presets";
 
 function SetupBody() {
   const router = useRouter();
@@ -70,6 +71,26 @@ function SetupBody() {
             새 설정
           </button>
         </div>
+
+        <section>
+          <p className="label-caps">예시로 시작</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            {WORLD_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="preset-card"
+                onClick={() => play.applyPreset(preset.id)}
+              >
+                <p className="font-semibold">{preset.label}</p>
+                <p className="mt-1 text-sm text-[var(--ink-dim)]">{preset.blurb}</p>
+                <p className="mt-2 text-xs text-[var(--blue-soft)]">
+                  등장인물 {preset.cast.length}명
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
 
         <div className="space-y-2">
           {play.settings.map((item) => (

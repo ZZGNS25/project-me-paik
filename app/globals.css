@@ -280,6 +280,19 @@ body {
   background: rgba(26, 115, 232, 0.14);
 }
 
+.preset-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(18, 21, 27, 0.88);
+  padding: 1rem 1.05rem;
+  text-align: left;
+}
+
+.preset-card:hover {
+  border-color: rgba(77, 141, 255, 0.5);
+  background: rgba(26, 115, 232, 0.12);
+}
+
 .forbidden-box {
   margin-top: 0.45rem;
   white-space: pre-wrap;

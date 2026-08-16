@@ -48,8 +48,22 @@ export default function HistoryPanel() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-12">
-      <p className="label-caps">내 기록</p>
-      <h1 className="mt-2 text-3xl font-semibold">이어 둔 이야기</h1>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="label-caps">내 기록</p>
+          <h1 className="mt-2 text-3xl font-semibold">이어 둔 이야기</h1>
+        </div>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => {
+            play.createSetting();
+            router.push("/setup");
+          }}
+        >
+          설정 추가
+        </button>
+      </div>
 
       {local ? (
         <button

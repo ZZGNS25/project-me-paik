@@ -58,7 +58,7 @@ function SetupBody() {
         className="mx-auto w-full max-w-3xl space-y-6 overflow-y-auto px-6 py-8"
         onSubmit={(event) => {
           event.preventDefault();
-          if (canStart) router.push(storyStarted ? "/chat" : "/");
+          if (canStart) router.push("/chat");
         }}
       >
         <div className="flex items-end justify-between gap-3">
@@ -106,60 +106,26 @@ function SetupBody() {
           </div>
         </section>
 
-        <div className="space-y-2">
-          {play.settings.map((item) => (
-            <div
-              key={item.id}
-              className={`setting-row ${
-                item.id === play.currentSettingId ? "is-active" : ""
-              }`}
-            >
-              <button
-                type="button"
-                className="min-w-0 flex-1 text-left"
-                onClick={() => play.selectSetting(item.id)}
-              >
-                <span className="flex items-center gap-3">
-                  <AvatarCircle
-                    src={item.character.photo}
-                    name={item.character.name}
-                    size="sm"
-                  />
-                  <p className="font-semibold">
-                    {item.character.name.trim() || "이름 없는 설정"}
-                  </p>
-                </span>
-                <p className="mt-1 truncate text-sm text-[var(--ink-dim)]">
-                  {item.character.oneLiner || "한 줄 소개 없음"}
-                  {item.turnCount > 0 ? ` · ${item.turnCount}턴` : ""}
-                </p>
-              </button>
-              {play.settings.length > 1 ? (
-                <button
-                  type="button"
-                  className="ghost-link"
-                  onClick={() => play.deleteSetting(item.id)}
-                >
-                  삭제
-                </button>
-              ) : null}
-            </div>
-          ))}
-        </div>
-
         {error ? <p className="alert-error">{error}</p> : null}
         <section className="paper-card space-y-4 p-6">
           <p className="label-caps">필수 프로필</p>
-          <div className="flex items-center gap-4">
-            <AvatarCircle
-              src={play.state.character.photo}
-              name={play.state.character.name}
-              size="lg"
-            />
-            <p className="text-sm text-[var(--ink-dim)]">
-              예시 세계관을 고르면 웹툰 화풍 사진이 들어갑니다.
-            </p>
-          </div>
+          <div className="flex items-start gap-4">
+            <div>
+              <p className="text-sm font-medium text-[var(--ink)]">사진</p>
+              <div className="mt-2">
+                <AvatarCircle
+                  src={play.state.character.photo}
+                  name={play.state.character.name}
+                  size="lg"
+                  editable
+                  onChange={play.setCharacterPhoto}
+                />
+              </div>
+              <p className="mt-2 text-xs text-[var(--ink-dim)]">
+                예시 세계관을 고르면 그림이 들어갑니다. 원을 눌러 바꿀 수도 있습니다.
+              </p>
+            </div>
+            <div className="min-w-0 flex-1 space-y-4">
           <CharField
             label="이름"
             required
@@ -175,6 +141,8 @@ function SetupBody() {
             onChange={(value) => play.updateCharacter("oneLiner", value)}
             placeholder="밤의 서점을 지키는 사람"
           />
+            </div>
+          </div>
           <CharField
             label="말투"
             multiline
@@ -219,7 +187,7 @@ function SetupBody() {
         </section>
 
         <section className="paper-card space-y-4 p-6">
-          <p className="label-caps">유저 · 세계관</p>
+          <p className="label-caps">유저 프로필</p>
           <div className="flex items-start gap-4">
             <div>
               <p className="text-sm font-medium text-[var(--ink)]">사진</p>
@@ -254,6 +222,10 @@ function SetupBody() {
           />
             </div>
           </div>
+        </section>
+
+        <section className="paper-card space-y-4 p-6">
+          <p className="label-caps">세계관</p>
           <CharField
             label="세계관"
             multiline
@@ -293,7 +265,7 @@ function SetupBody() {
         />
 
         <button type="submit" className="btn-primary w-full" disabled={!canStart}>
-          {storyStarted ? "채팅으로 돌아가기" : "작성 화면으로"}
+          {storyStarted ? "채팅으로 돌아가기" : "채팅 시작"}
         </button>
       </form>
     </AppFrame>

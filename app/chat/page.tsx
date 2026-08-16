@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
-import AvatarCircle from "@/components/AvatarCircle";
 import ChatLog from "@/components/ChatLog";
+import ProfileCard from "@/components/ProfileCard";
 import Composer from "@/components/Composer";
 import StoryExtrasPanel from "@/components/StoryExtrasPanel";
 import PageShell from "@/components/PageShell";
@@ -87,19 +87,11 @@ function ChatBody() {
     <AppFrame>
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <AvatarCircle
-              src={play.state.character.photo}
-              name={play.state.character.name}
-              size="sm"
-            />
-            <div>
-            <p className="label-caps">이어롤</p>
-            <h1 className="text-xl font-semibold">
-              {play.state.character.name || "채팅"}
-            </h1>
-            </div>
-          </div>
+          <ProfileCard
+            name={play.state.character.name || "채팅"}
+            oneLiner={play.state.character.oneLiner}
+            photo={play.state.character.photo}
+          />
           <div className="flex items-center gap-3">
             <button
               type="button"

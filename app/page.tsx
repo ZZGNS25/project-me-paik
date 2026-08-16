@@ -1,27 +1,25 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
-import AvatarCircle from "@/components/AvatarCircle";
-import Composer from "@/components/Composer";
-import PrologueCard from "@/components/PrologueCard";
 import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
 import PageShell from "@/components/PageShell";
+import ProfileCard from "@/components/ProfileCard";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
-import { setPendingMessage } from "@/lib/pending";
+import { withWaGwa } from "@/lib/korean";
+import type { SettingRecord } from "@/lib/types";
 
 function HomeBody() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
-  const { state, ready } = usePlayState();
-  const [draft, setDraft] = useState("");
+  const play = usePlayState();
   const view = searchParams.get("view");
 
-  if (!auth.ready || !ready) {
+  if (!auth.ready || !play.ready) {
     return (
       <PageShell>
         <p className="mono-readout text-sm text-[var(--ink-dim)]">불러오는 중…</p>
@@ -61,16 +59,14 @@ function HomeBody() {
     );
   }
 
-  function submitHome() {
-    const text = draft.trim();
-    if (!text) return;
-    if (!state.character.name) {
-      router.push("/setup");
-      return;
-    }
-    setPendingMessage(text);
+  function openStory(setting: SettingRecord) {
+    play.selectSetting(setting.id);
     router.push("/chat");
   }
+
+  const stories = play.settings.filter((item) => item.character.name.trim());
+  const ongoing = stories.filter((item) => item.chatLog.length > 0);
+  const notStarted = stories.filter((item) => item.chatLog.length === 0);
 
   return (
     <AppFrame>
@@ -79,47 +75,97 @@ function HomeBody() {
       ) : view === "history" ? (
         <HistoryPanel />
       ) : (
-        <div className="flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-8">
-          {state.character.photo ? (
-            <AvatarCircle
-              src={state.character.photo}
-              name={state.character.name}
-              size="lg"
-            />
-          ) : (
-            <span className="gemini-mark text-sm font-semibold text-white">이</span>
-          )}
-          <h1 className="mt-6 text-center text-3xl font-semibold tracking-tight sm:text-4xl">
-            {state.character.name
-              ? state.chatLog.length > 0
-                ? `${state.character.name}과 이야기를 이어가 볼까요?`
-                : `${state.character.name}과 이야기를 시작해볼까요?`
-              : "오늘은 어떤 이야기를 시작할까요?"}
-          </h1>
-          <p className="mt-3 max-w-md text-center text-sm text-[var(--ink-dim)]">
-            {state.character.name
-              ? state.prologue && state.chatLog.length === 0
-                ? "프롤로그를 읽고, 아래 칸에 대사나 행동을 적으면 이어집니다."
-                : "아래 칸에 대사나 행동을 적으면 바로 이어집니다."
-              : "왼쪽 설정에서 캐릭터를 먼저 적어 주세요."}
+        <div className="mx-auto w-full max-w-2xl overflow-y-auto px-6 py-10">
+          <p className="label-caps">이야기</p>
+          <h1 className="mt-2 text-3xl font-semibold">어떤 이야기를 할까요?</h1>
+          <p className="mt-3 text-sm text-[var(--ink-dim)]">
+            진행 중인 건 여기서 바로 이어가고, 새 말은 채팅 화면에서 씁니다.
           </p>
-          {state.prologue && state.chatLog.length === 0 ? (
-            <div className="mt-8 w-full max-w-2xl">
-              <PrologueCard text={state.prologue} />
-            </div>
+
+          {ongoing.length > 0 ? (
+            <section className="mt-8 space-y-3">
+              <p className="label-caps">이어가기</p>
+              {ongoing.map((item) => (
+                <div key={item.id} className="history-card">
+                  <ProfileCard
+                    name={item.character.name}
+                    oneLiner={item.character.oneLiner}
+                    photo={item.character.photo}
+                    meta={`${item.turnCount}턴 · ${withWaGwa(item.character.name)} 이어가 볼까요?`}
+                  />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => {
+                        play.selectSetting(item.id);
+                        router.push("/setup");
+                      }}
+                    >
+                      설정
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => openStory(item)}
+                    >
+                      대화 이어가기
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </section>
           ) : null}
-          <div className="mt-10 w-full max-w-2xl">
-            <Composer
-              value={draft}
-              onChange={setDraft}
-              onSubmit={submitHome}
-              placeholder={
-                state.character.name
-                  ? "캐릭터에게 말을 걸어 보세요"
-                  : "설정을 먼저 작성해 주세요"
-              }
-            />
-          </div>
+
+          {notStarted.length > 0 ? (
+            <section className="mt-8 space-y-3">
+              <p className="label-caps">시작하기</p>
+              {notStarted.map((item) => (
+                <div key={item.id} className="history-card">
+                  <ProfileCard
+                    name={item.character.name}
+                    oneLiner={item.character.oneLiner}
+                    photo={item.character.photo}
+                    meta={`${withWaGwa(item.character.name)} 시작해볼까요?`}
+                  />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => {
+                        play.selectSetting(item.id);
+                        router.push("/setup");
+                      }}
+                    >
+                      설정
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => openStory(item)}
+                    >
+                      대화 시작
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </section>
+          ) : null}
+
+          {stories.length === 0 ? (
+            <p className="mt-8 text-sm text-[var(--ink-dim)]">
+              아직 만든 이야기가 없습니다. 설정에서 예시 세계관을 고르거나 프로필을
+              적어 주세요.
+            </p>
+          ) : null}
+
+          <button
+            type="button"
+            className="btn-secondary mt-8 w-full"
+            onClick={() => router.push("/setup")}
+          >
+            설정으로
+          </button>
         </div>
       )}
     </AppFrame>

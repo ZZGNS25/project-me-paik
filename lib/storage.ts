@@ -1,7 +1,23 @@
 import { createEmptyPlayState, createEmptySetting, createEmptyStore } from "./constants";
 import { buildForbidden } from "./forbidden";
+import { WORLD_PRESETS } from "./presets";
 import type { AppStore, PlayState, SettingRecord } from "./types";
 import { STORAGE_KEY } from "./constants";
+
+function backfillPresetMeta(record: SettingRecord): SettingRecord {
+  const preset = WORLD_PRESETS.find(
+    (item) => item.character.name === record.character.name.trim(),
+  );
+  if (!preset) return record;
+  return {
+    ...record,
+    prologue: record.prologue.trim() || preset.prologue,
+    character: {
+      ...record.character,
+      photo: record.character.photo || preset.character.photo,
+    },
+  };
+}
 
 function applyForbidden(record: SettingRecord): SettingRecord {
   const forbiddenManual = Boolean(record.character.forbiddenManual);
@@ -99,7 +115,9 @@ export function loadStore(): AppStore {
     if (isStore(parsed) && parsed.settings.length > 0) {
       return {
         ...parsed,
-        settings: parsed.settings.map(applyForbidden),
+        settings: parsed.settings.map((item) =>
+          applyForbidden(backfillPresetMeta(item)),
+        ),
       };
     }
     const migrated = migrateLegacy({
@@ -108,7 +126,9 @@ export function loadStore(): AppStore {
     });
     return {
       ...migrated,
-      settings: migrated.settings.map(applyForbidden),
+      settings: migrated.settings.map((item) =>
+        applyForbidden(backfillPresetMeta(item)),
+      ),
     };
   } catch {
     return createEmptyStore();

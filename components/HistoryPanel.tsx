@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import AvatarCircle from "@/components/AvatarCircle";
+import ProfileCard from "@/components/ProfileCard";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlayState } from "@/hooks/usePlayState";
 import { listPlaySessions, loadPlayById, type SessionSummary } from "@/lib/cloud";
@@ -24,14 +24,14 @@ export default function HistoryPanel() {
       });
   }, [auth.user]);
 
-  async function openSession(id: string) {
+  async function openSession(id: string, next: "/chat" | "/setup") {
     setBusyId(id);
     setError("");
     try {
       const loaded = await loadPlayById(id);
       if (!loaded) throw new Error("세션을 찾지 못했습니다.");
       play.hydrateFromCloud(loaded);
-      router.push("/chat");
+      router.push(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "열기에 실패했습니다.");
     } finally {
@@ -39,13 +39,7 @@ export default function HistoryPanel() {
     }
   }
 
-  const local = play.state.character.name
-    ? {
-        name: play.state.character.name,
-        turns: play.state.turnCount,
-        lines: play.state.chatLog.length,
-      }
-    : null;
+  const localStories = play.settings.filter((item) => item.character.name.trim());
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-12">
@@ -62,33 +56,63 @@ export default function HistoryPanel() {
             router.push("/setup");
           }}
         >
-          설정 추가
+          새 설정
         </button>
       </div>
 
-      {local ? (
-        <button
-          type="button"
-          className="history-card mt-8 w-full text-left"
-          onClick={() => router.push(local.lines > 0 ? "/chat" : "/setup")}
-        >
-          <p className="text-xs text-[var(--blue-soft)]">이 브라우저</p>
-          <span className="mt-2 flex items-center gap-3">
-            <AvatarCircle
-              src={play.state.character.photo}
-              name={local.name}
-              size="sm"
-            />
-            <p className="text-lg font-semibold">{local.name}</p>
-          </span>
-          <p className="mt-1 text-sm text-[var(--ink-dim)]">
-            {local.turns}턴 · 메시지 {local.lines}개
-          </p>
-        </button>
-      ) : (
-        <p className="mt-8 text-sm text-[var(--ink-dim)]">
+      <p className="label-caps mt-8">이 브라우저</p>
+      {localStories.length === 0 ? (
+        <p className="mt-3 text-sm text-[var(--ink-dim)]">
           아직 이 브라우저에 저장된 이야기가 없습니다.
         </p>
+      ) : (
+        <div className="mt-3 space-y-3">
+          {localStories.map((item) => (
+            <div key={item.id} className="history-card">
+              <ProfileCard
+                name={item.character.name}
+                oneLiner={item.character.oneLiner}
+                photo={item.character.photo}
+                meta={
+                  item.chatLog.length > 0
+                    ? `${item.turnCount}턴`
+                    : "아직 시작 전"
+                }
+              />
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    play.selectSetting(item.id);
+                    router.push("/setup");
+                  }}
+                >
+                  설정
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => {
+                    play.selectSetting(item.id);
+                    router.push("/chat");
+                  }}
+                >
+                  {item.chatLog.length > 0 ? "대화 이어가기" : "대화 시작"}
+                </button>
+                {play.settings.length > 1 ? (
+                  <button
+                    type="button"
+                    className="ghost-link"
+                    onClick={() => play.deleteSetting(item.id)}
+                  >
+                    삭제
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       <p className="label-caps mt-10">클라우드</p>
@@ -100,22 +124,31 @@ export default function HistoryPanel() {
           </p>
         ) : (
           sessions.map((session) => (
-            <button
-              key={session.id}
-              type="button"
-              className="history-card w-full text-left"
-              disabled={busyId === session.id}
-              onClick={() => void openSession(session.id)}
-            >
-              <p className="text-lg font-semibold">{session.characterName}</p>
-              <p className="mt-1 text-sm text-[var(--ink-soft)]">
-                {session.oneLiner || "한 줄 소개 없음"}
-              </p>
-              <p className="mt-2 text-xs text-[var(--ink-dim)]">
-                {session.turnCount}턴
-                {busyId === session.id ? " · 여는 중…" : ""}
-              </p>
-            </button>
+            <div key={session.id} className="history-card">
+              <ProfileCard
+                name={session.characterName}
+                oneLiner={session.oneLiner}
+                meta={`${session.turnCount}턴${busyId === session.id ? " · 여는 중…" : ""}`}
+              />
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={busyId === session.id}
+                  onClick={() => void openSession(session.id, "/setup")}
+                >
+                  설정
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={busyId === session.id}
+                  onClick={() => void openSession(session.id, "/chat")}
+                >
+                  대화 이어가기
+                </button>
+              </div>
+            </div>
           ))
         )}
       </div>

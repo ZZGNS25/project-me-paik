@@ -138,6 +138,15 @@ export function usePlayState() {
     );
   }
 
+  function setCharacterPhoto(photo: string) {
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        character: { ...current.character, photo },
+      })),
+    );
+  }
+
   function setWorldSetting(value: string) {
     updateStore((prev) =>
       patchCurrent(prev, (current) => ({
@@ -291,13 +300,9 @@ export function usePlayState() {
       const current =
         prev.settings.find((item) => item.id === prev.currentSettingId) ??
         prev.settings[0];
-      const blank =
-        current &&
-        !current.character.name.trim() &&
-        !current.worldSetting.trim() &&
-        current.chatLog.length === 0;
+      const canReplace = current && current.chatLog.length === 0;
 
-      if (blank && current) {
+      if (canReplace && current) {
         const next = {
           ...prev,
           settings: prev.settings.map((item) =>
@@ -361,6 +366,7 @@ export function usePlayState() {
     resetForbidden,
     updateUser,
     setUserPhoto,
+    setCharacterPhoto,
     setWorldSetting,
     setPrologue,
     setStorySummary,

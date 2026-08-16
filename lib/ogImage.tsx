@@ -8,22 +8,26 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 async function loadFont(text: string, weight: number) {
-  const css = await fetch(
-    `https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@${weight}&text=${encodeURIComponent(text)}`,
-    {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.3 Safari/605.1.15",
+  try {
+    const css = await fetch(
+      `https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@${weight}&text=${encodeURIComponent(text)}`,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.3 Safari/605.1.15",
+        },
       },
-    },
-  ).then((response) => response.text());
-  const match = css.match(
-    /url\((https:\/\/[^)]+)\) format\('(opentype|truetype)'\)/,
-  );
-  if (!match?.[1]) return null;
-  const font = await fetch(match[1]);
-  if (!font.ok) return null;
-  return font.arrayBuffer();
+    ).then((response) => response.text());
+    const match = css.match(
+      /url\((https:\/\/[^)]+)\) format\('(opentype|truetype)'\)/,
+    );
+    if (!match?.[1]) return null;
+    const font = await fetch(match[1]);
+    if (!font.ok) return null;
+    return font.arrayBuffer();
+  } catch {
+    return null;
+  }
 }
 
 export default async function OgImage() {
@@ -92,7 +96,7 @@ export default async function OgImage() {
     ),
     {
       ...size,
-      fonts,
+      ...(fonts.length > 0 ? { fonts } : {}),
     },
   );
 }

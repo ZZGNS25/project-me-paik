@@ -246,12 +246,44 @@ body {
 
 .chat-edit-actions {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.35rem;
 }
 
-.chat-edit.is-user .chat-edit-actions {
-  justify-content: flex-end;
+.chat-edit-cancel {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+}
+
+.chat-edit-cancel:hover {
+  color: var(--ink);
+}
+
+.chat-edit-save {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--blue);
+  color: white;
+}
+
+.chat-edit-save:not(:disabled):hover {
+  background: var(--blue-deep);
+}
+
+.chat-edit-save:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
 }
 
 .icon-btn.is-tiny {
@@ -889,6 +921,46 @@ button.chat-speaker.is-me {
 
 .page-hero h1 {
   letter-spacing: -0.03em;
+}
+
+.story-peek {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 0.7rem;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.story-empty {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  padding: 1.15rem 1.2rem 1.25rem;
+}
+
+.story-start-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  background: transparent;
+  padding: 0.15rem;
+  color: inherit;
+  text-align: center;
+}
+
+.story-start-face:hover .login-cast-name {
+  color: var(--ink);
+}
+
+.story-start-blurb {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+  line-height: 1.4;
 }
 
 .login-card {

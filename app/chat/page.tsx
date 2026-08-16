@@ -133,10 +133,10 @@ function ChatBody() {
     });
   }
 
-  function regenerate(userMessageId: string) {
+  function regenerate(userMessageId: string, textOverride?: string) {
     const run = () => {
       const rewound = play.rewindForRegen(userMessageId);
-      if (rewound) void sendMessage(rewound.text, rewound.state);
+      if (rewound) void sendMessage(textOverride ?? rewound.text, rewound.state);
     };
     if (!laterTurnsWillDrop(userMessageId)) {
       run();
@@ -148,6 +148,24 @@ function ChatBody() {
       danger: true,
       run,
     });
+  }
+
+  function saveEditedMessage(id: string, content: string) {
+    const log = play.state.chatLog;
+    const index = log.findIndex((item) => item.id === id);
+    const item = log[index];
+    if (!item) return;
+
+    if (item.role === "user") {
+      const lastPair =
+        log[index + 1]?.role === "model" && index + 1 === log.length - 1;
+      if (lastPair || index === log.length - 1) {
+        regenerate(id, content);
+        return;
+      }
+    }
+
+    play.updateMessage(id, content);
   }
 
   function pinTurn(user: ChatMessage, model?: ChatMessage) {
@@ -270,7 +288,7 @@ function ChatBody() {
           onTruncateFrom={truncateFrom}
           onRegenerate={regenerate}
           onPinTurn={pinTurn}
-          onEditMessage={(id, content) => play.updateMessage(id, content)}
+          onEditMessage={saveEditedMessage}
           onPickMe={openPersonaPicker}
         />
 

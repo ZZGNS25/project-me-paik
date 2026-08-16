@@ -123,6 +123,22 @@ function unwrapSpeech(text: string) {
   return wrapped ? wrapped[1].trim() : trimmed;
 }
 
+export function previewText(raw: string, max = 92) {
+  const parsed = parseModelReply(raw);
+  const line = [...parsed].reverse().find((item) => item.text.trim());
+  const text = !line
+    ? raw
+    : line.kind === "speech"
+      ? `${line.name}  ${line.text}`
+      : line.text;
+  return text
+    .replace(/@[^:\n]+:/g, "")
+    .replace(/\*/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
 function mergeRuns(lines: ParsedLine[]): ParsedLine[] {
   const merged: ParsedLine[] = [];
 

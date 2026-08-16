@@ -87,6 +87,12 @@ export default function ChatLog({
     if (!editingId || !editDraft.trim()) return;
     onEditMessage?.(editingId, editDraft);
     setEditingId(null);
+    setEditDraft("");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditDraft("");
   }
 
   if (!hasThread) {
@@ -113,7 +119,7 @@ export default function ChatLog({
           {groupTurns(messages).map((turn) => {
             const model = turn.model;
             const regenId =
-              turn.user.role === "user" && model ? turn.user.id : undefined;
+              turn.user.role === "user" ? turn.user.id : undefined;
             return (
             <div key={turn.user.id} className="chat-thread">
               {turn.user.role === "user" ? (
@@ -134,7 +140,12 @@ export default function ChatLog({
                   onEditDraft={setEditDraft}
                   onStartEdit={() => startEdit(turn.user.id, turn.user.content)}
                   onSaveEdit={saveEdit}
-                  onCancelEdit={() => setEditingId(null)}
+                  onCancelEdit={cancelEdit}
+                  onRegenerate={
+                    onRegenerate && regenId
+                      ? () => onRegenerate(regenId)
+                      : undefined
+                  }
                   onPin={onPinTurn ? () => onPinTurn(turn.user, model) : undefined}
                   onTruncate={
                     onTruncateFrom ? () => onTruncateFrom(turn.user.id) : undefined
@@ -157,7 +168,7 @@ export default function ChatLog({
                   onEditDraft={setEditDraft}
                   onStartEdit={() => startEdit(model.id, model.content)}
                   onSaveEdit={saveEdit}
-                  onCancelEdit={() => setEditingId(null)}
+                  onCancelEdit={cancelEdit}
                   onRegenerate={
                     onRegenerate && regenId
                       ? () => onRegenerate(regenId)
@@ -296,11 +307,24 @@ function PlayLines({
             }}
           />
           <div className="chat-edit-actions">
-            <button type="button" className="btn-primary" onClick={onSaveEdit}>
-              저장
+            <button
+              type="button"
+              className="chat-edit-cancel"
+              onClick={onCancelEdit}
+              aria-label="수정 취소"
+              title="없던 일로"
+            >
+              <Icon name="close" size={18} />
             </button>
-            <button type="button" className="btn-quiet" onClick={onCancelEdit}>
-              취소
+            <button
+              type="button"
+              className="chat-edit-save"
+              disabled={!editDraft.trim()}
+              onClick={onSaveEdit}
+              aria-label="수정 저장"
+              title="이 내용으로"
+            >
+              <Icon name="check" size={18} />
             </button>
           </div>
         </div>

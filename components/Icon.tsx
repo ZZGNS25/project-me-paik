@@ -1,4 +1,12 @@
-type IconName = "menu" | "compress" | "pin" | "edit" | "regen" | "trash";
+type IconName =
+  | "menu"
+  | "compress"
+  | "pin"
+  | "edit"
+  | "regen"
+  | "trash"
+  | "close"
+  | "check";
 
 type IconProps = {
   name: IconName;
@@ -15,6 +23,8 @@ const PATHS: Record<IconName, string[]> = {
   ],
   regen: ["M20 12a8 8 0 1 1-2.3-5.6", "M20 4.2V9h-4.8"],
   trash: ["M5 7h14", "M9.5 7V5.5h5V7", "M8.2 7l.8 12.2h6l.8-12.2"],
+  close: ["M6 6l12 12", "M18 6 6 18"],
+  check: ["M5 12.5 9.8 17 19 7"],
 };
 
 export default function Icon({ name, size = 18 }: IconProps) {

@@ -1,13 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { FIELD_LIMITS, createEmptyPlayState } from "@/lib/constants";
-import { clip, loadPlayState, savePlayState } from "@/lib/storage";
+import { FIELD_LIMITS, createEmptySetting, createEmptyStore } from "@/lib/constants";
+import { buildForbidden } from "@/lib/forbidden";
+import { clip, loadStore, saveStore, toPlayState } from "@/lib/storage";
 import type {
+  AppStore,
   CastNote,
   CharacterProfile,
   ChatMessage,
   PlayState,
+  SettingRecord,
   UserPersona,
 } from "@/lib/types";
 
@@ -15,32 +18,67 @@ function newId() {
   return crypto.randomUUID();
 }
 
+function withForbidden(record: SettingRecord): SettingRecord {
+  return {
+    ...record,
+    updatedAt: new Date().toISOString(),
+    character: {
+      ...record.character,
+      forbidden: buildForbidden({
+        name: record.character.name,
+        speechStyle: record.character.speechStyle,
+        appearance: record.character.appearance,
+        worldSetting: record.worldSetting,
+        openingSituation: record.character.openingSituation,
+      }),
+    },
+  };
+}
+
+function patchCurrent(
+  store: AppStore,
+  updater: (current: SettingRecord) => SettingRecord,
+): AppStore {
+  const current =
+    store.settings.find((item) => item.id === store.currentSettingId) ??
+    store.settings[0];
+  if (!current) return store;
+
+  const next = withForbidden(updater(current));
+  return {
+    ...store,
+    settings: store.settings.map((item) =>
+      item.id === current.id ? next : item,
+    ),
+  };
+}
+
 export function usePlayState() {
-  const [state, setState] = useState<PlayState>(createEmptyPlayState);
+  const [store, setStore] = useState<AppStore>(createEmptyStore);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setState(loadPlayState());
+    setStore(loadStore());
     setReady(true);
   }, []);
 
   useEffect(() => {
     if (!ready) return;
-    savePlayState(state);
-  }, [ready, state]);
+    saveStore(store);
+  }, [ready, store]);
 
-  const patch = useCallback((updater: (prev: PlayState) => PlayState) => {
-    setState(updater);
+  const updateStore = useCallback((updater: (prev: AppStore) => AppStore) => {
+    setStore(updater);
   }, []);
 
-  function setApiKey(apiKey: string) {
-    patch((prev) => ({ ...prev, apiKey }));
-  }
+  const state = toPlayState(store);
 
   function updateCharacter<K extends keyof CharacterProfile>(
     key: K,
     value: string,
   ) {
+    if (key === "forbidden") return;
+
     const limits: Record<keyof CharacterProfile, number> = {
       name: FIELD_LIMITS.characterName,
       oneLiner: FIELD_LIMITS.oneLiner,
@@ -50,10 +88,12 @@ export function usePlayState() {
       openingSituation: FIELD_LIMITS.openingSituation,
     };
 
-    patch((prev) => ({
-      ...prev,
-      character: { ...prev.character, [key]: clip(value, limits[key]) },
-    }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        character: { ...current.character, [key]: clip(value, limits[key]) },
+      })),
+    );
   }
 
   function updateUser<K extends keyof UserPersona>(key: K, value: string) {
@@ -62,24 +102,30 @@ export function usePlayState() {
       setting: FIELD_LIMITS.userSetting,
     };
 
-    patch((prev) => ({
-      ...prev,
-      userPersona: { ...prev.userPersona, [key]: clip(value, limits[key]) },
-    }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        userPersona: { ...current.userPersona, [key]: clip(value, limits[key]) },
+      })),
+    );
   }
 
   function setWorldSetting(value: string) {
-    patch((prev) => ({
-      ...prev,
-      worldSetting: clip(value, FIELD_LIMITS.worldSetting),
-    }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        worldSetting: clip(value, FIELD_LIMITS.worldSetting),
+      })),
+    );
   }
 
   function setStorySummary(value: string) {
-    patch((prev) => ({
-      ...prev,
-      storySummary: clip(value, FIELD_LIMITS.storySummary),
-    }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        storySummary: clip(value, FIELD_LIMITS.storySummary),
+      })),
+    );
   }
 
   function addCastNote() {
@@ -89,30 +135,35 @@ export function usePlayState() {
     );
     if (used >= FIELD_LIMITS.castNotesTotal) return;
 
-    patch((prev) => ({
-      ...prev,
-      castNotes: [...prev.castNotes, { id: newId(), name: "", note: "" }],
-    }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        castNotes: [...current.castNotes, { id: newId(), name: "", note: "" }],
+      })),
+    );
   }
 
   function updateCastNote(id: string, key: keyof CastNote, value: string) {
-    patch((prev) => ({
-      ...prev,
-      castNotes: prev.castNotes.map((note) => {
-        if (note.id !== id) return note;
-        if (key === "id") return note;
-        const max =
-          key === "name" ? FIELD_LIMITS.castName : FIELD_LIMITS.castNote;
-        return { ...note, [key]: clip(value, max) };
-      }),
-    }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        castNotes: current.castNotes.map((note) => {
+          if (note.id !== id || key === "id") return note;
+          const max =
+            key === "name" ? FIELD_LIMITS.castName : FIELD_LIMITS.castNote;
+          return { ...note, [key]: clip(value, max) };
+        }),
+      })),
+    );
   }
 
   function removeCastNote(id: string) {
-    patch((prev) => ({
-      ...prev,
-      castNotes: prev.castNotes.filter((note) => note.id !== id),
-    }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        castNotes: current.castNotes.filter((note) => note.id !== id),
+      })),
+    );
   }
 
   function appendTurn(userText: string, modelText: string) {
@@ -130,41 +181,87 @@ export function usePlayState() {
       createdAt: new Date().toISOString(),
     };
 
-    patch((prev) => ({
-      ...prev,
-      chatLog: [...prev.chatLog, userMessage, modelMessage],
-      shortTermBuffer: [...prev.shortTermBuffer, userMessage, modelMessage],
-      turnCount: prev.turnCount + 1,
-    }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        chatLog: [...current.chatLog, userMessage, modelMessage],
+        shortTermBuffer: [...current.shortTermBuffer, userMessage, modelMessage],
+        turnCount: current.turnCount + 1,
+      })),
+    );
   }
 
   function applySummary(summary: string) {
-    patch((prev) => ({
-      ...prev,
-      storySummary: clip(summary, FIELD_LIMITS.storySummary),
-      shortTermBuffer: [],
-    }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        storySummary: clip(summary, FIELD_LIMITS.storySummary),
+        shortTermBuffer: [],
+      })),
+    );
   }
 
   function hydrateFromCloud(partial: Partial<PlayState>) {
-    patch((prev) => ({ ...prev, ...partial }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({
+        ...current,
+        ...partial,
+        id: current.id,
+      })),
+    );
   }
 
   function setCloudSessionId(cloudSessionId: string | null) {
-    patch((prev) => ({ ...prev, cloudSessionId }));
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => ({ ...current, cloudSessionId })),
+    );
   }
 
   function startNewStory() {
-    patch((prev) => {
-      const next = {
-        ...prev,
+    updateStore((prev) => {
+      const next = patchCurrent(prev, (current) => ({
+        ...current,
         storySummary: "",
         chatLog: [],
         shortTermBuffer: [],
         turnCount: 0,
         cloudSessionId: null,
+      }));
+      saveStore(next);
+      return next;
+    });
+  }
+
+  function createSetting() {
+    const setting = withForbidden(createEmptySetting(newId()));
+    updateStore((prev) => {
+      const next = {
+        ...prev,
+        currentSettingId: setting.id,
+        settings: [...prev.settings, setting],
       };
-      savePlayState(next);
+      saveStore(next);
+      return next;
+    });
+  }
+
+  function selectSetting(id: string) {
+    updateStore((prev) => {
+      if (!prev.settings.some((item) => item.id === id)) return prev;
+      const next = { ...prev, currentSettingId: id };
+      saveStore(next);
+      return next;
+    });
+  }
+
+  function deleteSetting(id: string) {
+    updateStore((prev) => {
+      if (prev.settings.length <= 1) return prev;
+      const settings = prev.settings.filter((item) => item.id !== id);
+      const currentSettingId =
+        prev.currentSettingId === id ? settings[0].id : prev.currentSettingId;
+      const next = { ...prev, settings, currentSettingId };
+      saveStore(next);
       return next;
     });
   }
@@ -172,7 +269,8 @@ export function usePlayState() {
   return {
     state,
     ready,
-    setApiKey,
+    settings: store.settings,
+    currentSettingId: store.currentSettingId,
     updateCharacter,
     updateUser,
     setWorldSetting,
@@ -185,5 +283,8 @@ export function usePlayState() {
     hydrateFromCloud,
     setCloudSessionId,
     startNewStory,
+    createSetting,
+    selectSetting,
+    deleteSetting,
   };
 }

@@ -39,9 +39,12 @@ export const EMPTY_USER = {
   setting: "",
 };
 
-export function createEmptyPlayState(): import("./types").PlayState {
+export function createEmptySetting(
+  id = "local-draft",
+): import("./types").SettingRecord {
   return {
-    apiKey: "",
+    id,
+    updatedAt: new Date().toISOString(),
     character: { ...EMPTY_CHARACTER },
     userPersona: { ...EMPTY_USER },
     worldSetting: "",
@@ -51,5 +54,30 @@ export function createEmptyPlayState(): import("./types").PlayState {
     shortTermBuffer: [],
     turnCount: 0,
     cloudSessionId: null,
+  };
+}
+
+export function createEmptyStore(): import("./types").AppStore {
+  const setting = createEmptySetting();
+  return {
+    apiKey: "",
+    currentSettingId: setting.id,
+    settings: [setting],
+  };
+}
+
+export function createEmptyPlayState(): import("./types").PlayState {
+  const setting = createEmptySetting();
+  return {
+    apiKey: "",
+    character: setting.character,
+    userPersona: setting.userPersona,
+    worldSetting: setting.worldSetting,
+    storySummary: setting.storySummary,
+    castNotes: setting.castNotes,
+    chatLog: setting.chatLog,
+    shortTermBuffer: setting.shortTermBuffer,
+    turnCount: setting.turnCount,
+    cloudSessionId: setting.cloudSessionId,
   };
 }

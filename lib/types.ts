@@ -40,6 +40,17 @@ export type PlayState = {
   cloudSessionId: string | null;
 };
 
+export type SettingRecord = Omit<PlayState, "apiKey"> & {
+  id: string;
+  updatedAt: string;
+};
+
+export type AppStore = {
+  apiKey: string;
+  currentSettingId: string;
+  settings: SettingRecord[];
+};
+
 export type PromptState = Pick<
   PlayState,
   | "character"

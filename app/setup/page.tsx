@@ -57,10 +57,54 @@ function SetupBody() {
           if (canStart) router.push("/");
         }}
       >
-        <div>
-          <p className="label-caps">설정</p>
-          <h1 className="mt-1 text-3xl font-semibold">캐릭터와 세계관</h1>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="label-caps">설정</p>
+            <h1 className="mt-1 text-3xl font-semibold">캐릭터와 세계관</h1>
+          </div>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={play.createSetting}
+          >
+            새 설정
+          </button>
         </div>
+
+        <div className="space-y-2">
+          {play.settings.map((item) => (
+            <div
+              key={item.id}
+              className={`setting-row ${
+                item.id === play.currentSettingId ? "is-active" : ""
+              }`}
+            >
+              <button
+                type="button"
+                className="min-w-0 flex-1 text-left"
+                onClick={() => play.selectSetting(item.id)}
+              >
+                <p className="font-semibold">
+                  {item.character.name.trim() || "이름 없는 설정"}
+                </p>
+                <p className="mt-1 truncate text-sm text-[var(--ink-dim)]">
+                  {item.character.oneLiner || "한 줄 소개 없음"}
+                  {item.turnCount > 0 ? ` · ${item.turnCount}턴` : ""}
+                </p>
+              </button>
+              {play.settings.length > 1 ? (
+                <button
+                  type="button"
+                  className="ghost-link"
+                  onClick={() => play.deleteSetting(item.id)}
+                >
+                  삭제
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+
         {error ? <p className="alert-error">{error}</p> : null}
         <section className="paper-card space-y-4 p-6">
           <p className="label-caps">필수 프로필</p>
@@ -94,14 +138,16 @@ function SetupBody() {
             max={FIELD_LIMITS.appearance}
             onChange={(value) => play.updateCharacter("appearance", value)}
           />
-          <CharField
-            label="금지"
-            multiline
-            value={play.state.character.forbidden}
-            max={FIELD_LIMITS.forbidden}
-            onChange={(value) => play.updateCharacter("forbidden", value)}
-            placeholder="마법을 쓰지 않는다"
-          />
+          <div>
+            <p className="text-sm font-medium text-[var(--ink)]">금지</p>
+            <p className="mt-1 text-xs text-[var(--ink-dim)]">
+              말투와 세계관을 보고 자동으로 정합니다. 직접 고치지 않아도 됩니다.
+            </p>
+            <p className="forbidden-box">
+              {play.state.character.forbidden ||
+                "이름이나 말투를 적으면 여기에 규칙이 생깁니다."}
+            </p>
+          </div>
           <CharField
             label="시작 상황"
             multiline

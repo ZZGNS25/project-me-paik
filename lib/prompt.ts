@@ -8,10 +8,10 @@ export function buildPinnedRules(state: PromptState) {
   return `[규칙]
 너는 ${character}의 시점과 행동만 서술한다.
 절대로 ${user}의 대사·감정·행동을 대신 쓰지 않는다.
-나레이션은 반드시 (나레이션) ... 한 줄로 쓴다.
-대사는 반드시 이름: 「대사」 형식만 쓴다.
+나레이션은 (나레이션) 으로 시작하는 줄을 2~4개 쓴다. 각 줄은 한 문장.
+대사는 이름: 「대사」 형식으로 2~4줄 쓴다.
 다른 기호·OOC 설명은 금지한다.
-짧게: 나레이션 1~3문장 + 대사 2~5줄. 소설처럼 길게 쓰지 않는다.`;
+한 줄로 끝내지 마라. 문장을 중간에 끊지 마라.`;
 }
 
 export function buildChatPrompt(state: PromptState, userText: string) {
@@ -63,6 +63,9 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     "",
     "[유저 말]",
     userText,
+    !recent && state.prologue.trim()
+      ? "\n프롤로그 직후 장면을 나레이션 2~4줄과 대사 2~4줄로 충분히 보여라."
+      : "",
   ].join("\n");
 }
 

@@ -4,6 +4,8 @@ import { WORLD_PRESETS } from "./presets";
 import type { AppStore, PlayState, SettingRecord } from "./types";
 import { STORAGE_KEY } from "./constants";
 
+let lastSaved = "";
+
 function backfillPresetMeta(record: SettingRecord): SettingRecord {
   const preset = WORLD_PRESETS.find(
     (item) => item.character.name === record.character.name.trim(),
@@ -113,12 +115,14 @@ export function loadStore(): AppStore {
     if (!raw) return createEmptyStore();
     const parsed = JSON.parse(raw) as unknown;
     if (isStore(parsed) && parsed.settings.length > 0) {
-      return {
+      const next = {
         ...parsed,
         settings: parsed.settings.map((item) =>
           applyForbidden(backfillPresetMeta(item)),
         ),
       };
+      lastSaved = raw;
+      return next;
     }
     const migrated = migrateLegacy({
       ...createEmptyPlayState(),
@@ -137,7 +141,10 @@ export function loadStore(): AppStore {
 
 export function saveStore(store: AppStore) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  const raw = JSON.stringify(store);
+  if (raw === lastSaved) return;
+  lastSaved = raw;
+  window.localStorage.setItem(STORAGE_KEY, raw);
 }
 
 export function loadPlayState(): PlayState {

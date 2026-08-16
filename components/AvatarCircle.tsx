@@ -40,7 +40,15 @@ export default function AvatarCircle({
 
   const face = src ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={name || "프로필"} className="avatar-image" />
+    <img
+      src={src}
+      alt={name || "프로필"}
+      className="avatar-image"
+      width={88}
+      height={88}
+      loading="lazy"
+      decoding="async"
+    />
   ) : (
     <span className="avatar-fallback">{initial}</span>
   );

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { GEMINI_SUMMARY_OUTPUT_TOKENS } from "@/lib/constants";
 import { generateGeminiText } from "@/lib/gemini";
 import { buildChatPrompt, buildSummaryPrompt } from "@/lib/prompt";
 import { requireUser } from "@/lib/requireUser";
@@ -39,7 +40,10 @@ export async function POST(request: Request) {
     }
 
     if (body.mode === "summary") {
-      const text = await generateGeminiText(buildSummaryPrompt(body.state));
+      const text = await generateGeminiText(
+        buildSummaryPrompt(body.state),
+        GEMINI_SUMMARY_OUTPUT_TOKENS,
+      );
       return NextResponse.json({ text });
     }
 

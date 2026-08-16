@@ -1,13 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_KR } from "next/font/google";
 import "./globals.css";
-
-const sans = IBM_Plex_Sans_KR({
-  variable: "--font-sans-kr",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "이어롤",
@@ -20,10 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ko"
-      className={`${sans.variable} h-full antialiased`}
-    >
+    <html lang="ko" className="h-full antialiased">
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

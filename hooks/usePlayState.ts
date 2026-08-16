@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FIELD_LIMITS, createEmptySetting, createEmptyStore } from "@/lib/constants";
 import { buildForbidden } from "@/lib/forbidden";
 import { WORLD_PRESETS, settingFromPreset, type PresetId } from "@/lib/presets";
@@ -61,6 +61,7 @@ function patchCurrent(
 export function usePlayState() {
   const [store, setStore] = useState<AppStore>(createEmptyStore);
   const [ready, setReady] = useState(false);
+  const skipSave = useRef(true);
 
   useEffect(() => {
     setStore(loadStore());
@@ -69,6 +70,10 @@ export function usePlayState() {
 
   useEffect(() => {
     if (!ready) return;
+    if (skipSave.current) {
+      skipSave.current = false;
+      return;
+    }
     saveStore(store);
   }, [ready, store]);
 
@@ -384,3 +389,5 @@ export function usePlayState() {
     deleteSetting,
   };
 }
+
+export type PlayController = ReturnType<typeof usePlayState>;

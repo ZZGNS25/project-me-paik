@@ -73,7 +73,7 @@ function HomeBody() {
       {view === "guide" ? (
         <GuidePanel />
       ) : view === "history" ? (
-        <HistoryPanel />
+        <HistoryPanel play={play} />
       ) : (
         <div className="mx-auto w-full max-w-2xl overflow-y-auto px-6 py-10">
           <p className="label-caps">이야기</p>

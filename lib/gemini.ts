@@ -1,6 +1,9 @@
 import { GEMINI_MAX_OUTPUT_TOKENS, GEMINI_MODEL } from "./constants";
 
-export async function generateGeminiText(prompt: string) {
+export async function generateGeminiText(
+  prompt: string,
+  maxOutputTokens = GEMINI_MAX_OUTPUT_TOKENS,
+) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("서버에 Gemini 키가 없습니다. GEMINI_API_KEY를 설정해 주세요.");
@@ -14,7 +17,7 @@ export async function generateGeminiText(prompt: string) {
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
-        maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS,
+        maxOutputTokens,
       },
     }),
   });

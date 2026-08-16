@@ -4,13 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProfileCard from "@/components/ProfileCard";
 import { useAuth } from "@/hooks/useAuth";
-import { usePlayState } from "@/hooks/usePlayState";
+import type { PlayController } from "@/hooks/usePlayState";
 import { listPlaySessions, loadPlayById, type SessionSummary } from "@/lib/cloud";
 
-export default function HistoryPanel() {
+export default function HistoryPanel({ play }: { play: PlayController }) {
   const router = useRouter();
   const auth = useAuth();
-  const play = usePlayState();
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);

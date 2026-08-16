@@ -1204,6 +1204,40 @@ button.chat-speaker.is-me {
   overflow: auto;
 }
 
+.share-sheet {
+  width: min(22rem, 100%);
+}
+
+.share-url {
+  margin-top: 0.7rem;
+  overflow: hidden;
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.share-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.share-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  border: 1px solid rgba(77, 141, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(12, 16, 24, 0.55);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
 .prologue-card {
   max-width: 36rem;
   border: 1px solid rgba(77, 141, 255, 0.16);

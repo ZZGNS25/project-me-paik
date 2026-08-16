@@ -16,10 +16,11 @@ npm run dev
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+NEXT_PUBLIC_GA_MEASUREMENT_ID=
 GEMINI_API_KEY=
 ```
 
-`GEMINI_API_KEY`는 서버 전용입니다. `NEXT_PUBLIC_`을 붙이지 마세요.
+`GEMINI_API_KEY`는 서버 전용입니다. `NEXT_PUBLIC_`을 붙이지 마세요. 구글 애널리틱스는 `NEXT_PUBLIC_GA_MEASUREMENT_ID`에 `G-`로 시작하는 측정 ID를 넣으면 집계됩니다.
 
 ## 화면
 
@@ -45,5 +46,5 @@ supabase/       테이블 SQL
 
 1. Framework Preset: **Next.js**
 2. Root Directory: 비워 두기 (`.`)
-3. Environment Variables에 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `GEMINI_API_KEY` 추가
+3. Environment Variables에 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `GEMINI_API_KEY` 추가
 4. Supabase Authentication → URL Configuration에 `https://project-me-paik.vercel.app/**` 과 `http://localhost:3000/**` 을 Redirect URL로 추가

@@ -133,8 +133,9 @@ export default function GuidePanel() {
             바로 남깁니다. 로그인되어 있으면 평소에도 자동으로 남습니다.
           </li>
           <li>
-            <strong className="text-[var(--ink)]">공유</strong>는 캐릭터·세계관·등장인물
-            링크만 복사합니다. 대화는 들어가지 않습니다.
+            <strong className="text-[var(--ink)]">공유</strong>를 누르면 다른 앱, 링크 복사,
+            X, 페이스북, 텔레그램, 라인이 뜹니다. 캐릭터와 세계관만 들어가고 대화는
+            빠집니다.
           </li>
           <li>
             <strong className="text-[var(--ink)]">새로</strong>는 같은 세계와 역할로 새
@@ -191,7 +192,7 @@ export default function GuidePanel() {
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
           설정의 <strong className="text-[var(--ink)]">기록 내려받기</strong>는 세계관과
           대화를 텍스트 파일로 남깁니다. 다시 불러오는 파일이 아닙니다. 캐릭터와 세계관
-          링크는 <strong className="text-[var(--ink)]">공유</strong>로 복사합니다.
+          링크는 <strong className="text-[var(--ink)]">공유</strong>로 보냅니다.
         </p>
       </section>
     </div>

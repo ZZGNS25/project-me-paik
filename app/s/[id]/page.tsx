@@ -8,7 +8,9 @@ import PageShell from "@/components/PageShell";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { copyText, loadShare, shareUrl, type ShareRecord } from "@/lib/share";
+import { SITE_TAGLINE } from "@/lib/site";
 import { trackEvent } from "@/lib/analytics";
+import ShareSheet from "@/components/ShareSheet";
 
 export default function SharePage() {
   const params = useParams<{ id: string }>();
@@ -18,6 +20,7 @@ export default function SharePage() {
   const [share, setShare] = useState<ShareRecord | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -102,11 +105,26 @@ export default function SharePage() {
                   {auth.busy ? "연결 중…" : "Google로 시작하기"}
                 </button>
               )}
-              <button type="button" className="btn-secondary" onClick={() => void copyLink()}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setSharing(true)}
+              >
+                공유
+              </button>
+              <button type="button" className="btn-quiet" onClick={() => void copyLink()}>
                 {copied ? "복사됨" : "링크 복사"}
               </button>
             </div>
             {auth.error ? <p className="alert-error mt-4">{auth.error}</p> : null}
+            {sharing && share ? (
+              <ShareSheet
+                url={shareUrl(share.id)}
+                title={`${share.title} · 이어롤`}
+                text={snapshot.character.oneLiner.trim() || SITE_TAGLINE}
+                onClose={() => setSharing(false)}
+              />
+            ) : null}
           </>
         )}
       </main>

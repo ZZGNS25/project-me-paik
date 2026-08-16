@@ -105,3 +105,53 @@ export async function loadShare(id: string): Promise<ShareRecord | null> {
 export async function copyText(text: string) {
   await navigator.clipboard.writeText(text);
 }
+
+export async function shareToApps(input: {
+  title: string;
+  text: string;
+  url: string;
+}) {
+  if (typeof navigator === "undefined" || !navigator.share) {
+    return { status: "unavailable" as const };
+  }
+  try {
+    await navigator.share(input);
+    return { status: "shared" as const };
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return { status: "aborted" as const };
+    }
+    return { status: "failed" as const };
+  }
+}
+
+export function shareDestinations(url: string, text: string) {
+  const encodedUrl = encodeURIComponent(url);
+  const encodedText = encodeURIComponent(text);
+  return [
+    {
+      id: "x",
+      label: "X",
+      href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
+    },
+    {
+      id: "facebook",
+      label: "페이스북",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    },
+    {
+      id: "telegram",
+      label: "텔레그램",
+      href: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`,
+    },
+    {
+      id: "line",
+      label: "라인",
+      href: `https://social-plugins.line.me/lineit/share?url=${encodedUrl}`,
+    },
+  ] as const;
+}
+
+export function canShareToApps() {
+  return typeof navigator !== "undefined" && typeof navigator.share === "function";
+}

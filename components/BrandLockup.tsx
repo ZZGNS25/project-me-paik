@@ -7,7 +7,7 @@ type BrandLockupProps = {
 export default function BrandLockup({ compact = false }: BrandLockupProps) {
   return (
     <span className={`brand-lockup ${compact ? "is-compact" : ""}`}>
-      <EarRoleMark size={compact ? 30 : 40} />
+      <EarRoleMark size={compact ? 36 : 52} />
       <span className="brand-en">EarRole</span>
     </span>
   );

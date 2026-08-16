@@ -3,7 +3,7 @@ type EarRoleMarkProps = {
   className?: string;
 };
 
-export default function EarRoleMark({ size = 40, className = "" }: EarRoleMarkProps) {
+export default function EarRoleMark({ size = 48, className = "" }: EarRoleMarkProps) {
   return (
     <span className={`ear-mark ${className}`} style={{ width: size, height: size }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}

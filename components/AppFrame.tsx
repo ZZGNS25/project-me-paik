@@ -74,7 +74,11 @@ export default function AppFrame({ children }: AppFrameProps) {
           ) : null}
         </div>
       </aside>
-      <div className="app-main">{children}</div>
+      <div className="app-main">
+        <div key={`${pathname}?${view ?? ""}`} className="page-enter">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

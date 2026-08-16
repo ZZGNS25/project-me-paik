@@ -121,7 +121,7 @@ function UserBlock({
   const lines = parseModelReply(text);
 
   return (
-    <div className="flex items-end justify-end gap-2">
+    <div className="appear flex items-end justify-end gap-2">
       <div className="flex min-w-0 max-w-[85%] flex-col items-end gap-2">
         {lines.map((line, index) => (
           <UserLine key={index} line={line} fallbackName={name} />
@@ -184,7 +184,7 @@ function ModelBlock({
   const lines = parseModelReply(content);
 
   return (
-    <div className="flex max-w-[85%] items-start gap-2">
+    <div className="appear flex max-w-[85%] items-start gap-2">
       <AvatarCircle src={photo} name={name} size="sm" />
       <div className="flex min-w-0 flex-col gap-2">
         {lines.map((line, index) => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import EarRoleMark from "@/components/EarRoleMark";
+import { SITE_TAGLINE } from "@/lib/site";
 
 const INTRO_KEY = "eorol-intro-seen";
 
@@ -29,7 +30,7 @@ export default function IntroScreen() {
       <div className="intro-mark">
         <EarRoleMark size={88} />
         <p className="brand-en">EarRole</p>
-        <p className="intro-kicker">듣고, 잇고, 연기하다.</p>
+        <p className="intro-kicker">{SITE_TAGLINE}</p>
       </div>
     </div>
   );

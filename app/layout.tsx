@@ -3,6 +3,7 @@ import MotionRoot from "@/components/MotionRoot";
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
+  SITE_TAGLINE,
   SITE_TITLE,
   SITE_URL,
 } from "@/lib/site";
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/earrole-mark.png",
-        alt: "EarRole — 듣고, 잇고, 연기하다.",
+        alt: `EarRole — ${SITE_TAGLINE}`,
       },
     ],
   },

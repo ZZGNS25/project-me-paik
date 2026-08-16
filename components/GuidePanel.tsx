@@ -4,7 +4,7 @@ export default function GuidePanel() {
       <p className="label-caps">안내</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight">EarRole 쓰는 법</h1>
       <p className="mt-3 text-sm text-[var(--ink-dim)]">
-        이어롤은 귀를 열고, 이야기를 잇고, 역할을 플레이합니다. 캐릭터를 골라 소비하는
+        이어롤은 귀를 열고, 이야기를 잇고, 그 역할에 몰입합니다. 캐릭터를 골라 소비하는
         곳이 아니라, 세계와 나를 정한 뒤 그 안에서 대화를 이어 가는 곳입니다.
       </p>
 

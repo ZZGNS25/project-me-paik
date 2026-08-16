@@ -58,7 +58,7 @@ export default function SharePage() {
     <PageShell>
       <main className="paper-card login-card mt-8 px-7 py-10">
         <BrandLockup />
-        <p className="login-kicker">듣고, 잇고, 연기하다.</p>
+        <p className="login-kicker">{SITE_TAGLINE}</p>
         {!ready ? (
           <p className="mono-readout mt-8 text-sm text-[var(--ink-dim)]">불러오는 중…</p>
         ) : error || !snapshot ? (

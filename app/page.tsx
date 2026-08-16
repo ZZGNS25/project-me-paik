@@ -18,6 +18,7 @@ import { deletePlayFromCloud } from "@/lib/cloud";
 import { timeAgo } from "@/lib/korean";
 import { previewText } from "@/lib/parseMessage";
 import { WORLD_PRESETS } from "@/lib/presets";
+import { SITE_TAGLINE } from "@/lib/site";
 import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
 
@@ -43,7 +44,7 @@ function HomeBody() {
       <PageShell>
         <main className="paper-card login-card mt-8 px-7 py-10">
           <BrandLockup />
-          <p className="login-kicker">듣고, 잇고, 연기하다.</p>
+          <p className="login-kicker">{SITE_TAGLINE}</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">
             이야기가 끊기지 않게
           </h1>

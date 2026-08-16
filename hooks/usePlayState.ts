@@ -400,6 +400,7 @@ export function usePlayState() {
           ...createEmptySetting(newId()),
           ...item,
           id: newId(),
+          title: item.title ?? "",
           storyPins: normalizePins(item.storyPins),
           cloudSessionId: null,
           updatedAt: new Date().toISOString(),
@@ -424,6 +425,7 @@ export function usePlayState() {
     const mapped: SettingRecord = withForbidden({
       ...(existing ?? createEmptySetting(newId())),
       ...partial,
+      title: existing?.title ?? "",
       id: existing?.id ?? newId(),
       storyPins: normalizePins(partial.storyPins),
       shortTermBuffer: partial.shortTermBuffer ?? syncBuffer(partial.chatLog ?? []),
@@ -587,6 +589,21 @@ export function usePlayState() {
     });
   }
 
+  function renameSetting(id: string, title: string) {
+    updateStore((prev) => ({
+      ...prev,
+      settings: prev.settings.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              title: clip(title, FIELD_LIMITS.storyTitle),
+              updatedAt: new Date().toISOString(),
+            }
+          : item,
+      ),
+    }));
+  }
+
   return {
     state,
     ready,
@@ -625,6 +642,7 @@ export function usePlayState() {
     selectSetting,
     unlinkCloudSession,
     deleteSetting,
+    renameSetting,
   };
 }
 

@@ -20,8 +20,9 @@ export const FIELD_LIMITS = {
   storyPin: 160,
   storyPinsMax: 12,
   castName: 32,
-  castNote: 150,
-  castNotesTotal: 900,
+  castNote: 200,
+  castNotesTotal: 1200,
+  storyTitle: 40,
 } as const;
 
 export const WORLD_PLACEHOLDER = `시대/장소:
@@ -51,6 +52,7 @@ export function createEmptySetting(
 ): import("./types").SettingRecord {
   return {
     id,
+    title: "",
     updatedAt: new Date().toISOString(),
     character: { ...EMPTY_CHARACTER },
     userPersona: { ...EMPTY_USER },

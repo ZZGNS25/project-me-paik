@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import AvatarCircle from "@/components/AvatarCircle";
 import MarkupText from "@/components/MarkupText";
 import PrologueCard from "@/components/PrologueCard";
@@ -22,6 +22,8 @@ type ChatLogProps = {
   onPinTurn?: (user: ChatMessage, model?: ChatMessage) => void;
 };
 
+const NEAR_BOTTOM = 96;
+
 export default function ChatLog({
   messages,
   prologue,
@@ -36,113 +38,143 @@ export default function ChatLog({
   onRegenerate,
   onPinTurn,
 }: ChatLogProps) {
+  const feedRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const pinToBottom = useRef(true);
+  const [away, setAway] = useState(false);
   const hasThread = messages.length > 0 || Boolean(pendingUserText);
   const showActions = Boolean(onTruncateFrom || onRegenerate || onPinTurn);
 
+  function measure() {
+    const el = feedRef.current;
+    if (!el) return;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM;
+    pinToBottom.current = near;
+    setAway(!near);
+  }
+
+  function jumpToBottom() {
+    pinToBottom.current = true;
+    setAway(false);
+    endRef.current?.scrollIntoView({ block: "end" });
+  }
+
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+    if (!pinToBottom.current) return;
+    endRef.current?.scrollIntoView({
+      block: "end",
+      behavior: streamingText ? "auto" : "smooth",
+    });
   }, [messages, pendingUserText, streamingText]);
 
   if (!hasThread) {
     return (
-      <div className="chat-feed">
-        <div className="chat-feed-inner is-empty">
-          {prologue?.trim() ? (
-            <PrologueCard text={prologue} />
-          ) : (
-            <p className="chat-empty">첫 말을 건네 보세요.</p>
-          )}
+      <div className="chat-feed-wrap">
+        <div className="chat-feed">
+          <div className="chat-feed-inner is-empty">
+            {prologue?.trim() ? (
+              <PrologueCard text={prologue} />
+            ) : (
+              <p className="chat-empty">첫 말을 건네 보세요.</p>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="chat-feed">
-      <div className="chat-feed-inner">
-        {prologue?.trim() ? <PrologueCard text={prologue} compact /> : null}
-        {groupTurns(messages).map((turn) => (
-          <div key={turn.user.id} className="chat-thread">
-            {turn.user.role === "user" ? (
-              <PlayLines
-                content={turn.user.content}
-                characterName={characterName}
-                characterPhoto={characterPhoto}
-                userName={userName}
-                userPhoto={userPhoto}
-                fromUser
-              />
-            ) : null}
-            {turn.model ? (
-              <PlayLines
-                content={turn.model.content}
-                characterName={characterName}
-                characterPhoto={characterPhoto}
-                userName={userName}
-                userPhoto={userPhoto}
-              />
-            ) : null}
-            {showActions && !pendingUserText && !streamingText ? (
-              <div className="turn-actions">
-                {onTruncateFrom ? (
-                  <button
-                    type="button"
-                    className="btn-danger"
-                    disabled={actionsDisabled}
-                    onClick={() => onTruncateFrom(turn.user.id)}
-                  >
-                    여기부터 삭제
-                  </button>
-                ) : null}
-                {onRegenerate && turn.user.role === "user" ? (
-                  <button
-                    type="button"
-                    className="btn-quiet"
-                    disabled={actionsDisabled}
-                    onClick={() => onRegenerate(turn.user.id)}
-                  >
-                    답 다시 생성
-                  </button>
-                ) : null}
-                {onPinTurn ? (
-                  <button
-                    type="button"
-                    className="btn-quiet"
-                    disabled={actionsDisabled}
-                    onClick={() => onPinTurn(turn.user, turn.model)}
-                  >
-                    사건 고정
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        ))}
-        {pendingUserText ? (
-          <PlayLines
-            content={pendingUserText}
-            characterName={characterName}
-            characterPhoto={characterPhoto}
-            userName={userName}
-            userPhoto={userPhoto}
-            fromUser
-          />
-        ) : null}
-        {streamingText ? (
-          <PlayLines
-            content={streamingText}
-            characterName={characterName}
-            characterPhoto={characterPhoto}
-            userName={userName}
-            userPhoto={userPhoto}
-            streaming
-          />
-        ) : pendingUserText ? (
-          <p className="streaming-wait">쓰는 중…</p>
-        ) : null}
-        <div ref={endRef} />
+    <div className="chat-feed-wrap">
+      <div className="chat-feed" ref={feedRef} onScroll={measure}>
+        <div className="chat-feed-inner">
+          {prologue?.trim() ? <PrologueCard text={prologue} compact /> : null}
+          {groupTurns(messages).map((turn) => (
+            <div key={turn.user.id} className="chat-thread">
+              {turn.user.role === "user" ? (
+                <PlayLines
+                  content={turn.user.content}
+                  characterName={characterName}
+                  characterPhoto={characterPhoto}
+                  userName={userName}
+                  userPhoto={userPhoto}
+                  fromUser
+                />
+              ) : null}
+              {turn.model ? (
+                <PlayLines
+                  content={turn.model.content}
+                  characterName={characterName}
+                  characterPhoto={characterPhoto}
+                  userName={userName}
+                  userPhoto={userPhoto}
+                />
+              ) : null}
+              {showActions && !pendingUserText && !streamingText ? (
+                <div className="turn-actions">
+                  {onTruncateFrom ? (
+                    <button
+                      type="button"
+                      className="btn-danger"
+                      disabled={actionsDisabled}
+                      onClick={() => onTruncateFrom(turn.user.id)}
+                    >
+                      여기부터 삭제
+                    </button>
+                  ) : null}
+                  {onRegenerate && turn.user.role === "user" ? (
+                    <button
+                      type="button"
+                      className="btn-quiet"
+                      disabled={actionsDisabled}
+                      onClick={() => onRegenerate(turn.user.id)}
+                    >
+                      답 다시 생성
+                    </button>
+                  ) : null}
+                  {onPinTurn ? (
+                    <button
+                      type="button"
+                      className="btn-quiet"
+                      disabled={actionsDisabled}
+                      onClick={() => onPinTurn(turn.user, turn.model)}
+                    >
+                      사건 고정
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ))}
+          {pendingUserText ? (
+            <PlayLines
+              content={pendingUserText}
+              characterName={characterName}
+              characterPhoto={characterPhoto}
+              userName={userName}
+              userPhoto={userPhoto}
+              fromUser
+            />
+          ) : null}
+          {streamingText ? (
+            <PlayLines
+              content={streamingText}
+              characterName={characterName}
+              characterPhoto={characterPhoto}
+              userName={userName}
+              userPhoto={userPhoto}
+              streaming
+            />
+          ) : pendingUserText ? (
+            <p className="streaming-wait">쓰는 중…</p>
+          ) : null}
+          <div ref={endRef} />
+        </div>
       </div>
+      {away ? (
+        <button type="button" className="jump-bottom" onClick={jumpToBottom}>
+          맨 아래로
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -36,6 +36,7 @@ function applyForbidden(record: SettingRecord): SettingRecord {
   const forbiddenManual = Boolean(record.character.forbiddenManual);
   return {
     ...record,
+    title: record.title ?? "",
     prologue: record.prologue ?? "",
     storyPins: normalizePins(record.storyPins),
     worldSetting: clip(record.worldSetting ?? "", FIELD_LIMITS.worldSetting),
@@ -108,6 +109,7 @@ function migrateLegacy(parsed: PlayState): AppStore {
       : "migrated";
   const setting: SettingRecord = {
     id,
+    title: "",
     updatedAt: new Date().toISOString(),
     character: parsed.character ?? createEmptyPlayState().character,
     userPersona: parsed.userPersona ?? createEmptyPlayState().userPersona,
@@ -185,6 +187,7 @@ export function savePlayState(state: PlayState) {
             ...item,
             ...state,
             id: item.id,
+            title: item.title,
             updatedAt: new Date().toISOString(),
           }
         : item,

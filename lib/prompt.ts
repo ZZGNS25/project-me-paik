@@ -1,4 +1,4 @@
-import { SHORT_TERM_TURNS } from "./constants";
+import { FIELD_LIMITS, SHORT_TERM_TURNS } from "./constants";
 import type { PromptState } from "./types";
 
 function clip(value: string, max: number) {
@@ -47,7 +47,7 @@ export function buildChatPrompt(state: PromptState, userText: string) {
 
   const cast = state.castNotes
     .filter((note) => note.name.trim() || note.note.trim())
-    .map((note) => `- ${note.name}: ${note.note}`)
+    .map((note) => `- ${note.name}: ${note.note.slice(0, FIELD_LIMITS.castNote)}`)
     .join("\n");
 
   const blocks = [

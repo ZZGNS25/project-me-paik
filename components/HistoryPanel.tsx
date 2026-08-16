@@ -11,6 +11,7 @@ import {
   loadPlayById,
   type SessionSummary,
 } from "@/lib/cloud";
+import { storyTitle } from "@/lib/storyTitle";
 
 export default function HistoryPanel({ play }: { play: PlayController }) {
   const router = useRouter();
@@ -111,7 +112,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
           {localStories.map((item) => (
             <div key={item.id} className="history-card">
               <ProfileCard
-                name={item.character.name}
+                name={storyTitle(item)}
                 oneLiner={item.character.oneLiner}
                 photo={item.character.photo}
                 meta={
@@ -119,8 +120,9 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
                     ? `${item.turnCount}턴`
                     : "아직 시작 전"
                 }
+                onRename={(title) => play.renameSetting(item.id, title)}
               />
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   className="btn-secondary"
@@ -139,7 +141,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
                     router.push("/chat");
                   }}
                 >
-                  {item.chatLog.length > 0 ? "대화 이어가기" : "대화 시작"}
+                  {item.chatLog.length > 0 ? "이어가기" : "시작"}
                 </button>
                 {play.settings.length > 1 ? (
                   <button
@@ -191,7 +193,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
                   disabled={busyId === session.id}
                   onClick={() => void openSession(session.id, "/chat")}
                 >
-                  대화 이어가기
+                  이어가기
                 </button>
                 <button
                   type="button"

@@ -12,18 +12,17 @@ import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
 import { requestGenerate } from "@/lib/geminiClient";
-import { WORLD_PRESETS } from "@/lib/presets";
+import { WORLD_PRESETS, isPresetNamed } from "@/lib/presets";
 import { downloadExport, parseImport } from "@/lib/transfer";
 import type { SettingRecord } from "@/lib/types";
 
-function isPresetNamed(setting: SettingRecord) {
-  const name = setting.character.name.trim();
-  return WORLD_PRESETS.some((preset) => preset.character.name === name);
+function isPresetSetting(setting: SettingRecord) {
+  return isPresetNamed(setting.character.name);
 }
 
 function isUnusedBlank(setting: SettingRecord) {
   return (
-    !isPresetNamed(setting) &&
+    !isPresetSetting(setting) &&
     !setting.character.name.trim() &&
     !setting.character.photo &&
     !setting.worldSetting.trim() &&
@@ -74,10 +73,10 @@ function SetupBody() {
     (item) => item.character.name === play.state.character.name.trim(),
   );
   const customSettings = play.settings.filter((setting) => {
-    if (isPresetNamed(setting)) return false;
+    if (isPresetSetting(setting)) return false;
     const onlyHiddenStarter =
       !picked &&
-      play.settings.filter((item) => !isPresetNamed(item)).length === 1 &&
+      play.settings.filter((item) => !isPresetSetting(item)).length === 1 &&
       isUnusedBlank(setting);
     return !onlyHiddenStarter;
   });

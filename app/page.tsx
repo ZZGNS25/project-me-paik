@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
+import AvatarCircle from "@/components/AvatarCircle";
 import BrandLockup from "@/components/BrandLockup";
 import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
@@ -11,7 +12,8 @@ import ProfileCard from "@/components/ProfileCard";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { deletePlayFromCloud } from "@/lib/cloud";
-import { withWaGwa } from "@/lib/korean";
+import { WORLD_PRESETS, type PresetId } from "@/lib/presets";
+import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
 
 function HomeBody() {
@@ -32,16 +34,27 @@ function HomeBody() {
   if (!auth.enabled || !auth.user) {
     return (
       <PageShell>
-        <main className="paper-card login-card mt-10 px-7 py-10">
+        <main className="paper-card login-card mt-8 px-7 py-10">
           <BrandLockup />
           <p className="login-kicker">듣고, 잇고, 연기하다.</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">
             이야기가 끊기지 않게
           </h1>
           <p className="mt-4 text-base leading-relaxed text-[var(--ink-soft)]">
-            캐릭터 설정이 이어지는 개인용 스토리 롤플. EarRole은 귀를 열고, 역할을
-            잇습니다.
+            캐릭터 설정이 이어지는 개인용 스토리 롤플.
           </p>
+          <div className="login-cast">
+            {WORLD_PRESETS.map((preset) => (
+              <div key={preset.id} className="login-cast-item">
+                <AvatarCircle
+                  src={preset.character.photo}
+                  name={preset.character.name}
+                  size="md"
+                />
+                <p className="login-cast-name">{preset.character.name}</p>
+              </div>
+            ))}
+          </div>
           {!auth.enabled ? (
             <p className="alert-error mt-8">
               Supabase 환경 변수가 없어 로그인할 수 없습니다.
@@ -81,9 +94,22 @@ function HomeBody() {
     play.deleteSetting(setting.id);
   }
 
-  const stories = play.settings.filter((item) => item.character.name.trim());
-  const ongoing = stories.filter((item) => item.chatLog.length > 0);
-  const notStarted = stories.filter((item) => item.chatLog.length === 0);
+  const ongoing = play.settings.filter(
+    (item) => item.character.name.trim() && item.chatLog.length > 0,
+  );
+
+  function startPreset(presetId: PresetId, next: "/chat" | "/setup") {
+    const preset = WORLD_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+    const unused = play.settings.find(
+      (item) =>
+        item.character.name.trim() === preset.character.name &&
+        item.chatLog.length === 0,
+    );
+    if (unused) play.selectSetting(unused.id);
+    else play.applyPreset(presetId);
+    router.push(next);
+  }
 
   return (
     <AppFrame>
@@ -92,12 +118,12 @@ function HomeBody() {
       ) : view === "history" ? (
         <HistoryPanel play={play} />
       ) : (
-        <div className="page-scroll mx-auto w-full max-w-2xl px-6 py-10">
+        <div className="page-scroll mx-auto w-full max-w-3xl px-6 py-10">
           <div className="page-hero">
             <p className="label-caps">이야기</p>
             <h1 className="mt-2 text-3xl font-semibold">어떤 이야기를 이을까요?</h1>
             <p className="mt-3 text-sm text-[var(--ink-dim)]">
-              진행 중인 건 여기서 바로 이어가고, 새 말은 채팅 화면에서 씁니다.
+              하던 이야기는 위에서, 새 이야기는 아래 얼굴에서.
             </p>
           </div>
 
@@ -107,12 +133,13 @@ function HomeBody() {
               {ongoing.map((item) => (
                 <div key={item.id} className="story-card">
                   <ProfileCard
-                    name={item.character.name}
+                    name={storyTitle(item)}
                     oneLiner={item.character.oneLiner}
                     photo={item.character.photo}
-                    meta={`${item.turnCount}턴 · ${withWaGwa(item.character.name)} 이어가 볼까요?`}
+                    meta={`${item.turnCount}턴`}
+                    onRename={(title) => play.renameSetting(item.id, title)}
                   />
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       className="btn-secondary"
@@ -128,7 +155,7 @@ function HomeBody() {
                       className="btn-primary"
                       onClick={() => openStory(item)}
                     >
-                      대화 이어가기
+                      이어가기
                     </button>
                     {play.settings.length > 1 ? (
                       <button
@@ -145,71 +172,44 @@ function HomeBody() {
             </section>
           ) : null}
 
-          {notStarted.length > 0 ? (
-            <section className="mt-8 space-y-3">
-              <p className="label-caps">시작하기</p>
-              {notStarted.map((item) => (
-                <div key={item.id} className="story-card">
-                  <ProfileCard
-                    name={item.character.name}
-                    oneLiner={item.character.oneLiner}
-                    photo={item.character.photo}
-                    meta={`${withWaGwa(item.character.name)} 시작해볼까요?`}
-                  />
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => {
-                        play.selectSetting(item.id);
-                        router.push("/setup");
-                      }}
-                    >
-                      설정
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={() => openStory(item)}
-                    >
-                      대화 시작
-                    </button>
-                    {play.settings.length > 1 ? (
-                      <button
-                        type="button"
-                        className="btn-danger"
-                        onClick={() => void removeStory(item)}
-                      >
-                        삭제
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
+          <section className="mt-8">
+            <p className="label-caps">시작하기</p>
+            <div className="cast-grid">
+              {WORLD_PRESETS.map((preset) => (
+                <article key={preset.id} className="cast-card">
+                  <button
+                    type="button"
+                    className="cast-start"
+                    onClick={() => startPreset(preset.id, "/chat")}
+                  >
+                    <AvatarCircle
+                      src={preset.character.photo}
+                      name={preset.character.name}
+                      size="lg"
+                    />
+                    <p className="cast-world">{preset.label}</p>
+                    <h2 className="cast-name">{preset.character.name}</h2>
+                    <p className="cast-blurb">{preset.character.oneLiner}</p>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-quiet"
+                    onClick={() => startPreset(preset.id, "/setup")}
+                  >
+                    설정
+                  </button>
+                </article>
               ))}
-            </section>
-          ) : null}
+            </div>
+          </section>
 
-          {stories.length === 0 ? (
-            <p className="mt-8 text-sm text-[var(--ink-dim)]">
-              아직 만든 이야기가 없습니다. 설정에서 예시 세계관을 고르거나 프로필을
-              적어 주세요.
-            </p>
-          ) : null}
-
-          <div className="mt-8 flex flex-wrap gap-2">
+          <div className="mt-8">
             <button
               type="button"
-              className="btn-primary"
+              className="btn-quiet"
               onClick={() => router.push(`/setup?new=${Date.now()}`)}
             >
-              새 이야기
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => router.push("/setup")}
-            >
-              설정으로
+              내 세계관으로 만들기
             </button>
           </div>
         </div>

@@ -13,6 +13,7 @@
   --blue-deep: #1a73e8;
   --line: rgba(77, 141, 255, 0.22);
   --danger: #f28b82;
+  --app-height: 100dvh;
 }
 
 @theme inline {
@@ -249,7 +250,33 @@ body {
   flex: 1;
   flex-direction: column;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1.1rem 1.15rem 0.35rem;
+}
+
+.chat-feed-wrap {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.jump-bottom {
+  position: absolute;
+  right: 1.1rem;
+  bottom: 0.7rem;
+  z-index: 2;
+  border: 1px solid rgba(138, 180, 248, 0.32);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(40, 58, 88, 0.96), rgba(18, 28, 48, 0.96));
+  padding: 0.42rem 0.85rem;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 8px 18px rgba(0, 0, 0, 0.35);
 }
 
 .chat-feed-inner {
@@ -414,7 +441,7 @@ body {
 
 .app-frame {
   display: flex;
-  height: 100dvh;
+  height: var(--app-height, 100dvh);
   background:
     radial-gradient(ellipse 70% 45% at 62% -12%, rgba(26, 115, 232, 0.24), transparent 56%),
     var(--background);
@@ -565,7 +592,7 @@ body {
 }
 
 .composer-dock {
-  padding: 0.7rem 1rem 1.05rem;
+  padding: 0.7rem 1rem max(1.05rem, env(safe-area-inset-bottom));
   background: linear-gradient(180deg, transparent, rgba(7, 9, 12, 0.72) 32%);
 }
 
@@ -596,6 +623,8 @@ body {
   resize: none;
   background: transparent;
   color: var(--ink);
+  font-size: 16px;
+  line-height: 1.45;
   outline: none;
 }
 
@@ -662,6 +691,98 @@ body {
 
 .login-card {
   overflow: hidden;
+}
+
+.login-cast {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.login-cast-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.login-cast-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.cast-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 0.85rem;
+}
+
+.cast-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid rgba(77, 141, 255, 0.16);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(28, 34, 44, 0.94), rgba(15, 18, 24, 0.94));
+  padding: 1.15rem 0.85rem 0.75rem;
+  text-align: center;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.cast-start {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  color: inherit;
+}
+
+.cast-card > .btn-quiet {
+  margin-top: 0.45rem;
+}
+
+.cast-card:hover {
+  border-color: rgba(77, 141, 255, 0.4);
+}
+
+.cast-world {
+  margin-top: 0.75rem;
+  color: var(--blue-soft);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+}
+
+.cast-name {
+  margin-top: 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.cast-blurb {
+  margin-top: 0.35rem;
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.story-name-edit {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-weight: 600;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.story-rename-input {
+  margin-top: 0;
+  padding: 0.35rem 0.55rem;
 }
 
 .login-kicker {
@@ -1038,7 +1159,11 @@ body {
   }
 
   .composer-dock {
-    padding: 0.65rem 0.75rem 0.85rem;
+    padding: 0.65rem 0.75rem max(0.85rem, env(safe-area-inset-bottom));
+  }
+
+  .cast-grid {
+    grid-template-columns: 1fr;
   }
 
   .scene-narration {

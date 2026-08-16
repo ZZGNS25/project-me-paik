@@ -124,6 +124,10 @@ export const WORLD_PRESETS: WorldPreset[] = [
   },
 ];
 
+export function isPresetNamed(name: string) {
+  return WORLD_PRESETS.some((preset) => preset.character.name === name.trim());
+}
+
 function clipField(value: string, max: number) {
   return value.slice(0, max);
 }

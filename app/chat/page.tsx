@@ -12,6 +12,7 @@ import { useCloudSync, usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { requestGenerateStream } from "@/lib/geminiClient";
 import { takePendingMessage } from "@/lib/pending";
+import { storyTitle } from "@/lib/storyTitle";
 import type { ChatMessage, PlayState } from "@/lib/types";
 
 function ChatBody() {
@@ -104,14 +105,10 @@ function ChatBody() {
   }
 
   const listening = busy === "chat";
-  const cloudLabel =
-    cloud.status === "saving"
-      ? "저장 중…"
-      : cloud.status === "error"
-        ? "저장 실패"
-        : cloud.status === "saved"
-          ? "저장됨"
-          : "자동 저장";
+  const current = play.settings.find((item) => item.id === play.currentSettingId);
+  const headerName = current
+    ? storyTitle(current)
+    : play.state.character.name || "채팅";
 
   return (
     <AppFrame>
@@ -119,7 +116,7 @@ function ChatBody() {
         <div className="chat-topbar">
           <div className="min-w-0">
             <ProfileCard
-              name={play.state.character.name || "채팅"}
+              name={headerName}
               photo={play.state.character.photo}
               status={listening ? "듣는 중" : "대기 중"}
               statusIdle={!listening}
@@ -133,15 +130,17 @@ function ChatBody() {
             >
               {extrasOpen ? "닫기" : "인물 추가"}
             </button>
-            <button
-              type="button"
-              className={cloud.status === "error" ? "btn-danger" : "btn-quiet"}
-              onClick={() => void cloud.saveNow()}
-              disabled={cloud.status === "saving"}
-              title={cloud.error || "이야기가 바뀌면 클라우드에 자동으로 남깁니다."}
-            >
-              {cloudLabel}
-            </button>
+            {cloud.status === "saving" || cloud.status === "error" ? (
+              <button
+                type="button"
+                className={cloud.status === "error" ? "btn-danger" : "btn-quiet"}
+                onClick={() => void cloud.saveNow()}
+                disabled={cloud.status === "saving"}
+                title={cloud.error || "클라우드에 남기는 중"}
+              >
+                {cloud.status === "saving" ? "저장 중…" : "저장 실패"}
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -157,6 +156,7 @@ function ChatBody() {
         ) : null}
 
         <ChatLog
+          key={play.currentSettingId}
           messages={play.state.chatLog}
           prologue={play.state.prologue}
           characterPhoto={play.state.character.photo}

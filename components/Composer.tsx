@@ -41,6 +41,8 @@ export default function Composer({
         placeholder={placeholder}
         value={value}
         disabled={disabled}
+        enterKeyHint="send"
+        autoComplete="off"
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {

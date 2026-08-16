@@ -36,13 +36,18 @@ export default function CastEditor({
               maxLength={FIELD_LIMITS.castName}
               onChange={(event) => onUpdate(note.id, "name", event.target.value)}
             />
-            <input
-              className="field-input mt-0"
-              placeholder="한 줄 메모"
-              value={note.note}
-              maxLength={FIELD_LIMITS.castNote}
-              onChange={(event) => onUpdate(note.id, "note", event.target.value)}
-            />
+            <div className="min-w-0">
+              <input
+                className="field-input mt-0"
+                placeholder="한 줄 메모"
+                value={note.note}
+                maxLength={FIELD_LIMITS.castNote}
+                onChange={(event) => onUpdate(note.id, "note", event.target.value)}
+              />
+              <p className="mt-1 text-right text-xs text-[var(--ink-dim)]">
+                {note.note.length}/{FIELD_LIMITS.castNote}
+              </p>
+            </div>
             <button
               type="button"
               className="btn-danger self-center"

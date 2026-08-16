@@ -52,6 +52,7 @@ export type PlayState = {
 
 export type SettingRecord = Omit<PlayState, "apiKey"> & {
   id: string;
+  title: string;
   updatedAt: string;
 };
 

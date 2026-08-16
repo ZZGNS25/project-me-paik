@@ -29,6 +29,7 @@ create table if not exists public.eorol_play_sessions (
   prologue text not null default '',
   story_summary text not null default '',
   story_pins text not null default '[]',
+  -- story_title: 대화 이름은 우선 브라우저 로컬에만 둡니다.
   character_photo text not null default '',
   user_photo text not null default '',
   turn_count integer not null default 0,

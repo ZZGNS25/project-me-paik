@@ -39,6 +39,7 @@ export function parseImport(raw: string): SettingRecord[] {
   return data.settings.filter(isRecord).map((item) => ({
     ...empty,
     ...item,
+    title: item.title ?? "",
     storyPins: normalizePins(item.storyPins),
     cloudSessionId: null,
   }));

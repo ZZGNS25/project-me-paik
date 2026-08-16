@@ -85,7 +85,7 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     "[유저]",
     `이름: ${state.userPersona.name || "유저"}`,
     state.userPersona.setting.trim()
-      ? clip(state.userPersona.setting, started ? 360 : 800)
+      ? clip(state.userPersona.setting, FIELD_LIMITS.userSetting)
       : "",
     "",
     "[등장인물]",

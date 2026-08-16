@@ -15,7 +15,7 @@ export const FIELD_LIMITS = {
   forbidden: 400,
   openingSituation: 200,
   userName: 32,
-  userSetting: 800,
+  userSetting: 1000,
   worldSetting: 2000,
   prologue: 1200,
   storySummary: 800,

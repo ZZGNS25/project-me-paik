@@ -94,16 +94,23 @@ function ChatBody() {
     }
   }
 
+  const listening = busy === "chat";
+
   return (
     <AppFrame>
-      <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between px-6 py-4">
-          <ProfileCard
-            name={play.state.character.name || "채팅"}
-            oneLiner={play.state.character.oneLiner}
-            photo={play.state.character.photo}
-          />
-          <div className="flex items-center gap-3">
+      <div className="chat-shell">
+        <div className="chat-topbar">
+          <div className="min-w-0">
+            <ProfileCard
+              name={play.state.character.name || "채팅"}
+              oneLiner={play.state.character.oneLiner}
+              photo={play.state.character.photo}
+            />
+            <p className={`chat-status ${listening ? "" : "is-idle"}`}>
+              {listening ? "듣고 쓰는 중…" : "이야기를 기다리고 있어요"}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
             <button
               type="button"
               className="ghost-link"
@@ -153,15 +160,17 @@ function ChatBody() {
           onDeleteLast={busy ? undefined : play.deleteLastTurn}
         />
 
-        <div className="mx-auto w-full max-w-3xl px-4 pb-6">
-          {error ? <p className="alert-error mb-3">{error}</p> : null}
-          <Composer
-            value={draft}
-            onChange={setDraft}
-            onSubmit={() => void sendMessage()}
-            disabled={Boolean(busy)}
-            placeholder="@:나레이션  @이름:대사  *행동*"
-          />
+        <div className="composer-dock">
+          <div className="mx-auto w-full max-w-3xl">
+            {error ? <p className="alert-error mb-3">{error}</p> : null}
+            <Composer
+              value={draft}
+              onChange={setDraft}
+              onSubmit={() => void sendMessage()}
+              disabled={Boolean(busy)}
+              placeholder="@:나레이션  @이름:대사  *행동*"
+            />
+          </div>
         </div>
       </div>
     </AppFrame>

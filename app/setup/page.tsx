@@ -116,7 +116,9 @@ function SetupBody() {
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="label-caps">설정</p>
-            <h1 className="mt-1 text-3xl font-semibold">캐릭터와 세계관</h1>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+              캐릭터와 세계관
+            </h1>
             {storyStarted ? (
               <p className="mt-2 text-sm text-[var(--ink-dim)]">
                 이야기가 시작된 뒤에도 인물과 설정을 고칠 수 있습니다. 다음 턴부터

@@ -36,7 +36,7 @@ export default function ChatLog({
   const hasThread = messages.length > 0 || Boolean(pendingUserText);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
+    endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [messages, pendingUserText, streamingText]);
 
   if (!hasThread) {

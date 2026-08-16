@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0b0d10;
-  --foreground: #e8eef7;
-  --paper: #12151b;
-  --paper-2: #171b22;
-  --ink: #e8eef7;
-  --ink-soft: #b4c0d0;
-  --ink-dim: #7d8a99;
+  --background: #07090c;
+  --foreground: #eef3fb;
+  --paper: #10141b;
+  --paper-2: #161b24;
+  --ink: #eef3fb;
+  --ink-soft: #b7c4d6;
+  --ink-dim: #7d8b9c;
   --blue: #4d8dff;
   --blue-soft: #8ab4f8;
   --blue-deep: #1a73e8;
-  --line: rgba(77, 141, 255, 0.2);
+  --line: rgba(77, 141, 255, 0.22);
   --danger: #f28b82;
 }
 
@@ -23,6 +23,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  line-height: 1.65;
   font-family:
     "Apple SD Gothic Neo",
     "Malgun Gothic",
@@ -34,8 +35,8 @@ body {
 .paper-bg {
   min-height: 100%;
   background:
-    radial-gradient(ellipse 80% 55% at 50% -18%, rgba(26, 115, 232, 0.28), transparent 58%),
-    radial-gradient(ellipse 40% 30% at 90% 10%, rgba(77, 141, 255, 0.1), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 50% -12%, rgba(26, 115, 232, 0.32), transparent 60%),
+    radial-gradient(ellipse 36% 28% at 88% 8%, rgba(77, 141, 255, 0.12), transparent 52%),
     var(--background);
 }
 
@@ -143,9 +144,9 @@ body {
 
 .bubble-user,
 .bubble-model {
-  border-radius: 16px;
-  padding: 0.75rem 0.9rem;
-  line-height: 1.55;
+  border-radius: 18px;
+  padding: 0.8rem 1rem;
+  line-height: 1.65;
 }
 
 .bubble-user {
@@ -202,44 +203,67 @@ body {
   }
 }
 
-.gemini-mark {
+.ear-mark {
   display: inline-flex;
-  height: 2.5rem;
-  width: 2.5rem;
-  align-items: center;
-  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
   border-radius: 999px;
-  background:
-    radial-gradient(circle at 30% 30%, #8ab4f8, transparent 45%),
-    linear-gradient(135deg, #4d8dff, #1a73e8);
-  box-shadow: 0 0 24px rgba(77, 141, 255, 0.35);
+  box-shadow: 0 0 28px rgba(77, 141, 255, 0.28);
+}
+
+.ear-mark img,
+.ear-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brand-lockup {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.brand-en {
+  background: linear-gradient(180deg, #b7d2ff 0%, #4d8dff 52%, #1a73e8 100%);
+  color: transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.brand-lockup.is-compact .brand-en {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
 }
 
 .app-frame {
   display: flex;
   height: 100dvh;
   background:
-    radial-gradient(ellipse 70% 45% at 60% -10%, rgba(26, 115, 232, 0.2), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 62% -12%, rgba(26, 115, 232, 0.24), transparent 56%),
     var(--background);
 }
 
 .side-rail {
   display: flex;
-  width: 13.5rem;
+  width: 14.5rem;
   flex-shrink: 0;
   flex-direction: column;
   border-right: 1px solid var(--line);
-  background: rgba(10, 12, 16, 0.92);
-  padding: 1.1rem 0.7rem;
+  background: rgba(7, 9, 12, 0.94);
+  padding: 1.15rem 0.8rem;
 }
 
 .side-brand {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.2rem 0.55rem;
-  color: var(--ink);
-  font-weight: 600;
+  padding: 0.15rem 0.35rem;
 }
 
 .side-item {
@@ -286,15 +310,48 @@ body {
   flex: 1;
 }
 
+.chat-shell {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.chat-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(7, 9, 12, 0.72);
+  padding: 0.7rem 1.25rem;
+  backdrop-filter: blur(16px);
+}
+
+.chat-status {
+  margin-top: 0.15rem;
+  color: var(--blue-soft);
+  font-size: 0.75rem;
+}
+
+.chat-status.is-idle {
+  color: var(--ink-dim);
+}
+
+.composer-dock {
+  border-top: 1px solid var(--line);
+  background: linear-gradient(180deg, transparent, rgba(7, 9, 12, 0.88) 28%);
+  padding: 0.85rem 1rem 1.1rem;
+}
+
 .composer {
   display: flex;
   align-items: flex-end;
   gap: 0.65rem;
   border: 1px solid var(--line);
-  border-radius: 28px;
-  background: rgba(18, 21, 27, 0.95);
-  padding: 0.65rem 0.7rem 0.65rem 1.1rem;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+  border-radius: 26px;
+  background: rgba(16, 20, 27, 0.96);
+  padding: 0.55rem 0.6rem 0.55rem 1rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
 }
 
 .composer-input {
@@ -323,11 +380,41 @@ body {
   opacity: 0.35;
 }
 
-.history-card {
+.history-card,
+.story-card {
   border: 1px solid var(--line);
-  border-radius: 16px;
-  background: rgba(18, 21, 27, 0.88);
-  padding: 1rem 1.1rem;
+  border-radius: 18px;
+  background: rgba(16, 20, 27, 0.9);
+  padding: 1.05rem 1.15rem;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+
+.story-card:hover {
+  border-color: rgba(77, 141, 255, 0.45);
+  background: rgba(26, 115, 232, 0.1);
+  transform: translateY(-1px);
+}
+
+.page-hero {
+  margin-bottom: 0.25rem;
+}
+
+.page-hero h1 {
+  letter-spacing: -0.03em;
+}
+
+.login-card {
+  overflow: hidden;
+}
+
+.login-kicker {
+  margin-top: 1.1rem;
+  color: var(--ink-dim);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
 }
 
 .setting-row {
@@ -557,10 +644,25 @@ body {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.4rem;
+    padding: 0.7rem 0.7rem 0.55rem;
   }
 
   .side-rail nav {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+
+  .side-new {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .chat-topbar {
+    padding: 0.55rem 0.85rem;
+  }
+
+  .composer-dock {
+    padding: 0.65rem 0.75rem 0.85rem;
   }
 }

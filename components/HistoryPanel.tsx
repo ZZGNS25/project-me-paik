@@ -45,7 +45,7 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="label-caps">내 기록</p>
-          <h1 className="mt-2 text-3xl font-semibold">이어 둔 이야기</h1>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">이어 둔 이야기</h1>
         </div>
         <button
           type="button"

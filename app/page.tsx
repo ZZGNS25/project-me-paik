@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
+import BrandLockup from "@/components/BrandLockup";
 import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
 import PageShell from "@/components/PageShell";
@@ -30,12 +31,15 @@ function HomeBody() {
   if (!auth.enabled || !auth.user) {
     return (
       <PageShell>
-        <main className="paper-card mt-10 px-7 py-10">
-          <span className="gemini-mark text-sm font-semibold text-white">이</span>
-          <p className="label-caps mt-5">이어 + Role</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">이어롤</h1>
+        <main className="paper-card login-card mt-10 px-7 py-10">
+          <BrandLockup />
+          <p className="login-kicker">잇고 · 듣고 · 연기하다</p>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+            이야기가 끊기지 않게
+          </h1>
           <p className="mt-4 text-base leading-relaxed text-[var(--ink-soft)]">
-            길게 놀아도 캐릭터 설정이 이어지는 개인용 스토리 롤플 채팅.
+            캐릭터 설정이 이어지는 개인용 스토리 롤플. EarRole은 귀를 열고, 역할을
+            잇습니다.
           </p>
           {!auth.enabled ? (
             <p className="alert-error mt-8">
@@ -76,17 +80,19 @@ function HomeBody() {
         <HistoryPanel play={play} />
       ) : (
         <div className="mx-auto w-full max-w-2xl overflow-y-auto px-6 py-10">
-          <p className="label-caps">이야기</p>
-          <h1 className="mt-2 text-3xl font-semibold">어떤 이야기를 할까요?</h1>
-          <p className="mt-3 text-sm text-[var(--ink-dim)]">
-            진행 중인 건 여기서 바로 이어가고, 새 말은 채팅 화면에서 씁니다.
-          </p>
+          <div className="page-hero">
+            <p className="label-caps">이야기</p>
+            <h1 className="mt-2 text-3xl font-semibold">어떤 이야기를 이을까요?</h1>
+            <p className="mt-3 text-sm text-[var(--ink-dim)]">
+              진행 중인 건 여기서 바로 이어가고, 새 말은 채팅 화면에서 씁니다.
+            </p>
+          </div>
 
           {ongoing.length > 0 ? (
             <section className="mt-8 space-y-3">
               <p className="label-caps">이어가기</p>
               {ongoing.map((item) => (
-                <div key={item.id} className="history-card">
+                <div key={item.id} className="story-card">
                   <ProfileCard
                     name={item.character.name}
                     oneLiner={item.character.oneLiner}
@@ -121,7 +127,7 @@ function HomeBody() {
             <section className="mt-8 space-y-3">
               <p className="label-caps">시작하기</p>
               {notStarted.map((item) => (
-                <div key={item.id} className="history-card">
+                <div key={item.id} className="story-card">
                   <ProfileCard
                     name={item.character.name}
                     oneLiner={item.character.oneLiner}

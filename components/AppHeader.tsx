@@ -7,7 +7,7 @@ type AppHeaderProps = {
 };
 
 export default function AppHeader({
-  eyebrow = "이어롤",
+  eyebrow = "EarRole",
   title,
   right,
 }: AppHeaderProps) {

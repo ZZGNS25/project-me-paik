@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+
 type ComposerProps = {
   value: string;
   onChange: (value: string) => void;
@@ -13,6 +17,15 @@ export default function Composer({
   disabled = false,
   placeholder = "캐릭터에게 말을 걸어 보세요",
 }: ComposerProps) {
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight, 128)}px`;
+  }, [value]);
+
   return (
     <form
       className="composer"
@@ -22,6 +35,7 @@ export default function Composer({
       }}
     >
       <textarea
+        ref={inputRef}
         className="composer-input"
         rows={1}
         placeholder={placeholder}

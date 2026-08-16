@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import BrandLockup from "@/components/BrandLockup";
 import { useAuth } from "@/hooks/useAuth";
 
 const NAV = [
@@ -32,8 +33,7 @@ export default function AppFrame({ children }: AppFrameProps) {
     <div className="app-frame">
       <aside className="side-rail">
         <Link href="/" className="side-brand">
-          <span className="gemini-mark text-xs font-semibold text-white">이</span>
-          <span>이어롤</span>
+          <BrandLockup />
         </Link>
 
         <button

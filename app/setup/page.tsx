@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
 import AvatarCircle from "@/components/AvatarCircle";
 import CastEditor from "@/components/CastEditor";
@@ -32,17 +32,30 @@ function isUnusedBlank(setting: SettingRecord) {
 
 function SetupBody() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const auth = useAuth();
   const play = usePlayState();
   const [compressing, setCompressing] = useState(false);
   const [error, setError] = useState("");
   const [picked, setPicked] = useState(false);
+  const newToken = searchParams.get("new");
 
   useEffect(() => {
     if (auth.ready && !auth.user) {
       router.replace("/");
     }
   }, [auth.ready, auth.user, router]);
+
+  useEffect(() => {
+    if (!play.ready || !newToken) return;
+    if (sessionStorage.getItem("eorol-new-used") === newToken) return;
+    sessionStorage.setItem("eorol-new-used", newToken);
+    const unusedBlank = play.settings.find(isUnusedBlank);
+    if (unusedBlank) play.selectSetting(unusedBlank.id);
+    else play.createSetting();
+    setPicked(true);
+    router.replace("/setup");
+  }, [play.ready, newToken, play, router]);
 
   if (!play.ready || !auth.ready) {
     return (

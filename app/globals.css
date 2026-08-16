@@ -256,6 +256,22 @@ body {
   color: var(--ink);
 }
 
+.side-new {
+  margin: 1rem 0 0.35rem;
+  border: 1px solid rgba(77, 141, 255, 0.4);
+  border-radius: 12px;
+  background: rgba(26, 115, 232, 0.22);
+  padding: 0.7rem 0.85rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.side-new:hover {
+  background: rgba(26, 115, 232, 0.34);
+}
+
 .app-main {
   display: flex;
   min-width: 0;

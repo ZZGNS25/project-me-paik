@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
 const NAV = [
@@ -17,6 +17,7 @@ type AppFrameProps = {
 
 export default function AppFrame({ children }: AppFrameProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const auth = useAuth();
   const view = searchParams.get("view");
@@ -35,7 +36,15 @@ export default function AppFrame({ children }: AppFrameProps) {
           <span>이어롤</span>
         </Link>
 
-        <nav className="mt-6 flex flex-1 flex-col gap-1">
+        <button
+          type="button"
+          className="side-new"
+          onClick={() => router.push(`/setup?new=${Date.now()}`)}
+        >
+          새 이야기
+        </button>
+
+        <nav className="mt-2 flex flex-1 flex-col gap-1">
           {NAV.map((item) => (
             <Link
               key={item.label}

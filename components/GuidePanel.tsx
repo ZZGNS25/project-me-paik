@@ -170,9 +170,8 @@ export default function GuidePanel() {
             입력창 위에도 있습니다.
           </li>
           <li>
-            어긋난 지점은 그 말의 <strong className="text-[var(--ink)]">여기부터 삭제</strong>로
-            그 이후를 지웁니다. <strong className="text-[var(--ink)]">답 다시 생성</strong>은
-            그 입력에 대한 응답만 다시 받습니다.
+            어긋난 지점은 말 옆의 휴지로 그 이후를 지웁니다. 화살표는 그 입력에 대한
+            응답만 다시 받고, 연필은 마지막 말을 고칩니다.
           </li>
         </ul>
       </section>
@@ -187,7 +186,7 @@ export default function GuidePanel() {
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
           잊히면 안 되는 일은 <strong className="text-[var(--ink)]">고정</strong>하세요.
-          말 옆의 사건 고정은 그 한 턴을, 입력창 위·메뉴의 고정은 마지막 턴을 남깁니다.
+          말 옆의 고정은 그 한 턴을, 입력창 위·메뉴의 고정은 마지막 턴을 남깁니다.
           설정 화면의 기억 칸에서 직접 적을 수도 있습니다. 고정된 사건은 요약보다
           우선합니다.
         </p>

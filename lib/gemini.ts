@@ -13,6 +13,20 @@ function apiKey() {
   return key;
 }
 
+function friendlyGeminiError(message: string) {
+  const lower = message.toLowerCase();
+  if (
+    lower.includes("high demand") ||
+    lower.includes("overloaded") ||
+    lower.includes("unavailable") ||
+    lower.includes("resource exhausted") ||
+    lower.includes("try again later")
+  ) {
+    return "지금 모델이 바빠서 요약을 못 만들었습니다. 잠시 후 다시 눌러 주세요.";
+  }
+  return message;
+}
+
 function extractText(data: GeminiResponse) {
   return (
     data.candidates?.[0]?.content?.parts
@@ -46,7 +60,9 @@ export async function generateGeminiText(
   const data = (await response.json()) as GeminiResponse;
 
   if (!response.ok) {
-    throw new Error(data.error?.message || `Gemini API 오류 (${response.status})`);
+    throw new Error(
+      friendlyGeminiError(data.error?.message || `Gemini API 오류 (${response.status})`),
+    );
   }
 
   const text = extractText(data);
@@ -71,7 +87,9 @@ export async function streamGeminiText(
 
   if (!response.ok) {
     const data = (await response.json()) as GeminiResponse;
-    throw new Error(data.error?.message || `Gemini API 오류 (${response.status})`);
+    throw new Error(
+      friendlyGeminiError(data.error?.message || `Gemini API 오류 (${response.status})`),
+    );
   }
 
   if (!response.body) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { readPhotoFile } from "@/lib/photo";
 
 type AvatarSize = "sm" | "md" | "lg";
@@ -20,6 +20,18 @@ const SIZE_CLASS: Record<AvatarSize, string> = {
   lg: "avatar-lg",
 };
 
+function AvatarSilhouette() {
+  return (
+    <svg className="avatar-silhouette" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="8.1" r="3.7" fill="currentColor" />
+      <path
+        d="M5.4 19.4c.7-3.5 3.3-5.4 6.6-5.4s5.9 1.9 6.6 5.4"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export default function AvatarCircle({
   src,
   name = "",
@@ -29,7 +41,12 @@ export default function AvatarCircle({
   onChange,
 }: AvatarCircleProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const initial = name.trim().slice(0, 1) || (editable ? "+" : "");
+  const photo = src?.trim() ?? "";
+  const [broken, setBroken] = useState(false);
+
+  useEffect(() => {
+    setBroken(false);
+  }, [photo]);
 
   async function handleFile(file?: File) {
     if (!file || !onChange) return;
@@ -40,20 +57,22 @@ export default function AvatarCircle({
     }
   }
 
-  const face = src ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt={name || "프로필"}
-      className="avatar-image"
-      width={88}
-      height={88}
-      loading="lazy"
-      decoding="async"
-    />
-  ) : (
-    <span className="avatar-fallback">{initial}</span>
-  );
+  const face =
+    photo && !broken ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={photo}
+        alt={name || "프로필"}
+        className="avatar-image"
+        width={88}
+        height={88}
+        loading="lazy"
+        decoding="async"
+        onError={() => setBroken(true)}
+      />
+    ) : (
+      <AvatarSilhouette />
+    );
 
   if (!editable) {
     return <span className={`avatar-circle ${SIZE_CLASS[size]}`}>{face}</span>;
@@ -69,7 +88,7 @@ export default function AvatarCircle({
       >
         {face}
       </button>
-      {src ? (
+      {photo && !broken ? (
         <button
           type="button"
           className="btn-quiet avatar-clear"

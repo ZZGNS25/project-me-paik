@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import AvatarCircle from "@/components/AvatarCircle";
+import Icon from "@/components/Icon";
 import MarkupText from "@/components/MarkupText";
 import PrologueCard from "@/components/PrologueCard";
 import { isUserSpeaker, parseModelReply } from "@/lib/parseMessage";
@@ -21,6 +22,7 @@ type ChatLogProps = {
   onTruncateFrom?: (messageId: string) => void;
   onRegenerate?: (userMessageId: string) => void;
   onPinTurn?: (user: ChatMessage, model?: ChatMessage) => void;
+  onEditLast?: () => void;
   onPickMe?: () => void;
 };
 
@@ -40,6 +42,7 @@ export default function ChatLog({
   onTruncateFrom,
   onRegenerate,
   onPinTurn,
+  onEditLast,
   onPickMe,
 }: ChatLogProps) {
   const feedRef = useRef<HTMLDivElement>(null);
@@ -47,7 +50,7 @@ export default function ChatLog({
   const pinToBottom = useRef(true);
   const [away, setAway] = useState(false);
   const hasThread = messages.length > 0 || Boolean(pendingUserText);
-  const showActions = Boolean(onTruncateFrom || onRegenerate || onPinTurn);
+  const showActions = Boolean(onTruncateFrom || onRegenerate || onPinTurn || onEditLast);
 
   function measure() {
     const el = feedRef.current;
@@ -92,7 +95,9 @@ export default function ChatLog({
       <div className="chat-feed" ref={feedRef} onScroll={measure}>
         <div className="chat-feed-inner">
           {prologue?.trim() ? <PrologueCard text={prologue} compact /> : null}
-          {groupTurns(messages).map((turn) => (
+          {groupTurns(messages).map((turn, index, turns) => {
+            const last = index === turns.length - 1;
+            return (
             <div key={turn.user.id} className="chat-thread">
               {turn.user.role === "user" ? (
                 <PlayLines
@@ -118,40 +123,59 @@ export default function ChatLog({
               ) : null}
               {showActions && !pendingUserText && !streamingText ? (
                 <div className="turn-actions">
-                  {onTruncateFrom ? (
+                  {last && onEditLast && turn.user.role === "user" ? (
                     <button
                       type="button"
-                      className="btn-danger"
+                      className="icon-btn is-tiny"
                       disabled={actionsDisabled}
-                      onClick={() => onTruncateFrom(turn.user.id)}
+                      onClick={onEditLast}
+                      aria-label="마지막 말 수정"
+                      title="수정"
                     >
-                      여기부터 삭제
+                      <Icon name="edit" size={15} />
                     </button>
                   ) : null}
                   {onRegenerate && turn.user.role === "user" ? (
                     <button
                       type="button"
-                      className="btn-quiet"
+                      className="icon-btn is-tiny"
                       disabled={actionsDisabled}
                       onClick={() => onRegenerate(turn.user.id)}
+                      aria-label="답 다시 생성"
+                      title="다시 생성"
                     >
-                      답 다시 생성
+                      <Icon name="regen" size={15} />
                     </button>
                   ) : null}
                   {onPinTurn ? (
                     <button
                       type="button"
-                      className="btn-quiet"
+                      className="icon-btn is-tiny"
                       disabled={actionsDisabled}
                       onClick={() => onPinTurn(turn.user, turn.model)}
+                      aria-label="사건 고정"
+                      title="고정"
                     >
-                      사건 고정
+                      <Icon name="pin" size={15} />
+                    </button>
+                  ) : null}
+                  {onTruncateFrom ? (
+                    <button
+                      type="button"
+                      className="icon-btn is-tiny is-danger"
+                      disabled={actionsDisabled}
+                      onClick={() => onTruncateFrom(turn.user.id)}
+                      aria-label="여기부터 삭제"
+                      title="여기부터 삭제"
+                    >
+                      <Icon name="trash" size={15} />
                     </button>
                   ) : null}
                 </div>
               ) : null}
             </div>
-          ))}
+            );
+          })}
           {pendingUserText ? (
             <PlayLines
               content={pendingUserText}
@@ -271,8 +295,7 @@ function PlayLines({
                     className="chat-speaker is-me"
                     onClick={onPickMe}
                   >
-                    나
-                    {userName?.trim() ? ` · ${userName.trim()}` : ""}
+                    {userName?.trim() || "나"}
                   </button>
                 ) : (
                   <p className="chat-speaker">{label}</p>

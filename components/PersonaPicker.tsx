@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import AvatarCircle from "@/components/AvatarCircle";
+import Icon from "@/components/Icon";
 import PersonaList from "@/components/PersonaList";
 import type { SavedPersona, UserPersona } from "@/lib/types";
 
@@ -14,6 +15,7 @@ type PersonaPickerProps = {
   skipLabel?: string;
   onPick: (id: string) => void;
   onEdit?: (id: string) => void;
+  onEditCurrent?: () => void;
   onAdd?: () => void;
   onSkip?: () => void;
   onCancel: () => void;
@@ -27,6 +29,7 @@ export default function PersonaPicker({
   skipLabel,
   onPick,
   onEdit,
+  onEditCurrent,
   onAdd,
   onSkip,
   onCancel,
@@ -89,6 +92,16 @@ export default function PersonaPicker({
                   {nowSetting ? <span className="persona-desc">{nowSetting}</span> : null}
                 </span>
               </button>
+              {onEditCurrent ? (
+                <button
+                  type="button"
+                  className="persona-edit"
+                  aria-label="지금 프로필 수정"
+                  onClick={onEditCurrent}
+                >
+                  <Icon name="edit" size={16} />
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}

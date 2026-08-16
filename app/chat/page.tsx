@@ -263,11 +263,15 @@ function ChatBody() {
           onTruncateFrom={truncateFrom}
           onRegenerate={regenerate}
           onPinTurn={pinTurn}
+          onEditLast={() => {
+            const text = play.popLastUserMessage();
+            if (text) setDraft(text);
+          }}
           onPickMe={openPersonaPicker}
         />
 
         <div className="composer-dock">
-          <div className="mx-auto w-full max-w-2xl">
+          <div className="mx-auto w-full max-w-4xl">
             {error ? <p className="alert-error mb-3">{error}</p> : null}
             <div className="composer-tools">
               <button
@@ -281,9 +285,8 @@ function ChatBody() {
                   name={meName}
                   size="sm"
                 />
-                <span className="me-chip-who">나</span>
                 <span className="me-chip-name">
-                  {play.state.userPersona.name.trim() || "프로필 고르기"}
+                  {play.state.userPersona.name.trim() || "나"}
                 </span>
               </button>
               <button
@@ -409,6 +412,10 @@ function ChatBody() {
               setPickingPersona(false);
             }}
             onEdit={(id) => goProfile(id)}
+            onEditCurrent={() => {
+              setPickingPersona(false);
+              router.push("/setup");
+            }}
             onAdd={() => goProfile()}
             onCancel={() => setPickingPersona(false)}
           />

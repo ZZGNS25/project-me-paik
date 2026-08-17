@@ -988,8 +988,15 @@ button.chat-speaker.is-me {
   color: inherit;
 }
 
-.cast-card > .btn-quiet {
-  margin-top: 0.45rem;
+.cast-card .story-actions {
+  width: 100%;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 0.7rem;
+}
+
+.cast-card .story-actions > button {
+  width: calc(50% - 0.25rem);
 }
 
 .cast-card:hover {

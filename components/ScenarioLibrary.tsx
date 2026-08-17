@@ -140,7 +140,7 @@ export default function ScenarioLibrary({ play }: ScenarioLibraryProps) {
         <section className="mt-8">
           <p className="label-caps">예시</p>
           <p className="mt-2 text-sm text-[var(--ink-dim)]">
-            얼굴을 누르면 대화를 열고, 다듬기는 그 세계를 고칩니다.
+            시작하기로 대화를 열고, 다듬기는 그 세계를 고칩니다.
           </p>
           <div className="cast-grid mt-4">
             {WORLD_PRESETS.map((preset) => (
@@ -150,32 +150,36 @@ export default function ScenarioLibrary({ play }: ScenarioLibraryProps) {
                   name={preset.character.name}
                   size="lg"
                 />
-                <button
-                  type="button"
-                  className="cast-start"
-                  onClick={() => startPreset(preset.id, "chat")}
-                >
+                <div className="cast-start">
                   <p className="cast-world">{preset.label}</p>
                   <h2 className="cast-name">{preset.character.name}</h2>
                   <p className="cast-blurb">{preset.blurb}</p>
-                </button>
-                <button
-                  type="button"
-                  className="btn-quiet"
-                  onClick={() => startPreset(preset.id, "edit")}
-                >
-                  다듬기
-                </button>
+                </div>
+                <div className="story-actions">
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => startPreset(preset.id, "chat")}
+                  >
+                    시작하기
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => startPreset(preset.id, "edit")}
+                  >
+                    다듬기
+                  </button>
+                </div>
               </article>
             ))}
           </div>
+          <div className="mt-4">
+            <button type="button" className="btn-secondary" onClick={fresh.startStory}>
+              직접 만들기
+            </button>
+          </div>
         </section>
-
-        <div className="mt-8">
-          <button type="button" className="btn-quiet" onClick={fresh.startStory}>
-            직접 만들기
-          </button>
-        </div>
       </div>
       {confirm.dialog}
       {fresh.dialog}

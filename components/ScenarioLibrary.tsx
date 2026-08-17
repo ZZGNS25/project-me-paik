@@ -9,7 +9,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { useStartFresh } from "@/hooks/useStartFresh";
 import type { PlayController } from "@/hooks/usePlayState";
 import { deletePlayFromCloud } from "@/lib/cloud";
-import { WORLD_PRESETS, type PresetId } from "@/lib/presets";
+import { WORLD_PRESETS, isPresetNamed, type PresetId } from "@/lib/presets";
 import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
 
@@ -27,7 +27,11 @@ export default function ScenarioLibrary({ play }: ScenarioLibraryProps) {
   } | null>(null);
 
   const mine = play.settings
-    .filter((item) => item.character.name.trim())
+    .filter(
+      (item) =>
+        item.character.name.trim() &&
+        (item.chatLog.length > 0 || !isPresetNamed(item.character.name)),
+    )
     .slice()
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 

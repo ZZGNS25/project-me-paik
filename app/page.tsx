@@ -13,11 +13,10 @@ import ProfilesPanel from "@/components/ProfilesPanel";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useStartFresh } from "@/hooks/useStartFresh";
 import { deletePlayFromCloud } from "@/lib/cloud";
 import { timeAgo } from "@/lib/korean";
 import { previewText } from "@/lib/parseMessage";
-import { WORLD_PRESETS } from "@/lib/presets";
+import { WORLD_PRESETS, isPresetNamed } from "@/lib/presets";
 import { SITE_TAGLINE } from "@/lib/site";
 import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
@@ -29,7 +28,6 @@ function HomeBody() {
   const play = usePlay();
   const view = searchParams.get("view");
   const confirm = useConfirm();
-  const fresh = useStartFresh();
 
   if (!auth.ready || !play.ready) {
     return (
@@ -106,7 +104,12 @@ function HomeBody() {
     .slice()
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const waiting = play.settings
-    .filter((item) => item.character.name.trim() && item.chatLog.length === 0)
+    .filter(
+      (item) =>
+        item.character.name.trim() &&
+        item.chatLog.length === 0 &&
+        !isPresetNamed(item.character.name),
+    )
     .slice()
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
@@ -139,7 +142,7 @@ function HomeBody() {
             <p className="mt-3 text-sm text-[var(--ink-dim)]">
               {ongoing.length > 0
                 ? `${ongoing.length}개의 대화를 이었습니다. 세계와 역할은 시나리오에서 고칩니다.`
-                : "시나리오에서 세계를 고르면, 그 대화가 여기에 쌓입니다."}
+                : "시나리오에서 세계를 고르면, 이은 대화가 여기에 모입니다."}
             </p>
           </div>
 
@@ -191,57 +194,27 @@ function HomeBody() {
               })}
             </section>
           ) : (
-            <section className="story-empty mt-8">
-              <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
-                얼굴을 누르면 시나리오로 갑니다. 거기서 세계를 고르거나 직접 만들 수 있습니다.
-              </p>
-              <div className="login-cast">
-                {WORLD_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    className="story-start-face"
-                    onClick={() => router.push("/setup")}
-                  >
-                    <AvatarCircle
-                      src={preset.character.photo}
-                      name={preset.character.name}
-                      size="md"
-                    />
-                    <p className="login-cast-name">{preset.character.name}</p>
-                    <p className="story-start-blurb">{preset.blurb}</p>
-                  </button>
-                ))}
-              </div>
-              <div className="mt-6 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => router.push("/setup")}
-                >
-                  시나리오
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={fresh.startStory}
-                >
-                  새 시나리오
-                </button>
-              </div>
-            </section>
+            <div className="mt-8">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => router.push("/setup")}
+              >
+                시나리오로
+              </button>
+            </div>
           )}
 
           {waiting.length > 0 ? (
             <section className="mt-8 space-y-3">
-              <p className="label-caps">아직 말 없는 시나리오</p>
+              <p className="label-caps">시작 전</p>
               {waiting.map((item) => (
                 <div key={item.id} className="story-card">
                   <ProfileCard
                     name={storyTitle(item)}
                     oneLiner={item.character.oneLiner}
                     photo={item.character.photo}
-                    meta="채팅 전"
+                    meta="시작 전"
                     onRename={(title) => play.renameSetting(item.id, title)}
                   />
                   <div className="story-actions">
@@ -271,7 +244,6 @@ function HomeBody() {
       )}
     </AppFrame>
     {confirm.dialog}
-    {fresh.dialog}
     </>
   );
 }

@@ -938,35 +938,6 @@ button.chat-speaker.is-me {
   -webkit-line-clamp: 2;
 }
 
-.story-empty {
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--paper);
-  padding: 1.15rem 1.2rem 1.25rem;
-}
-
-.story-start-face {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  border: 0;
-  background: transparent;
-  padding: 0.15rem;
-  color: inherit;
-  text-align: center;
-}
-
-.story-start-face:hover .login-cast-name {
-  color: var(--ink);
-}
-
-.story-start-blurb {
-  color: var(--ink-dim);
-  font-size: 0.72rem;
-  line-height: 1.4;
-}
-
 .login-card {
   overflow: hidden;
 }

@@ -34,15 +34,31 @@ function applyChunk(full: string, chunk: string) {
   return full + chunk;
 }
 
+export class GenerateStoppedError extends Error {
+  constructor(public readonly partial: string) {
+    super("stopped");
+    this.name = "GenerateStoppedError";
+  }
+}
+
+export function isAbortError(err: unknown) {
+  return (
+    (err instanceof DOMException && err.name === "AbortError") ||
+    (err instanceof Error && err.name === "AbortError")
+  );
+}
+
 export async function requestGenerate(
   mode: "chat" | "summary" | "suggest",
   state: PlayState | PromptState,
   userText?: string,
+  signal?: AbortSignal,
 ) {
   const response = await fetch("/api/generate", {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ mode, state: toPromptState(state), userText }),
+    signal,
   });
 
   const type = response.headers.get("content-type") ?? "";
@@ -66,16 +82,31 @@ export async function requestGenerateStream(
   state: PlayState | PromptState,
   userText: string,
   onUpdate: (text: string) => void,
+  signal?: AbortSignal,
 ) {
-  const response = await fetch("/api/generate", {
-    method: "POST",
-    headers: await authHeaders(),
-    body: JSON.stringify({
-      mode: "chat",
-      state: toPromptState(state),
-      userText,
-    }),
-  });
+  let response: Response;
+  try {
+    const headers = await authHeaders();
+    if (signal?.aborted) {
+      throw new GenerateStoppedError("");
+    }
+    response = await fetch("/api/generate", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        mode: "chat",
+        state: toPromptState(state),
+        userText,
+      }),
+      signal,
+    });
+  } catch (err) {
+    if (err instanceof GenerateStoppedError) throw err;
+    if (signal?.aborted || isAbortError(err)) {
+      throw new GenerateStoppedError("");
+    }
+    throw err;
+  }
 
   const type = response.headers.get("content-type") ?? "";
   if (!response.ok || !type.includes("text/plain") || !response.body) {
@@ -89,12 +120,30 @@ export async function requestGenerateStream(
   const decoder = new TextDecoder();
   let full = "";
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    full = applyChunk(full, chunk);
-    onUpdate(full);
+  const onAbort = () => {
+    void reader.cancel();
+  };
+  signal?.addEventListener("abort", onAbort, { once: true });
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      full = applyChunk(full, chunk);
+      onUpdate(full);
+    }
+  } catch (err) {
+    if (signal?.aborted || isAbortError(err)) {
+      throw new GenerateStoppedError(full.trim());
+    }
+    throw err;
+  } finally {
+    signal?.removeEventListener("abort", onAbort);
+  }
+
+  if (signal?.aborted) {
+    throw new GenerateStoppedError(full.trim());
   }
 
   const text = full.trim();

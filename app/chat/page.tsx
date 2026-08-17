@@ -19,11 +19,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStartFresh } from "@/hooks/useStartFresh";
 import { deletePlayFromCloud } from "@/lib/cloud";
 import { COMPRESS_EVERY_TURNS } from "@/lib/constants";
-import { requestGenerate, requestGenerateStream } from "@/lib/geminiClient";
+import {
+  GenerateStoppedError,
+  isAbortError,
+  requestGenerate,
+  requestGenerateStream,
+} from "@/lib/geminiClient";
 import { recountTurns } from "@/lib/memory";
 import { takePendingMessage } from "@/lib/pending";
 import { STORY_PERSONA_EDIT } from "@/lib/persona";
 import { storyTitle } from "@/lib/storyTitle";
+import { downloadTranscript } from "@/lib/transcript";
 import type { ChatMessage, PlayState } from "@/lib/types";
 
 function cleanSuggest(raw: string) {
@@ -51,9 +57,12 @@ function ChatBody() {
   const [compressing, setCompressing] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [pinnedFlash, setPinnedFlash] = useState(false);
+  const [pinFlashId, setPinFlashId] = useState<string | null>(null);
   const pendingSent = useRef(false);
   const sending = useRef(false);
   const quietCompress = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const pinTimer = useRef(0);
   const confirm = useConfirm();
   const fresh = useStartFresh();
 
@@ -75,6 +84,10 @@ function ChatBody() {
     pendingSent.current = true;
     void sendMessage(pending);
   }, [play.ready, auth.user]);
+
+  useEffect(() => {
+    return () => window.clearTimeout(pinTimer.current);
+  }, []);
 
   useEffect(() => {
     if (!play.ready || busy || quietCompress.current) return;
@@ -106,21 +119,41 @@ function ChatBody() {
     setDraft("");
     setPendingUser(text);
     setStreamingReply("");
+    const ac = new AbortController();
+    abortRef.current = ac;
 
     try {
-      const reply = await requestGenerateStream(state, text, setStreamingReply);
+      const reply = await requestGenerateStream(
+        state,
+        text,
+        setStreamingReply,
+        ac.signal,
+      );
       play.appendTurn(text, reply);
       setPendingUser("");
       setStreamingReply("");
     } catch (err) {
-      setDraft(text);
       setPendingUser("");
       setStreamingReply("");
-      setError(err instanceof Error ? err.message : "응답을 받지 못했습니다.");
+      if (err instanceof GenerateStoppedError) {
+        if (err.partial) {
+          play.appendTurn(text, err.partial);
+        } else {
+          setDraft(text);
+        }
+      } else {
+        setDraft(text);
+        setError(err instanceof Error ? err.message : "응답을 받지 못했습니다.");
+      }
     } finally {
+      abortRef.current = null;
       sending.current = false;
       setBusy(null);
     }
+  }
+
+  function stopGenerate() {
+    abortRef.current?.abort();
   }
 
   function laterTurnsWillDrop(fromId: string) {
@@ -165,15 +198,20 @@ function ChatBody() {
     sending.current = true;
     setBusy("suggest");
     setError("");
+    const ac = new AbortController();
+    abortRef.current = ac;
     try {
       const text = cleanSuggest(
-        await requestGenerate("suggest", play.state, draft),
+        await requestGenerate("suggest", play.state, draft, ac.signal),
       );
+      if (ac.signal.aborted) return;
       if (!text) throw new Error("내 말을 만들지 못했습니다.");
       setDraft(text);
     } catch (err) {
+      if (isAbortError(err) || err instanceof GenerateStoppedError) return;
       setError(err instanceof Error ? err.message : "내 말을 만들지 못했습니다.");
     } finally {
+      abortRef.current = null;
       sending.current = false;
       setBusy(null);
     }
@@ -182,7 +220,12 @@ function ChatBody() {
   function pinTurn(user: ChatMessage, model?: ChatMessage) {
     play.pinTurn(user, model);
     setPinnedFlash(true);
-    window.setTimeout(() => setPinnedFlash(false), 1600);
+    setPinFlashId(user.id);
+    window.clearTimeout(pinTimer.current);
+    pinTimer.current = window.setTimeout(() => {
+      setPinnedFlash(false);
+      setPinFlashId(null);
+    }, 1600);
   }
 
   async function saveChat() {
@@ -302,6 +345,7 @@ function ChatBody() {
           onPinTurn={pinTurn}
           onEditMessage={(id, content) => play.updateMessage(id, content)}
           onPickMe={openPersonaPicker}
+          pinFlashId={pinFlashId}
         />
 
         <div className="composer-dock">
@@ -347,11 +391,11 @@ function ChatBody() {
               </button>
               <button
                 type="button"
-                className="icon-btn"
+                className={`icon-btn ${pinnedFlash ? "is-on" : ""}`}
                 disabled={Boolean(busy) || !hasTurns}
                 onClick={pinLastTurn}
                 aria-label={pinnedFlash ? "고정됨" : "고정"}
-                title="고정"
+                title={pinnedFlash ? "고정됨" : "고정"}
               >
                 <Icon name="pin" />
               </button>
@@ -360,7 +404,8 @@ function ChatBody() {
               value={draft}
               onChange={setDraft}
               onSubmit={() => void sendMessage()}
-              disabled={Boolean(busy)}
+              onStop={busy ? stopGenerate : undefined}
+              disabled={busy === "suggest"}
               placeholder={
                 busy === "suggest"
                   ? "맥락에 맞게 쓰는 중…"
@@ -390,6 +435,7 @@ function ChatBody() {
             compressing={compressing}
             pinLabel={pinnedFlash ? "고정됨" : "고정"}
             pinDisabled={Boolean(busy) || !hasTurns}
+            downloadDisabled={!current}
             compressDisabled={
               Boolean(busy) || compressing || play.state.shortTermBuffer.length === 0
             }
@@ -404,6 +450,10 @@ function ChatBody() {
             onContinue={() => {
               setMenuOpen(false);
               setContinuing(true);
+            }}
+            onDownload={() => {
+              if (current) downloadTranscript(current);
+              setMenuOpen(false);
             }}
             onExtras={() => {
               setExtrasOpen((open) => !open);

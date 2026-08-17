@@ -25,6 +25,7 @@ type ChatLogProps = {
   onPinTurn?: (user: ChatMessage, model?: ChatMessage) => void;
   onEditMessage?: (messageId: string, content: string) => void;
   onPickMe?: () => void;
+  pinFlashId?: string | null;
 };
 
 const NEAR_BOTTOM = 96;
@@ -46,6 +47,7 @@ export default function ChatLog({
   onPinTurn,
   onEditMessage,
   onPickMe,
+  pinFlashId,
 }: ChatLogProps) {
   const feedRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -149,6 +151,7 @@ export default function ChatLog({
                       : undefined
                   }
                   onPin={onPinTurn ? () => onPinTurn(turn.user, model) : undefined}
+                  pinFlashed={pinFlashId === turn.user.id}
                   onTruncate={
                     onTruncateFrom ? () => onTruncateFrom(turn.user.id) : undefined
                   }
@@ -177,6 +180,7 @@ export default function ChatLog({
                       : undefined
                   }
                   onPin={onPinTurn ? () => onPinTurn(turn.user, model) : undefined}
+                  pinFlashed={pinFlashId === turn.user.id}
                   onTruncate={
                     onTruncateFrom ? () => onTruncateFrom(model.id) : undefined
                   }
@@ -264,6 +268,7 @@ function PlayLines({
   onResend,
   onRegenerate,
   onPin,
+  pinFlashed = false,
   onTruncate,
 }: {
   messageId?: string;
@@ -287,6 +292,7 @@ function PlayLines({
   onResend?: () => void;
   onRegenerate?: () => void;
   onPin?: () => void;
+  pinFlashed?: boolean;
   onTruncate?: () => void;
 }) {
   const lines = parseModelReply(content);
@@ -438,11 +444,11 @@ function PlayLines({
           {onPin ? (
             <button
               type="button"
-              className="icon-btn is-tiny"
+              className={`icon-btn is-tiny ${pinFlashed ? "is-on" : ""}`}
               disabled={actionsDisabled}
               onClick={onPin}
-              aria-label="사건 고정"
-              title="고정"
+              aria-label={pinFlashed ? "고정됨" : "사건 고정"}
+              title={pinFlashed ? "고정됨" : "고정"}
             >
               <Icon name="pin" size={15} />
             </button>

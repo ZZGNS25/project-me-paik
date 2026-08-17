@@ -170,8 +170,8 @@ export default function GuidePanel() {
           </li>
           <li>
             위쪽 <strong className="text-[var(--ink)]">메뉴</strong>에 대화 프로필, 새로하기,
-            이어하기, 공유, 인물 추가, 압축, 고정, 이야기 삭제가 있습니다. 압축과 고정은
-            입력창 위에도 있습니다.
+            이어하기, 공유, 기록 내려받기, 인물 추가, 압축, 고정, 이야기 삭제가 있습니다.
+            압축과 고정은 입력창 위에도 있습니다.
           </li>
           <li>
             어긋난 지점은 말 옆의 휴지로 그 이후를 지웁니다.
@@ -182,6 +182,8 @@ export default function GuidePanel() {
             연필은 그 말만 고칩니다. 체크해도 답은 바로 바뀌지 않습니다.
             입력창 위 <strong className="text-[var(--ink)]">대신 쓰기</strong>는 내가 안 써도
             맥락에 맞는 다음 말을 칸에 채워 줍니다. 보고 고친 뒤 보내면 됩니다.
+            상대가 쓰는 중에는 보내기 자리가 <strong className="text-[var(--ink)]">멈추기</strong>로
+            바뀝니다. 그때까지 나온 말은 남습니다.
             아이콘은 말풍선에 커서를 올리면 나타납니다.
           </li>
         </ul>
@@ -198,6 +200,7 @@ export default function GuidePanel() {
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
           잊히면 안 되는 일은 <strong className="text-[var(--ink)]">고정</strong>하세요.
           말 옆의 고정은 그 한 턴을, 입력창 위·메뉴의 고정은 마지막 턴을 남깁니다.
+          고정되면 아이콘이 잠깐 파랗게 바뀝니다.
           시나리오 화면의 기억 칸에서 직접 적을 수도 있습니다. 고정된 사건은 요약보다
           우선합니다.
         </p>

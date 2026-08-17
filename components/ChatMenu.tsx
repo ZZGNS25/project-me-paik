@@ -14,6 +14,7 @@ type ChatMenuProps = {
   pinLabel?: string;
   pinDisabled?: boolean;
   compressDisabled?: boolean;
+  downloadDisabled?: boolean;
   onPickProfile: () => void;
   onSave: () => void;
   onFresh: () => void;
@@ -21,6 +22,7 @@ type ChatMenuProps = {
   onExtras: () => void;
   onCompress: () => void;
   onPin: () => void;
+  onDownload: () => void;
   onDeleteLast: () => void;
   onDeleteStory: () => void;
   onClose: () => void;
@@ -36,6 +38,7 @@ export default function ChatMenu({
   pinLabel = "고정",
   pinDisabled = false,
   compressDisabled = false,
+  downloadDisabled = false,
   onPickProfile,
   onSave,
   onFresh,
@@ -43,6 +46,7 @@ export default function ChatMenu({
   onExtras,
   onCompress,
   onPin,
+  onDownload,
   onDeleteLast,
   onDeleteStory,
   onClose,
@@ -99,6 +103,17 @@ export default function ChatMenu({
           <span className="sheet-row-value">›</span>
         </button>
         <ShareButton align="row" />
+        <button
+          type="button"
+          className="sheet-row"
+          disabled={downloadDisabled}
+          onClick={onDownload}
+        >
+          <span>
+            <span className="sheet-row-title">기록 내려받기</span>
+            <span className="sheet-row-hint">세계관과 대화를 텍스트로 남깁니다.</span>
+          </span>
+        </button>
         <button type="button" className="sheet-row" onClick={onExtras}>
           <span>
             <span className="sheet-row-title">인물 추가</span>

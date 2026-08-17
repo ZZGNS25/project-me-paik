@@ -296,6 +296,10 @@ body {
   color: var(--danger);
 }
 
+.icon-btn.is-on {
+  color: var(--blue);
+}
+
 .alert-error {
   border-radius: 10px;
   background: rgba(242, 139, 130, 0.12);

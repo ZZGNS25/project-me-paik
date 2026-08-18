@@ -37,14 +37,14 @@ function HomeBody() {
 
   if (!auth.enabled || !auth.user) {
     return (
-      <PageShell wide>
+      <div className="login-gate">
         <LoginGate
           enabled={auth.enabled}
           busy={auth.busy}
           error={auth.error}
           onGoogle={auth.signInWithGoogle}
         />
-      </PageShell>
+      </div>
     );
   }
 

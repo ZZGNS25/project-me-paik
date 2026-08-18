@@ -980,48 +980,65 @@ button.chat-speaker.is-me {
 }
 
 .login-gate {
+  position: relative;
   display: flex;
   min-height: var(--app-height);
   flex: 1;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1.5rem;
-  background: var(--background);
+  overflow: hidden;
+  padding: 2.5rem 1.25rem;
+  background:
+    radial-gradient(ellipse at 50% 38%, #15181e 0%, var(--background) 70%);
+}
+
+.login-gate::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: url("/earrole-mark.png") center 36% / min(18rem, 58vw) no-repeat;
+  opacity: 0.07;
 }
 
 .login-stage {
+  position: relative;
   display: flex;
-  width: min(26rem, 100%);
+  width: min(42rem, 100%);
   flex-direction: column;
   align-items: center;
+  padding: 2.1rem 1.7rem 1.9rem;
   text-align: center;
 }
 
+.login-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-copy .brand-lockup {
+  align-items: center;
+}
+
 .login-stage h1 {
-  margin-top: 1.7rem;
-  font-size: clamp(1.85rem, 5vw, 2.35rem);
+  margin-top: 1.35rem;
+  font-size: clamp(1.7rem, 4.4vw, 2.2rem);
   font-weight: 650;
-  letter-spacing: -0.035em;
-  line-height: 1.25;
+  letter-spacing: -0.03em;
+  line-height: 1.28;
 }
 
 .login-lead {
-  margin-top: 0.8rem;
+  margin-top: 0.7rem;
+  max-width: 22rem;
   color: var(--ink-soft);
   font-size: 0.95rem;
   line-height: 1.65;
 }
 
-.login-rule {
-  display: block;
-  width: 2.25rem;
-  height: 1px;
-  margin-top: 1.45rem;
-  background: var(--blue);
-}
-
 .login-cta {
-  margin-top: 1.7rem;
+  margin-top: 1.45rem;
   min-width: 11.5rem;
 }
 
@@ -1029,11 +1046,70 @@ button.chat-speaker.is-me {
   margin-top: 1rem;
 }
 
+.login-cast {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.7rem;
+  padding-top: 1.45rem;
+  border-top: 1px solid var(--line);
+}
+
+.login-cast-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: -0.45rem;
+}
+
+.login-cast-item:first-child {
+  margin-left: 0;
+}
+
+.login-cast-item .avatar-circle {
+  box-shadow: 0 0 0 3px var(--paper);
+}
+
+.login-cast-name {
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+}
+
 .login-kicker {
   margin-top: 1.15rem;
   color: var(--ink-dim);
   font-size: 0.82rem;
   letter-spacing: 0.04em;
+}
+
+@media (min-width: 820px) {
+  .login-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem 2.4rem;
+    padding: 2.35rem 2.5rem;
+    text-align: left;
+  }
+
+  .login-copy {
+    align-items: flex-start;
+  }
+
+  .login-copy .brand-lockup {
+    align-items: center;
+  }
+
+  .login-lead {
+    max-width: 22rem;
+  }
+
+  .login-cast {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+    padding-left: 0.4rem;
+  }
 }
 
 .cast-grid {

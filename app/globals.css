@@ -879,6 +879,9 @@ button.chat-speaker.is-me {
   border: 0;
   background: transparent;
   color: var(--ink-soft);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .composer-star:hover:not(:disabled) {
@@ -1399,6 +1402,21 @@ button.story-name-edit {
   align-items: center;
   gap: 0.45rem;
   margin-bottom: 0.55rem;
+}
+
+.reply-pager {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  margin-left: auto;
+}
+
+.reply-pager-n {
+  min-width: 2.1rem;
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 .confirm-layer.is-sheet {

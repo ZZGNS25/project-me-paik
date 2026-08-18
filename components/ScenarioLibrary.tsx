@@ -187,7 +187,7 @@ export default function ScenarioLibrary({ play }: ScenarioLibraryProps) {
         <PersonaPicker
           personas={play.personas}
           selectedId={play.lastPersonaId}
-          skipLabel="없이 시작"
+          skipLabel="기본 프로필로 시작"
           onPick={(id) => {
             const pending = pendingStart;
             setPendingStart(null);

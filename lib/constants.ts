@@ -7,6 +7,7 @@ export const GEMINI_SUGGEST_OUTPUT_TOKENS = 400;
 export const SHORT_TERM_TURNS = 3;
 export const COMPRESS_EVERY_TURNS = 30;
 export const PERSONAS_MAX = 12;
+export const REPLY_VERSIONS_MAX = 8;
 
 export const FIELD_LIMITS = {
   characterName: 32,

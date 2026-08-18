@@ -178,11 +178,13 @@ export default function GuidePanel() {
             어긋난 지점은 말 옆의 휴지로 그 이후를 지웁니다.
             상대 말의 순환 화살표는 <strong className="text-[var(--ink)]">다시 생성</strong>입니다.
             내 말은 그대로 두고, 마음에 안 드는 상대 답만 다시 씁니다.
+            다시 만든 뒤에는 입력창 위 <strong className="text-[var(--ink)]">‹ ›</strong>로
+            이전 답과 지금 답을 오갑니다.
             내 말의 보내기 화살표는 <strong className="text-[var(--ink)]">이 말로 다시</strong>입니다.
             고친 내 말을 기준으로 상대의 답을 새로 받습니다.
             연필은 그 말만 고칩니다. 체크해도 답은 바로 바뀌지 않습니다.
-            입력창 위 <strong className="text-[var(--ink)]">대신 쓰기</strong>는 내가 안 써도
-            맥락에 맞는 다음 말을 칸에 채워 줍니다. 보고 고친 뒤 보내면 됩니다.
+            입력창을 비우거나 의미 없는 글만 넣고 보내면, 맥락에 맞는 내 말을
+            대신 써서 보냅니다.
             상대가 쓰는 중에는 보내기 자리가 <strong className="text-[var(--ink)]">멈추기</strong>로
             바뀝니다. 그때까지 나온 말은 남습니다.
             아이콘은 말풍선에 커서를 올리면 나타납니다.

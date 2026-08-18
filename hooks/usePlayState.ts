@@ -20,6 +20,11 @@ import {
 } from "@/lib/storage";
 import { userFromPersona } from "@/lib/persona";
 import type { ShareSnapshot } from "@/lib/share";
+import {
+  withEditedReply,
+  withNewReply,
+  withReplyIndex,
+} from "@/lib/messageVersions";
 import type {
   AppStore,
   CastNote,
@@ -303,21 +308,82 @@ export function usePlayState() {
     text: string;
     state: PlayState;
   } | null {
+    const prepared = prepareRegen(userMessageId);
+    if (!prepared) return null;
+    return { text: prepared.text, state: prepared.state };
+  }
+
+  function prepareRegen(
+    userMessageId: string,
+    textOverride?: string,
+  ): {
+    text: string;
+    state: PlayState;
+    modelId?: string;
+  } | null {
     const current =
       store.settings.find((item) => item.id === store.currentSettingId) ??
       store.settings[0];
     if (!current) return null;
     const index = current.chatLog.findIndex((item) => item.id === userMessageId);
     if (index < 0 || current.chatLog[index].role !== "user") return null;
-    const nextStore = patchCurrent(store, (item) =>
-      withLog(item, item.chatLog.slice(0, index)),
+    const model =
+      current.chatLog[index + 1]?.role === "model"
+        ? current.chatLog[index + 1]
+        : undefined;
+    const text = (textOverride ?? current.chatLog[index].content).trim();
+    if (!text) return null;
+
+    const kept = current.chatLog.slice(0, model ? index + 2 : index + 1).map((item) =>
+      item.id === userMessageId ? { ...item, content: text } : item,
     );
+    const promptLog = kept.slice(0, index);
+    const nextStore = patchCurrent(store, (item) => withLog(item, kept));
     saveStore(nextStore);
     setStore(nextStore);
+
+    const play = toPlayState(nextStore);
     return {
-      text: current.chatLog[index].content,
-      state: toPlayState(nextStore),
+      text,
+      modelId: model?.id,
+      state: {
+        ...play,
+        chatLog: promptLog,
+        shortTermBuffer: syncBuffer(promptLog),
+      },
     };
+  }
+
+  function commitRegen(modelId: string, text: string) {
+    const next = text.trim();
+    if (!next) return;
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => {
+        const chatLog = current.chatLog.map((item) =>
+          item.id === modelId ? withNewReply(item, next) : item,
+        );
+        return {
+          ...current,
+          chatLog,
+          shortTermBuffer: syncBuffer(chatLog),
+        };
+      }),
+    );
+  }
+
+  function setReplyVersion(modelId: string, index: number) {
+    updateStore((prev) =>
+      patchCurrent(prev, (current) => {
+        const chatLog = current.chatLog.map((item) =>
+          item.id === modelId ? withReplyIndex(item, index) : item,
+        );
+        return {
+          ...current,
+          chatLog,
+          shortTermBuffer: syncBuffer(chatLog),
+        };
+      }),
+    );
   }
 
   function deleteLastTurn() {
@@ -335,10 +401,10 @@ export function usePlayState() {
       patchCurrent(prev, (current) => ({
         ...current,
         chatLog: current.chatLog.map((item) =>
-          item.id === id ? { ...item, content: text } : item,
+          item.id === id ? withEditedReply(item, text) : item,
         ),
         shortTermBuffer: current.shortTermBuffer.map((item) =>
-          item.id === id ? { ...item, content: text } : item,
+          item.id === id ? withEditedReply(item, text) : item,
         ),
       })),
     );
@@ -866,6 +932,9 @@ export function usePlayState() {
     updateMessage,
     truncateFrom,
     rewindForRegen,
+    prepareRegen,
+    commitRegen,
+    setReplyVersion,
     applySummary,
     addStoryPin,
     pinTurn,

@@ -1,5 +1,6 @@
 import { SHORT_TERM_TURNS } from "./constants";
 import { normalizePins } from "./memory";
+import { packMessageContent, unpackMessageContent } from "./messageVersions";
 import { getSupabase } from "./supabase";
 import type { CastNote, ChatMessage, PlayState, StoryPin } from "./types";
 
@@ -93,7 +94,7 @@ export async function savePlayToCloud(userId: string, state: PlayState) {
       state.chatLog.map((message) => ({
         session_id: sessionId,
         role: message.role,
-        content: message.content,
+        content: packMessageContent(message),
         created_at: message.createdAt,
       })),
     );
@@ -220,8 +221,8 @@ function toChatLog(
   return messages.map((message) => ({
     id: message.id,
     role: message.role,
-    content: message.content,
     createdAt: message.created_at,
+    ...unpackMessageContent(message.content),
   }));
 }
 

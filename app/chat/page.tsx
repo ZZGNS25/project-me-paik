@@ -28,6 +28,8 @@ import {
 import { recountTurns } from "@/lib/memory";
 import { takePendingMessage } from "@/lib/pending";
 import { STORY_PERSONA_EDIT } from "@/lib/persona";
+import { replyVersions } from "@/lib/messageVersions";
+import { isBlankOrMeaningless } from "@/lib/korean";
 import { storyTitle } from "@/lib/storyTitle";
 import { downloadTranscript } from "@/lib/transcript";
 import type { ChatMessage, PlayState } from "@/lib/types";
@@ -54,6 +56,7 @@ function ChatBody() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingUser, setPendingUser] = useState("");
   const [streamingReply, setStreamingReply] = useState("");
+  const [replacingModelId, setReplacingModelId] = useState<string | null>(null);
   const [compressing, setCompressing] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [pinnedFlash, setPinnedFlash] = useState(false);
@@ -110,15 +113,20 @@ function ChatBody() {
     );
   }
 
-  async function sendMessage(text = draft.trim(), state: PlayState = play.state) {
+  async function sendMessage(
+    text = draft.trim(),
+    state: PlayState = play.state,
+    replaceModelId?: string,
+  ) {
     if (!text || sending.current) return;
 
     sending.current = true;
     setBusy("chat");
     setError("");
     setDraft("");
-    setPendingUser(text);
+    setPendingUser(replaceModelId ? "" : text);
     setStreamingReply("");
+    setReplacingModelId(replaceModelId ?? null);
     const ac = new AbortController();
     abortRef.current = ac;
 
@@ -129,7 +137,11 @@ function ChatBody() {
         setStreamingReply,
         ac.signal,
       );
-      play.appendTurn(text, reply);
+      if (replaceModelId) {
+        play.commitRegen(replaceModelId, reply);
+      } else {
+        play.appendTurn(text, reply);
+      }
       setPendingUser("");
       setStreamingReply("");
     } catch (err) {
@@ -137,18 +149,23 @@ function ChatBody() {
       setStreamingReply("");
       if (err instanceof GenerateStoppedError) {
         if (err.partial) {
-          play.appendTurn(text, err.partial);
-        } else {
+          if (replaceModelId) {
+            play.commitRegen(replaceModelId, err.partial);
+          } else {
+            play.appendTurn(text, err.partial);
+          }
+        } else if (!replaceModelId) {
           setDraft(text);
         }
       } else {
-        setDraft(text);
+        if (!replaceModelId) setDraft(text);
         setError(err instanceof Error ? err.message : "응답을 받지 못했습니다.");
       }
     } finally {
       abortRef.current = null;
       sending.current = false;
       setBusy(null);
+      setReplacingModelId(null);
     }
   }
 
@@ -176,8 +193,8 @@ function ChatBody() {
 
   function regenerate(userMessageId: string, textOverride?: string, asResend = false) {
     const run = () => {
-      const rewound = play.rewindForRegen(userMessageId);
-      if (rewound) void sendMessage(textOverride ?? rewound.text, rewound.state);
+      const prepared = play.prepareRegen(userMessageId, textOverride);
+      if (prepared) void sendMessage(prepared.text, prepared.state, prepared.modelId);
     };
     if (!laterTurnsWillDrop(userMessageId)) {
       run();
@@ -193,28 +210,35 @@ function ChatBody() {
     });
   }
 
-  async function suggestMyLine() {
+  async function submitComposer() {
+    const typed = draft.trim();
+    if (!isBlankOrMeaningless(typed)) {
+      void sendMessage(typed);
+      return;
+    }
     if (sending.current) return;
     sending.current = true;
     setBusy("suggest");
     setError("");
     const ac = new AbortController();
     abortRef.current = ac;
+    let text = "";
     try {
-      const text = cleanSuggest(
+      text = cleanSuggest(
         await requestGenerate("suggest", play.state, draft, ac.signal),
       );
       if (ac.signal.aborted) return;
       if (!text) throw new Error("내 말을 만들지 못했습니다.");
-      setDraft(text);
     } catch (err) {
       if (isAbortError(err) || err instanceof GenerateStoppedError) return;
       setError(err instanceof Error ? err.message : "내 말을 만들지 못했습니다.");
+      return;
     } finally {
       abortRef.current = null;
       sending.current = false;
       setBusy(null);
     }
+    void sendMessage(text);
   }
 
   function pinTurn(user: ChatMessage, model?: ChatMessage) {
@@ -269,6 +293,9 @@ function ChatBody() {
     : play.state.character.name || "채팅";
   const meName = play.state.userPersona.name.trim() || "나";
   const hasTurns = play.state.chatLog.length > 0;
+  const lastMessage = play.state.chatLog[play.state.chatLog.length - 1];
+  const lastReply = lastMessage?.role === "model" ? lastMessage : null;
+  const replyPage = lastReply ? replyVersions(lastReply) : null;
 
   function openPersonaPicker() {
     setMenuOpen(false);
@@ -338,6 +365,7 @@ function ChatBody() {
           castNotes={play.state.castNotes}
           pendingUserText={pendingUser}
           streamingText={streamingReply}
+          streamingForId={replacingModelId}
           actionsDisabled={Boolean(busy)}
           onTruncateFrom={truncateFrom}
           onResend={(id, text) => regenerate(id, text, true)}
@@ -372,16 +400,6 @@ function ChatBody() {
               <button
                 type="button"
                 className="icon-btn"
-                disabled={Boolean(busy)}
-                onClick={() => void suggestMyLine()}
-                aria-label={busy === "suggest" ? "쓰는 중" : "대신 쓰기"}
-                title="대신 쓰기"
-              >
-                <Icon name="suggest" />
-              </button>
-              <button
-                type="button"
-                className="icon-btn"
                 disabled={Boolean(busy) || compressing || play.state.shortTermBuffer.length === 0}
                 onClick={() => void compressMemory()}
                 aria-label={compressing ? "압축 중" : "압축"}
@@ -399,20 +417,47 @@ function ChatBody() {
               >
                 <Icon name="pin" />
               </button>
+              {replyPage && replyPage.count > 1 && lastReply ? (
+                <div className="reply-pager">
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    disabled={Boolean(busy) || replyPage.index <= 0}
+                    onClick={() => play.setReplyVersion(lastReply.id, replyPage.index - 1)}
+                    aria-label="이전 답"
+                    title="이전 답"
+                  >
+                    <Icon name="prev" />
+                  </button>
+                  <span className="reply-pager-n">
+                    {replyPage.index + 1}/{replyPage.count}
+                  </span>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    disabled={Boolean(busy) || replyPage.index >= replyPage.count - 1}
+                    onClick={() => play.setReplyVersion(lastReply.id, replyPage.index + 1)}
+                    aria-label="다음 답"
+                    title="다음 답"
+                  >
+                    <Icon name="next" />
+                  </button>
+                </div>
+              ) : null}
             </div>
             <Composer
               value={draft}
               onChange={setDraft}
-              onSubmit={() => void sendMessage()}
+              onSubmit={() => void submitComposer()}
               onStop={busy ? stopGenerate : undefined}
               disabled={busy === "suggest"}
               placeholder={
                 busy === "suggest"
                   ? "맥락에 맞게 쓰는 중…"
-                  : "@나: 내 말  ·  @이름: 그 인물 말"
+                  : "비우면 대신 씀  ·  @나: 내 말"
               }
             />
-            <p className="composer-hint">@: 장면 · @나: 내 말 · @이름: 그 인물 · *행동*</p>
+            <p className="composer-hint">비우면 대신 씀 · @: 장면 · @나: 내 말 · @이름: 그 인물 · *행동*</p>
           </div>
         </div>
         {confirm.dialog}

@@ -5,6 +5,8 @@ export type ChatMessage = {
   role: ChatRole;
   content: string;
   createdAt: string;
+  versions?: string[];
+  versionIndex?: number;
 };
 
 export type CastNote = {

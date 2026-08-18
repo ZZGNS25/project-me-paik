@@ -18,6 +18,7 @@ type ChatLogProps = {
   castNotes?: CastNote[];
   pendingUserText?: string;
   streamingText?: string;
+  streamingForId?: string | null;
   actionsDisabled?: boolean;
   onTruncateFrom?: (messageId: string) => void;
   onResend?: (userMessageId: string, text: string) => void;
@@ -40,6 +41,7 @@ export default function ChatLog({
   castNotes = [],
   pendingUserText,
   streamingText,
+  streamingForId,
   actionsDisabled = false,
   onTruncateFrom,
   onResend,
@@ -160,12 +162,17 @@ export default function ChatLog({
               {model ? (
                 <PlayLines
                   messageId={model.id}
-                  content={model.content}
+                  content={
+                    streamingForId === model.id && streamingText
+                      ? streamingText
+                      : model.content
+                  }
                   characterName={characterName}
                   characterPhoto={characterPhoto}
                   userName={userName}
                   userPhoto={userPhoto}
                   castNotes={castNotes}
+                  streaming={streamingForId === model.id && Boolean(streamingText)}
                   editing={editingId === model.id}
                   editDraft={editDraft}
                   actionsDisabled={actionsDisabled}
@@ -201,7 +208,7 @@ export default function ChatLog({
               onPickMe={onPickMe}
             />
           ) : null}
-          {streamingText ? (
+          {streamingText && !streamingForId ? (
             <PlayLines
               content={streamingText}
               characterName={characterName}

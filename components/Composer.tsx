@@ -76,12 +76,10 @@ export default function Composer({
         className="composer-star"
         disabled={locked}
         onClick={insertStar}
-        aria-label="별 넣기"
+        aria-label="별표 넣기"
         title="*행동*"
       >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-          <path d="M12 2.8 13.4 10 21 12l-7.6 2L12 21.2 10.6 14 3 12l7.6-2Z" />
-        </svg>
+        *
       </button>
       {onStop ? (
         <button
@@ -99,7 +97,7 @@ export default function Composer({
         <button
           type="submit"
           className="composer-send"
-          disabled={disabled || !value.trim()}
+          disabled={disabled}
           aria-label="전송"
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">

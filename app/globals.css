@@ -1004,7 +1004,7 @@ button.chat-speaker.is-me {
 .login-stage {
   position: relative;
   display: flex;
-  width: min(42rem, 100%);
+  width: min(46rem, 100%);
   flex-direction: column;
   align-items: center;
   padding: 2.1rem 1.7rem 1.9rem;
@@ -1059,20 +1059,47 @@ button.chat-speaker.is-me {
   flex-direction: column;
   align-items: center;
   gap: 0.45rem;
-  margin-left: -0.45rem;
+  margin-left: -0.55rem;
 }
 
 .login-cast-item:first-child {
   margin-left: 0;
 }
 
-.login-cast-item .avatar-circle {
+.login-cast-item.is-blank {
+  margin-left: -0.95rem;
+}
+
+.login-cast-item .avatar-circle,
+.login-cast-slot {
   box-shadow: 0 0 0 3px var(--paper);
+}
+
+.login-cast-slot {
+  display: inline-flex;
+  width: 5.5rem;
+  height: 5.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed rgba(154, 176, 214, 0.5);
+  border-radius: 999px;
+  background: rgba(10, 12, 16, 0.35);
+  color: rgba(168, 186, 214, 0.88);
+}
+
+.login-cast-slot svg {
+  width: 1.55rem;
+  height: 1.55rem;
 }
 
 .login-cast-name {
   color: var(--ink-dim);
   font-size: 0.78rem;
+}
+
+.login-cast-item.is-blank .login-cast-name {
+  color: rgba(168, 186, 214, 0.78);
 }
 
 .login-kicker {
@@ -1109,6 +1136,18 @@ button.chat-speaker.is-me {
     padding-top: 0;
     border-top: 0;
     padding-left: 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-cast-item .avatar-lg,
+  .login-cast-slot {
+    width: 4.35rem;
+    height: 4.35rem;
+  }
+
+  .login-cast-item.is-blank {
+    margin-left: -1.15rem;
   }
 }
 

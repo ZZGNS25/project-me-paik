@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { SITE_TAGLINE } from "@/lib/site";
+import { SITE_MOTTO } from "@/lib/site";
 
-export const alt = `EarRole — ${SITE_TAGLINE}`;
+export const alt = `EarRole — ${SITE_MOTTO}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -33,7 +33,7 @@ async function loadFont(text: string, weight: number) {
 export default async function OgImage() {
   const mark = await readFile(join(process.cwd(), "public", "earrole-mark.png"));
   const markSrc = `data:image/png;base64,${mark.toString("base64")}`;
-  const sample = `EarRole ${SITE_TAGLINE}`;
+  const sample = `EarRole ${SITE_MOTTO}`;
   const [regular, bold] = await Promise.all([
     loadFont(sample, 400),
     loadFont(sample, 700),
@@ -90,7 +90,7 @@ export default async function OgImage() {
               fontFamily: fonts.length ? "Noto Sans KR" : "sans-serif",
             }}
           >
-            {SITE_TAGLINE}
+            {SITE_MOTTO}
           </div>
         </div>
       </div>

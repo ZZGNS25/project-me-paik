@@ -4,8 +4,8 @@ import MotionRoot from "@/components/MotionRoot";
 import { gaId } from "@/lib/analytics";
 import {
   SITE_DESCRIPTION,
+  SITE_MOTTO,
   SITE_NAME,
-  SITE_TAGLINE,
   SITE_TITLE,
   SITE_URL,
 } from "@/lib/site";
@@ -50,8 +50,12 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
   },
   icons: {
-    icon: "/earrole-mark.png",
-    apple: "/earrole-mark.png",
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icon-192.png",
   },
   appleWebApp: {
     capable: true,
@@ -76,7 +80,7 @@ const jsonLd = {
   alternateName: "EarRole",
   url: SITE_URL,
   description: SITE_DESCRIPTION,
-  slogan: SITE_TAGLINE,
+  slogan: SITE_MOTTO,
   image: `${SITE_URL}/opengraph-image`,
   applicationCategory: "EntertainmentApplication",
   operatingSystem: "Web",

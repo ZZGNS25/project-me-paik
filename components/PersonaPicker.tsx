@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useOverlayLeave } from "@/hooks/useOverlayLeave";
 import AvatarCircle from "@/components/AvatarCircle";
 import Icon from "@/components/Icon";
 import PersonaList from "@/components/PersonaList";
@@ -35,6 +36,7 @@ export default function PersonaPicker({
   onCancel,
 }: PersonaPickerProps) {
   const [mounted, setMounted] = useState(false);
+  const { leaveClass, dismiss } = useOverlayLeave();
   const stacked = Boolean(current);
 
   useEffect(() => {
@@ -43,11 +45,11 @@ export default function PersonaPicker({
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onCancel();
+      if (event.key === "Escape") dismiss(onCancel);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onCancel]);
+  }, [dismiss, onCancel]);
 
   if (!mounted) return null;
 
@@ -56,12 +58,12 @@ export default function PersonaPicker({
 
   return createPortal(
     <div
-      className={`confirm-layer ${stacked ? "is-sheet" : ""}`}
+      className={`confirm-layer ${stacked ? "is-sheet" : ""} ${leaveClass}`}
       role="dialog"
       aria-modal="true"
       aria-label="내 대화 프로필"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onCancel();
+        if (event.target === event.currentTarget) dismiss(onCancel);
       }}
     >
       <div className={`confirm-card persona-picker ${stacked ? "is-stack" : ""}`}>
@@ -71,9 +73,9 @@ export default function PersonaPicker({
           <PersonaList
             personas={personas}
             activeId={stacked ? null : selectedId}
-            onPick={onPick}
-            onEdit={onEdit}
-            onAdd={onAdd}
+            onPick={(id) => dismiss(() => onPick(id))}
+            onEdit={onEdit ? (id) => dismiss(() => onEdit(id)) : undefined}
+            onAdd={onAdd ? () => dismiss(onAdd) : undefined}
           />
         </div>
         {current ? (
@@ -86,7 +88,7 @@ export default function PersonaPicker({
                   ✓
                 </span>
               </span>
-              <button type="button" className="persona-pick" onClick={onCancel}>
+              <button type="button" className="persona-pick" onClick={() => dismiss(onCancel)}>
                 <span className="min-w-0">
                   <span className="block truncate font-medium">{nowName}</span>
                   {nowSetting ? <span className="persona-desc">{nowSetting}</span> : null}
@@ -97,7 +99,7 @@ export default function PersonaPicker({
                   type="button"
                   className="persona-edit"
                   aria-label="지금 프로필 수정"
-                  onClick={onEditCurrent}
+                  onClick={() => dismiss(onEditCurrent)}
                 >
                   <Icon name="edit" size={16} />
                 </button>
@@ -106,11 +108,11 @@ export default function PersonaPicker({
           </div>
         ) : null}
         <div className="confirm-actions">
-          <button type="button" className="btn-quiet" onClick={onCancel}>
+          <button type="button" className="btn-quiet" onClick={() => dismiss(onCancel)}>
             닫기
           </button>
           {onSkip && skipLabel ? (
-            <button type="button" className="btn-quiet" onClick={onSkip}>
+            <button type="button" className="btn-quiet" onClick={() => dismiss(onSkip)}>
               {skipLabel}
             </button>
           ) : null}

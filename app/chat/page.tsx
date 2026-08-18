@@ -16,55 +16,33 @@ import AvatarCircle from "@/components/AvatarCircle";
 import Icon from "@/components/Icon";
 import { useCloudSync, usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { useChatGenerate } from "@/hooks/useChatGenerate";
 import { useStartFresh } from "@/hooks/useStartFresh";
-import { deletePlayFromCloud } from "@/lib/cloud";
 import { COMPRESS_EVERY_TURNS } from "@/lib/constants";
-import {
-  GenerateStoppedError,
-  isAbortError,
-  requestGenerate,
-  requestGenerateStream,
-} from "@/lib/geminiClient";
+import { deleteSettingWithCloud } from "@/lib/deleteSetting";
+import { requestGenerate } from "@/lib/geminiClient";
 import { recountTurns } from "@/lib/memory";
-import { takePendingMessage } from "@/lib/pending";
 import { STORY_PERSONA_EDIT } from "@/lib/persona";
-import { replyVersions } from "@/lib/messageVersions";
-import { isBlankOrMeaningless } from "@/lib/korean";
+import { listSavedChats } from "@/lib/settingFilters";
 import { storyTitle } from "@/lib/storyTitle";
 import { downloadTranscript } from "@/lib/transcript";
-import type { ChatMessage, PlayState } from "@/lib/types";
-
-function cleanSuggest(raw: string) {
-  return raw
-    .replace(/^```[\w]*\s*/, "")
-    .replace(/\s*```$/, "")
-    .trim()
-    .slice(0, 2000);
-}
+import type { ChatMessage } from "@/lib/types";
 
 function ChatBody() {
   const router = useRouter();
   const play = usePlay();
   const cloud = useCloudSync();
   const auth = useAuth();
-  const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState<"chat" | "suggest" | null>(null);
-  const [error, setError] = useState("");
+  const gen = useChatGenerate(play, Boolean(auth.user));
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [pickingPersona, setPickingPersona] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [pendingUser, setPendingUser] = useState("");
-  const [streamingReply, setStreamingReply] = useState("");
-  const [replacingModelId, setReplacingModelId] = useState<string | null>(null);
   const [compressing, setCompressing] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [pinnedFlash, setPinnedFlash] = useState(false);
   const [pinFlashId, setPinFlashId] = useState<string | null>(null);
-  const pendingSent = useRef(false);
-  const sending = useRef(false);
   const quietCompress = useRef(false);
-  const abortRef = useRef<AbortController | null>(null);
   const pinTimer = useRef(0);
   const confirm = useConfirm();
   const fresh = useStartFresh();
@@ -81,19 +59,11 @@ function ChatBody() {
   }, [play.ready, auth.ready, auth.user, play.state.character.name, router]);
 
   useEffect(() => {
-    if (!play.ready || !auth.user || pendingSent.current) return;
-    const pending = takePendingMessage();
-    if (!pending) return;
-    pendingSent.current = true;
-    void sendMessage(pending);
-  }, [play.ready, auth.user]);
-
-  useEffect(() => {
     return () => window.clearTimeout(pinTimer.current);
   }, []);
 
   useEffect(() => {
-    if (!play.ready || busy || quietCompress.current) return;
+    if (!play.ready || gen.busy || quietCompress.current) return;
     if (recountTurns(play.state.shortTermBuffer) < COMPRESS_EVERY_TURNS) return;
     quietCompress.current = true;
     const closedTurns = recountTurns(play.state.shortTermBuffer);
@@ -103,7 +73,7 @@ function ChatBody() {
       .finally(() => {
         quietCompress.current = false;
       });
-  }, [play.ready, busy, play.state.turnCount, play.state.shortTermBuffer.length]);
+  }, [play.ready, gen.busy, play.state.turnCount, play.state.shortTermBuffer.length]);
 
   if (!play.ready || !auth.ready) {
     return (
@@ -111,66 +81,6 @@ function ChatBody() {
         <p className="mono-readout text-sm text-[var(--ink-dim)]">불러오는 중…</p>
       </PageShell>
     );
-  }
-
-  async function sendMessage(
-    text = draft.trim(),
-    state: PlayState = play.state,
-    replaceModelId?: string,
-  ) {
-    if (!text || sending.current) return;
-
-    sending.current = true;
-    setBusy("chat");
-    setError("");
-    setDraft("");
-    setPendingUser(replaceModelId ? "" : text);
-    setStreamingReply("");
-    setReplacingModelId(replaceModelId ?? null);
-    const ac = new AbortController();
-    abortRef.current = ac;
-
-    try {
-      const reply = await requestGenerateStream(
-        state,
-        text,
-        setStreamingReply,
-        ac.signal,
-      );
-      if (replaceModelId) {
-        play.commitRegen(replaceModelId, reply);
-      } else {
-        play.appendTurn(text, reply);
-      }
-      setPendingUser("");
-      setStreamingReply("");
-    } catch (err) {
-      setPendingUser("");
-      setStreamingReply("");
-      if (err instanceof GenerateStoppedError) {
-        if (err.partial) {
-          if (replaceModelId) {
-            play.commitRegen(replaceModelId, err.partial);
-          } else {
-            play.appendTurn(text, err.partial);
-          }
-        } else if (!replaceModelId) {
-          setDraft(text);
-        }
-      } else {
-        if (!replaceModelId) setDraft(text);
-        setError(err instanceof Error ? err.message : "응답을 받지 못했습니다.");
-      }
-    } finally {
-      abortRef.current = null;
-      sending.current = false;
-      setBusy(null);
-      setReplacingModelId(null);
-    }
-  }
-
-  function stopGenerate() {
-    abortRef.current?.abort();
   }
 
   function laterTurnsWillDrop(fromId: string) {
@@ -184,6 +94,7 @@ function ChatBody() {
       return;
     }
     confirm.ask({
+      title: "여기부터 지울까요?",
       message: "이 뒤의 대화가 사라집니다.",
       confirmLabel: "삭제",
       danger: true,
@@ -194,13 +105,14 @@ function ChatBody() {
   function regenerate(userMessageId: string, textOverride?: string, asResend = false) {
     const run = () => {
       const prepared = play.prepareRegen(userMessageId, textOverride);
-      if (prepared) void sendMessage(prepared.text, prepared.state, prepared.modelId);
+      if (prepared) void gen.sendMessage(prepared.text, prepared.state, prepared.modelId);
     };
     if (!laterTurnsWillDrop(userMessageId)) {
       run();
       return;
     }
     confirm.ask({
+      title: asResend ? "이 말로 다시 받을까요?" : "답을 다시 만들까요?",
       message: asResend
         ? "지금 적힌 내 말을 기준으로 상대의 답을 다시 받습니다. 이 뒤의 대화는 사라집니다."
         : "내 말은 그대로 두고, 상대의 답만 다시 생성합니다. 이 뒤의 대화는 사라집니다.",
@@ -208,37 +120,6 @@ function ChatBody() {
       danger: true,
       run,
     });
-  }
-
-  async function submitComposer() {
-    const typed = draft.trim();
-    if (!isBlankOrMeaningless(typed)) {
-      void sendMessage(typed);
-      return;
-    }
-    if (sending.current) return;
-    sending.current = true;
-    setBusy("suggest");
-    setError("");
-    const ac = new AbortController();
-    abortRef.current = ac;
-    let text = "";
-    try {
-      text = cleanSuggest(
-        await requestGenerate("suggest", play.state, draft, ac.signal),
-      );
-      if (ac.signal.aborted) return;
-      if (!text) throw new Error("내 말을 만들지 못했습니다.");
-    } catch (err) {
-      if (isAbortError(err) || err instanceof GenerateStoppedError) return;
-      setError(err instanceof Error ? err.message : "내 말을 만들지 못했습니다.");
-      return;
-    } finally {
-      abortRef.current = null;
-      sending.current = false;
-      setBusy(null);
-    }
-    void sendMessage(text);
   }
 
   function pinTurn(user: ChatMessage, model?: ChatMessage) {
@@ -253,6 +134,7 @@ function ChatBody() {
   }
 
   async function saveChat() {
+    if (auth.isGuest) return;
     await cloud.saveNow();
     if (cloud.status !== "error") {
       setSavedFlash(true);
@@ -268,7 +150,7 @@ function ChatBody() {
       const summary = await requestGenerate("summary", play.state);
       play.applySummary(summary, closedTurns);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "요약을 만들지 못했습니다.");
+      gen.setError(err instanceof Error ? err.message : "요약을 만들지 못했습니다.");
     } finally {
       setCompressing(false);
     }
@@ -286,34 +168,28 @@ function ChatBody() {
     pinTurn(last);
   }
 
-  const listening = busy === "chat";
+  const listening = gen.busy === "chat";
   const current = play.settings.find((item) => item.id === play.currentSettingId);
   const headerName = current
     ? storyTitle(current)
     : play.state.character.name || "채팅";
   const meName = play.state.userPersona.name.trim() || "나";
   const hasTurns = play.state.chatLog.length > 0;
-  const lastMessage = play.state.chatLog[play.state.chatLog.length - 1];
-  const lastReply = lastMessage?.role === "model" ? lastMessage : null;
-  const replyPage = lastReply ? replyVersions(lastReply) : null;
 
   function openPersonaPicker() {
     setMenuOpen(false);
     setPickingPersona(true);
   }
 
-  function goProfile(editId?: string) {
+  function goProfile(editId?: string, create = false) {
     setPickingPersona(false);
-    const query = editId
-      ? `/?view=profiles&from=chat&edit=${editId}`
-      : "/?view=profiles&from=chat";
-    router.push(query);
+    const query = new URLSearchParams({ view: "profiles", from: "chat" });
+    if (editId) query.set("edit", editId);
+    if (create) query.set("new", "1");
+    router.push(`/?${query.toString()}`);
   }
 
-  const savedStories = play.settings
-    .filter((item) => item.chatLog.length > 0)
-    .slice()
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const savedStories = listSavedChats(play.settings);
 
   return (
     <AppFrame>
@@ -363,22 +239,23 @@ function ChatBody() {
           userPhoto={play.state.userPersona.photo}
           userName={play.state.userPersona.name}
           castNotes={play.state.castNotes}
-          pendingUserText={pendingUser}
-          streamingText={streamingReply}
-          streamingForId={replacingModelId}
-          actionsDisabled={Boolean(busy)}
+          pendingUserText={gen.pendingUser}
+          streamingText={gen.streamingReply}
+          streamingForId={gen.replacingModelId}
+          actionsDisabled={Boolean(gen.busy)}
           onTruncateFrom={truncateFrom}
           onResend={(id, text) => regenerate(id, text, true)}
           onRegenerate={(id) => regenerate(id)}
           onPinTurn={pinTurn}
           onEditMessage={(id, content) => play.updateMessage(id, content)}
+          onSetReplyVersion={play.setReplyVersion}
           onPickMe={openPersonaPicker}
           pinFlashId={pinFlashId}
         />
 
         <div className="composer-dock">
           <div className="mx-auto w-full max-w-4xl">
-            {error ? <p className="alert-error mb-3">{error}</p> : null}
+            {gen.error ? <p className="alert-error mb-3">{gen.error}</p> : null}
             <div className="composer-tools">
               <div className="me-chip">
                 <AvatarCircle
@@ -400,7 +277,7 @@ function ChatBody() {
               <button
                 type="button"
                 className="icon-btn"
-                disabled={Boolean(busy) || compressing || play.state.shortTermBuffer.length === 0}
+                disabled={Boolean(gen.busy) || compressing || play.state.shortTermBuffer.length === 0}
                 onClick={() => void compressMemory()}
                 aria-label={compressing ? "압축 중" : "압축"}
                 title="압축"
@@ -410,52 +287,20 @@ function ChatBody() {
               <button
                 type="button"
                 className={`icon-btn ${pinnedFlash ? "is-on" : ""}`}
-                disabled={Boolean(busy) || !hasTurns}
+                disabled={Boolean(gen.busy) || !hasTurns}
                 onClick={pinLastTurn}
                 aria-label={pinnedFlash ? "고정됨" : "고정"}
                 title={pinnedFlash ? "고정됨" : "고정"}
               >
                 <Icon name="pin" />
               </button>
-              {replyPage && replyPage.count > 1 && lastReply ? (
-                <div className="reply-pager">
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    disabled={Boolean(busy) || replyPage.index <= 0}
-                    onClick={() => play.setReplyVersion(lastReply.id, replyPage.index - 1)}
-                    aria-label="이전 답"
-                    title="이전 답"
-                  >
-                    <Icon name="prev" />
-                  </button>
-                  <span className="reply-pager-n">
-                    {replyPage.index + 1}/{replyPage.count}
-                  </span>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    disabled={Boolean(busy) || replyPage.index >= replyPage.count - 1}
-                    onClick={() => play.setReplyVersion(lastReply.id, replyPage.index + 1)}
-                    aria-label="다음 답"
-                    title="다음 답"
-                  >
-                    <Icon name="next" />
-                  </button>
-                </div>
-              ) : null}
             </div>
             <Composer
-              value={draft}
-              onChange={setDraft}
-              onSubmit={() => void submitComposer()}
-              onStop={busy ? stopGenerate : undefined}
-              disabled={busy === "suggest"}
-              placeholder={
-                busy === "suggest"
-                  ? "내 대사를 쓰는 중…"
-                  : "할 말을 적거나, 비워 보내면 이어 줍니다"
-              }
+              value={gen.draft}
+              onChange={gen.setDraft}
+              onSubmit={() => void gen.submitComposer()}
+              onStop={gen.busy ? gen.stopGenerate : undefined}
+              placeholder="할 말을 적거나, 비워 보내면 이어 줍니다"
             />
             <p className="composer-hint">@: 장면 · @나: 내 대사 · @이름: 다른 사람 · *행동*</p>
           </div>
@@ -466,7 +311,9 @@ function ChatBody() {
           <ChatMenu
             profileName={meName}
             saveLabel={
-              cloud.status === "saving"
+              auth.isGuest
+                ? "Guest 세션에 저장됨"
+                : cloud.status === "saving"
                 ? "저장 중…"
                 : cloud.status === "error"
                   ? "저장 실패"
@@ -474,15 +321,15 @@ function ChatBody() {
                     ? "저장됨"
                     : ""
             }
-            saveDisabled={cloud.status === "saving"}
+            saveDisabled={auth.isGuest || cloud.status === "saving"}
             extrasOpen={extrasOpen}
-            deleteLastDisabled={Boolean(busy) || !hasTurns}
+            deleteLastDisabled={Boolean(gen.busy) || !hasTurns}
             compressing={compressing}
             pinLabel={pinnedFlash ? "고정됨" : "고정"}
-            pinDisabled={Boolean(busy) || !hasTurns}
+            pinDisabled={Boolean(gen.busy) || !hasTurns}
             downloadDisabled={!current}
             compressDisabled={
-              Boolean(busy) || compressing || play.state.shortTermBuffer.length === 0
+              Boolean(gen.busy) || compressing || play.state.shortTermBuffer.length === 0
             }
             onPickProfile={openPersonaPicker}
             onSave={() => {
@@ -524,16 +371,15 @@ function ChatBody() {
             onDeleteStory={() => {
               setMenuOpen(false);
               confirm.ask({
-                message: "이 이야기를 지울까요? 세계와 대화가 함께 사라집니다.",
+                title: "이 이야기를 지울까요?",
+                message: "세계와 대화가 함께 사라집니다.",
                 confirmLabel: "삭제",
                 danger: true,
                 run: async () => {
-                  const sessionId = play.state.cloudSessionId;
-                  const id = play.currentSettingId;
-                  if (sessionId) {
-                    await deletePlayFromCloud(sessionId).catch(() => undefined);
-                  }
-                  play.deleteSetting(id);
+                  await deleteSettingWithCloud(play.deleteSetting, {
+                    id: play.currentSettingId,
+                    cloudSessionId: play.state.cloudSessionId,
+                  });
                   router.push("/");
                 },
               });
@@ -552,7 +398,7 @@ function ChatBody() {
             }}
             onEdit={(id) => goProfile(id)}
             onEditCurrent={() => goProfile(STORY_PERSONA_EDIT)}
-            onAdd={() => goProfile()}
+            onAdd={() => goProfile(undefined, true)}
             onCancel={() => setPickingPersona(false)}
           />
         ) : null}
@@ -564,6 +410,23 @@ function ChatBody() {
               play.selectSetting(id);
               setContinuing(false);
               router.push("/chat");
+            }}
+            onRename={(id, title) => play.renameSetting(id, title)}
+            onDelete={(id) => {
+              confirm.ask({
+                message: "이 대화를 지울까요?",
+                confirmLabel: "삭제",
+                danger: true,
+                run: async () => {
+                  const item = play.settings.find((story) => story.id === id);
+                  if (!item) return;
+                  await deleteSettingWithCloud(play.deleteSetting, item);
+                  if (id === play.currentSettingId) {
+                    setContinuing(false);
+                    router.push("/");
+                  }
+                },
+              });
             }}
             onClose={() => setContinuing(false)}
           />

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import FacePicker from "@/components/FacePicker";
+import { useOverlayLeave } from "@/hooks/useOverlayLeave";
 import { readPhotoFile } from "@/lib/photo";
 
 type AvatarSize = "sm" | "md" | "lg";
@@ -35,6 +36,48 @@ function AvatarSilhouette() {
   );
 }
 
+function PhotoPreview({
+  photo,
+  label,
+  onClose,
+}: {
+  photo: string;
+  label: string;
+  onClose: () => void;
+}) {
+  const { leaveClass, dismiss } = useOverlayLeave();
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") dismiss(onClose);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dismiss, onClose]);
+
+  return createPortal(
+    <div
+      className={`photo-layer ${leaveClass}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${label} 사진`}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) dismiss(onClose);
+      }}
+    >
+      <div className="photo-preview">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={photo} alt={label} />
+        <p>{label}</p>
+        <button type="button" className="btn-quiet" onClick={() => dismiss(onClose)}>
+          닫기
+        </button>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export default function AvatarCircle({
   src,
   name = "",
@@ -61,18 +104,6 @@ export default function AvatarCircle({
   useEffect(() => {
     setBroken(false);
   }, [photo]);
-
-  useEffect(() => {
-    if (!open && !picker) return;
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        setPicker(false);
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, picker]);
 
   async function handleFile(file?: File) {
     if (!file || !onChange) return;
@@ -114,29 +145,9 @@ export default function AvatarCircle({
   );
 
   const preview =
-    open && mounted && canPreview
-      ? createPortal(
-          <div
-            className="photo-layer"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`${label} 사진`}
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setOpen(false);
-            }}
-          >
-            <div className="photo-preview">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo} alt={label} />
-              <p>{label}</p>
-              <button type="button" className="btn-quiet" onClick={() => setOpen(false)}>
-                닫기
-              </button>
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
+    open && mounted && canPreview ? (
+      <PhotoPreview photo={photo} label={label} onClose={() => setOpen(false)} />
+    ) : null;
 
   if (!editable) {
     return (

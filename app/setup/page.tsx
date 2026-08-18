@@ -13,28 +13,13 @@ import ShareButton from "@/components/ShareButton";
 import ScenarioLibrary from "@/components/ScenarioLibrary";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { deletePlayFromCloud } from "@/lib/cloud";
-import { FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
+import { DEFAULT_STORY_TITLE, FIELD_LIMITS, WORLD_PLACEHOLDER } from "@/lib/constants";
+import { deleteSettingWithCloud } from "@/lib/deleteSetting";
 import { requestGenerate } from "@/lib/geminiClient";
 import { recountTurns } from "@/lib/memory";
-import { isPresetNamed } from "@/lib/presets";
+import { isUnusedBlank } from "@/lib/settingFilters";
 import { downloadTranscript } from "@/lib/transcript";
-import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
-
-function isPresetSetting(setting: SettingRecord) {
-  return isPresetNamed(setting.character.name);
-}
-
-function isUnusedBlank(setting: SettingRecord) {
-  return (
-    !isPresetSetting(setting) &&
-    !setting.character.name.trim() &&
-    !setting.character.photo &&
-    !setting.worldSetting.trim() &&
-    setting.chatLog.length === 0
-  );
-}
 
 function SetupBody() {
   const router = useRouter();
@@ -59,9 +44,15 @@ function SetupBody() {
     if (!play.ready || !newToken) return;
     if (sessionStorage.getItem("eorol-new-used") === newToken) return;
     sessionStorage.setItem("eorol-new-used", newToken);
-    const unusedBlank = play.settings.find(isUnusedBlank);
-    if (unusedBlank) play.selectSetting(unusedBlank.id);
-    else play.createSetting();
+    const unusedBlank = play.settings.find((item) =>
+      isUnusedBlank(item, { excludePresets: true }),
+    );
+    if (unusedBlank) {
+      play.selectSetting(unusedBlank.id);
+      if (!unusedBlank.title.trim() || unusedBlank.title.trim() === "이름 없음") {
+        play.renameSetting(unusedBlank.id, DEFAULT_STORY_TITLE);
+      }
+    } else play.createSetting();
     router.replace("/setup?focus=1");
   }, [play.ready, newToken, play, router]);
 
@@ -86,24 +77,15 @@ function SetupBody() {
   const currentStory =
     play.settings.find((item) => item.id === play.currentSettingId) ??
     play.settings[0];
-  const storyName = currentStory
-    ? storyTitle(currentStory)
-    : play.state.character.name.trim() || "이 시나리오";
 
   async function removeStory(setting: SettingRecord) {
-    if (setting.cloudSessionId) {
-      try {
-        await deletePlayFromCloud(setting.cloudSessionId);
-      } catch {
-        // 로컬은 지운다.
-      }
-    }
-    play.deleteSetting(setting.id);
+    await deleteSettingWithCloud(play.deleteSetting, setting);
   }
 
   function askRemove(setting: SettingRecord) {
     confirm.ask({
-      message: "이 시나리오를 지울까요? 대화가 있으면 함께 사라집니다.",
+      title: "이 시나리오를 지울까요?",
+      message: "대화가 있으면 함께 사라집니다.",
       confirmLabel: "삭제",
       danger: true,
       run: () => void removeStory(setting),
@@ -145,7 +127,24 @@ function SetupBody() {
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="label-caps">시나리오</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">{storyName}</h1>
+            <input
+              className="story-title-input"
+              value={
+                currentStory?.title.trim() === "이름 없음"
+                  ? ""
+                  : (currentStory?.title ?? "")
+              }
+              maxLength={FIELD_LIMITS.storyTitle}
+              placeholder={DEFAULT_STORY_TITLE}
+              aria-label="시나리오 이름"
+              onChange={(event) => {
+                if (!currentStory) return;
+                play.renameSetting(currentStory.id, event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.preventDefault();
+              }}
+            />
             {fromChat ? (
               <button
                 type="button"
@@ -218,9 +217,6 @@ function SetupBody() {
                       onChange={play.setCharacterPhoto}
                     />
                   </div>
-                  <p className="mt-2 text-xs text-[var(--ink-dim)]">
-                    사진을 누르면 크게 봅니다. 바꾸기는 아래에서.
-                  </p>
                 </div>
                 <div className="min-w-0 flex-1 space-y-4">
                   <CharField
@@ -248,7 +244,6 @@ function SetupBody() {
                 max={FIELD_LIMITS.characterSetting}
                 onChange={(value) => play.updateCharacter("setting", value)}
                 placeholder="능력, 성격"
-                hint="프롤로그 행적이 아니라, 이 사람의 능력과 성격을 적습니다."
               />
             </section>
 
@@ -320,9 +315,6 @@ function SetupBody() {
                         onChange={play.setUserPhoto}
                       />
                     </div>
-                    <p className="mt-2 text-xs text-[var(--ink-dim)]">
-                      이 이야기에서만 바뀝니다.
-                    </p>
                   </div>
                   <div className="min-w-0 flex-1 space-y-4">
                     <CharField
@@ -340,7 +332,6 @@ function SetupBody() {
                       max={FIELD_LIMITS.userSetting}
                       onChange={(value) => play.updateUser("setting", value)}
                       placeholder="나는 누구인지, 관계, 숨기는 것"
-                      hint="여기 적은 것은 이 이야기만 바꿉니다. 프로필 원본은 그대로입니다."
                     />
                   </div>
                 </div>
@@ -401,7 +392,7 @@ function SetupBody() {
             </details>
 
             <button type="submit" className="btn-primary w-full" disabled={!canStart}>
-              {storyStarted ? "채팅으로 돌아가기" : "채팅 시작"}
+              {storyStarted ? "이어가기" : "시작하기"}
             </button>
       </form>
       {confirm.dialog}

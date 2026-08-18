@@ -25,7 +25,9 @@ export default function ShareButton({
     text: string;
   } | null>(null);
   const current = play.settings.find((item) => item.id === play.currentSettingId);
-  const canShare = Boolean(auth.user && current?.character.name.trim());
+  const canShare = Boolean(
+    auth.user && !auth.isGuest && current?.character.name.trim(),
+  );
 
   async function openShare() {
     if (!auth.user || !current) return;
@@ -78,7 +80,9 @@ export default function ShareButton({
             title={
               canShare
                 ? "설정 링크를 보냅니다. 대화는 들어가지 않습니다."
-                : "로그인과 캐릭터 이름이 필요합니다."
+                : auth.isGuest
+                  ? "Guest는 공유할 수 없습니다. 브라우저를 닫으면 기록이 사라집니다."
+                  : "로그인과 캐릭터 이름이 필요합니다."
             }
             onClick={() => void openShare()}
           >

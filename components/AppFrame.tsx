@@ -60,17 +60,34 @@ export default function AppFrame({ children }: AppFrameProps) {
         <div className="side-account">
           {auth.user ? (
             <>
-              <p className="side-account-email">{auth.user.email}</p>
+              <p className="side-account-email">
+                {auth.isGuest ? "Guest" : auth.user.email}
+              </p>
+              {auth.isGuest ? (
+                <p className="side-account-hint">
+                  브라우저를 닫으면 모든 기록이 사라집니다.
+                </p>
+              ) : null}
               <button
                 type="button"
                 className="btn-quiet w-full"
                 onClick={() =>
-                  confirm.ask({
-                    message: "로그아웃할까요?",
-                    confirmLabel: "로그아웃",
-                    run: () =>
-                      void auth.signOut().then(() => router.replace("/")),
-                  })
+                  confirm.ask(
+                    auth.isGuest
+                      ? {
+                          title: "로그아웃할까요?",
+                          message: "로그아웃하면 이 Guest 기록이 모두 사라집니다.",
+                          confirmLabel: "로그아웃",
+                          run: () =>
+                            void auth.signOut().then(() => router.replace("/")),
+                        }
+                      : {
+                          message: "로그아웃할까요?",
+                          confirmLabel: "로그아웃",
+                          run: () =>
+                            void auth.signOut().then(() => router.replace("/")),
+                        },
+                  )
                 }
                 disabled={auth.busy}
               >

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import ProfileCard from "@/components/ProfileCard";
+import Icon from "@/components/Icon";
+import { useOverlayLeave } from "@/hooks/useOverlayLeave";
+import { SAVED_CHATS_MAX, continuePreview, continueStamp } from "@/lib/savedChat";
 import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
 
@@ -10,6 +12,8 @@ type ContinueSheetProps = {
   stories: SettingRecord[];
   currentId?: string | null;
   onPick: (id: string) => void;
+  onRename?: (id: string, title: string) => void;
+  onDelete?: (id: string) => void;
   onClose: () => void;
 };
 
@@ -17,59 +21,145 @@ export default function ContinueSheet({
   stories,
   currentId,
   onPick,
+  onRename,
+  onDelete,
   onClose,
 }: ContinueSheetProps) {
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const { leaveClass, dismiss } = useOverlayLeave();
+
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        if (renamingId) {
+          setRenamingId(null);
+          return;
+        }
+        if (menuId) {
+          setMenuId(null);
+          return;
+        }
+        dismiss(onClose);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [dismiss, menuId, onClose, renamingId]);
 
   if (typeof document === "undefined") return null;
 
   return createPortal(
     <div
-      className="confirm-layer"
+      className={`continue-layer ${leaveClass}`}
       role="dialog"
       aria-modal="true"
       aria-label="이어하기"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
     >
-      <div className="confirm-card persona-picker">
-        <p className="label-caps">이어하기</p>
-        <p className="confirm-copy">남긴 대화를 골라 그 장면부터 잇습니다.</p>
+      <div className="continue-page">
+        <div className="continue-head">
+          <button
+            type="button"
+            className="continue-back"
+            onClick={() => dismiss(onClose)}
+            aria-label="닫기"
+          >
+            <Icon name="prev" size={18} />
+          </button>
+          <h2 className="continue-title">이어하기</h2>
+        </div>
+        <p className="continue-count">
+          {stories.length}/{SAVED_CHATS_MAX}
+        </p>
         {stories.length === 0 ? (
-          <p className="mt-4 text-sm text-[var(--ink-dim)]">아직 남긴 대화가 없습니다.</p>
+          <p className="continue-empty">아직 저장한 대화가 없습니다.</p>
         ) : (
-          <ul className="mt-4 space-y-2">
-            {stories.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className={`continue-pick ${item.id === currentId ? "is-active" : ""}`}
-                  onClick={() => onPick(item.id)}
+          <ul className="continue-list">
+            {stories.map((item) => {
+              const stamp = continueStamp(item.updatedAt);
+              const preview = continuePreview(item);
+              const renaming = renamingId === item.id;
+              return (
+                <li
+                  key={item.id}
+                  className={`continue-row ${item.id === currentId ? "is-active" : ""}`}
                 >
-                  <ProfileCard
-                    name={storyTitle(item)}
-                    oneLiner={item.character.oneLiner}
-                    photo={item.character.photo}
-                    meta={`${item.turnCount}턴`}
-                    zoom={false}
-                  />
-                </button>
-              </li>
-            ))}
+                  {renaming ? (
+                    <form
+                      className="continue-rename"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const next = draft.trim();
+                        if (next) onRename?.(item.id, next);
+                        setRenamingId(null);
+                      }}
+                    >
+                      <input
+                        className="save-title-input"
+                        value={draft}
+                        autoFocus
+                        onChange={(event) => setDraft(event.target.value)}
+                        onBlur={() => setRenamingId(null)}
+                      />
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      className="continue-hit"
+                      onClick={() => dismiss(() => onPick(item.id))}
+                    >
+                      <span className="continue-name">{storyTitle(item)}</span>
+                      <span className="continue-meta">
+                        {stamp ? `${stamp} | ${preview}` : preview}
+                      </span>
+                    </button>
+                  )}
+                  <div className="continue-more">
+                    <button
+                      type="button"
+                      className="icon-btn is-tiny"
+                      aria-label="더보기"
+                      onClick={() =>
+                        setMenuId((current) => (current === item.id ? null : item.id))
+                      }
+                    >
+                      <Icon name="more" size={16} />
+                    </button>
+                    {menuId === item.id ? (
+                      <div className="continue-menu">
+                        {onRename ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDraft(storyTitle(item));
+                              setRenamingId(item.id);
+                              setMenuId(null);
+                            }}
+                          >
+                            이름 바꾸기
+                          </button>
+                        ) : null}
+                        {onDelete ? (
+                          <button
+                            type="button"
+                            className="is-danger"
+                            onClick={() => {
+                              setMenuId(null);
+                              onDelete(item.id);
+                            }}
+                          >
+                            삭제
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
-        <div className="confirm-actions">
-          <button type="button" className="btn-quiet" onClick={onClose}>
-            닫기
-          </button>
-        </div>
       </div>
     </div>,
     document.body,

@@ -21,7 +21,7 @@ export default function GuidePanel() {
           눌러 바꿀 수 있습니다.
         </p>
         <p className="text-sm leading-relaxed text-[var(--ink-soft)]">
-          <strong className="text-[var(--ink)]">채팅 시작</strong>을 누르면 프롤로그가 먼저
+          <strong className="text-[var(--ink)]">시작하기</strong>를 누르면 프롤로그가 먼저
           나옵니다. 읽고 나서 첫 대사를 쓰면 그 장면 직후부터 이어집니다. 프롤로그를
           처음부터 다시 쓰지 않습니다.
         </p>
@@ -85,7 +85,7 @@ export default function GuidePanel() {
           </li>
           <li>
             <strong className="text-[var(--ink)]">프롤로그</strong>는 대화 전에 읽는
-            도입입니다. 채팅 시작 전에 보여 주고, 첫 응답에도 참고됩니다.
+            도입입니다. 시작하기 전에 보여 주고, 첫 응답에도 참고됩니다.
           </li>
           <li>
             <strong className="text-[var(--ink)]">등장인물</strong>은 엑스트라입니다.
@@ -150,15 +150,14 @@ export default function GuidePanel() {
             빠집니다.
           </li>
           <li>
-            <strong className="text-[var(--ink)]">새로하기</strong>는 같은 세계와 역할로
-            빈 대화를 엽니다. 지금 대화가 있으면 남길지 묻습니다.{" "}
-            <strong className="text-[var(--ink)]">남기고 새로</strong>는 이 대화를 이어하기에
-            두고 빈 대화를 엽니다. <strong className="text-[var(--ink)]">지우고 새로</strong>는
-            이 대화를 비웁니다.
+            <strong className="text-[var(--ink)]">새로하기</strong>는 지금 대화를
+            저장할지 묻습니다. 저장하면 제목을 정한 뒤 처음으로 돌아가고, 그 대화는{" "}
+            <strong className="text-[var(--ink)]">이어하기</strong>에 남습니다.
+            저장하지 않으면 이 대화는 비워집니다.
           </li>
           <li>
-            <strong className="text-[var(--ink)]">이어하기</strong>는 남긴 대화 목록을 보고
-            골라 그 장면부터 잇습니다.
+            <strong className="text-[var(--ink)]">이어하기</strong>는 저장한 대화 목록입니다.
+            제목을 눌러 그 장면부터 잇고, 점 세 개에서 이름을 바꾸거나 지울 수 있습니다.
           </li>
           <li>
             <strong className="text-[var(--ink)]">이야기 삭제</strong>는 지금 이 이야기를
@@ -182,7 +181,7 @@ export default function GuidePanel() {
             어긋난 지점은 말 옆의 휴지로 그 이후를 지웁니다.
             상대 말의 순환 화살표는 <strong className="text-[var(--ink)]">다시 생성</strong>입니다.
             내 말은 그대로 두고, 마음에 안 드는 상대 답만 다시 씁니다.
-            다시 만든 뒤에는 입력창 위 <strong className="text-[var(--ink)]">‹ ›</strong>로
+            다시 만든 뒤에는 그 말 아래 <strong className="text-[var(--ink)]">‹ ›</strong>로
             이전 답과 지금 답을 오갑니다.
             내 말의 보내기 화살표는 <strong className="text-[var(--ink)]">이 말로 다시</strong>입니다.
             고친 내 말을 기준으로 상대의 답을 새로 받습니다.

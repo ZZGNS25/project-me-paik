@@ -8,15 +8,15 @@ import LoginGate from "@/components/LoginGate";
 import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
 import PageShell from "@/components/PageShell";
-import ProfileCard from "@/components/ProfileCard";
 import ProfilesPanel from "@/components/ProfilesPanel";
+import StoryCard from "@/components/StoryCard";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { usePlay } from "@/hooks/PlayProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { deletePlayFromCloud } from "@/lib/cloud";
+import { deleteSettingWithCloud } from "@/lib/deleteSetting";
 import { timeAgo } from "@/lib/korean";
 import { previewText } from "@/lib/parseMessage";
-import { isPresetNamed } from "@/lib/presets";
+import { listOngoing, listWaiting } from "@/lib/settingFilters";
 import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
 
@@ -45,6 +45,7 @@ function HomeBody() {
           busy={auth.busy}
           error={auth.error}
           onGoogle={auth.signInWithGoogle}
+          onGuest={auth.signInAsGuest}
         />
       </div>
     );
@@ -56,29 +57,11 @@ function HomeBody() {
   }
 
   async function removeStory(setting: SettingRecord) {
-    if (setting.cloudSessionId) {
-      try {
-        await deletePlayFromCloud(setting.cloudSessionId);
-      } catch {
-        // 로컬은 지운다.
-      }
-    }
-    play.deleteSetting(setting.id);
+    await deleteSettingWithCloud(play.deleteSetting, setting);
   }
 
-  const ongoing = play.settings
-    .filter((item) => item.character.name.trim() && item.chatLog.length > 0)
-    .slice()
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  const waiting = play.settings
-    .filter(
-      (item) =>
-        item.character.name.trim() &&
-        item.chatLog.length === 0 &&
-        !isPresetNamed(item.character.name),
-    )
-    .slice()
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const ongoing = listOngoing(play.settings);
+  const waiting = listWaiting(play.settings);
 
   return (
     <>
@@ -98,6 +81,7 @@ function HomeBody() {
                 : null
           }
           editId={searchParams.get("edit")}
+          startNew={searchParams.get("new") === "1"}
         />
       ) : (
         <div className="page-scroll mx-auto w-full max-w-3xl px-6 py-10">
@@ -120,43 +104,37 @@ function HomeBody() {
                 const last = item.chatLog[item.chatLog.length - 1];
                 const when = timeAgo(item.updatedAt);
                 return (
-                <div key={item.id} className="story-card">
-                  <ProfileCard
-                    name={storyTitle(item)}
-                    oneLiner={item.character.oneLiner}
-                    photo={item.character.photo}
-                    meta={`${item.turnCount}턴${when ? ` · ${when}` : ""}`}
-                    onRename={(title) => play.renameSetting(item.id, title)}
-                  />
-                  {last ? (
-                    <p className="story-peek">{previewText(last.content)}</p>
-                  ) : null}
-                  <div className="story-actions">
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={() => openStory(item)}
-                    >
-                      이어가기
-                    </button>
-                    {play.settings.length > 1 ? (
-                      <button
-                        type="button"
-                        className="btn-danger"
-                        onClick={() =>
-                          confirm.ask({
-                            message: "이 이야기를 지울까요?",
-                            confirmLabel: "삭제",
-                            danger: true,
-                            run: () => void removeStory(item),
-                          })
-                        }
-                      >
-                        삭제
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
+                <StoryCard
+                  key={item.id}
+                  name={storyTitle(item)}
+                  oneLiner={item.character.oneLiner}
+                  photo={item.character.photo}
+                  meta={`${item.turnCount}턴${when ? ` · ${when}` : ""}`}
+                  peek={last ? previewText(last.content) : undefined}
+                  onRename={(title) => play.renameSetting(item.id, title)}
+                  actions={[
+                    {
+                      label: "이어가기",
+                      kind: "primary",
+                      onClick: () => openStory(item),
+                    },
+                    ...(play.settings.length > 1
+                      ? [
+                          {
+                            label: "삭제",
+                            kind: "danger" as const,
+                            onClick: () =>
+                              confirm.ask({
+                                message: "이 이야기를 지울까요?",
+                                confirmLabel: "삭제",
+                                danger: true,
+                                run: () => void removeStory(item),
+                              }),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
                 );
               })}
             </section>
@@ -176,34 +154,29 @@ function HomeBody() {
             <section className="mt-8 space-y-3">
               <p className="label-caps">시작 전</p>
               {waiting.map((item) => (
-                <div key={item.id} className="story-card">
-                  <ProfileCard
-                    name={storyTitle(item)}
-                    oneLiner={item.character.oneLiner}
-                    photo={item.character.photo}
-                    meta="시작 전"
-                    onRename={(title) => play.renameSetting(item.id, title)}
-                  />
-                  <div className="story-actions">
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={() => openStory(item)}
-                    >
-                      시작
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => {
+                <StoryCard
+                  key={item.id}
+                  name={storyTitle(item)}
+                  oneLiner={item.character.oneLiner}
+                  photo={item.character.photo}
+                  meta="시작 전"
+                  onRename={(title) => play.renameSetting(item.id, title)}
+                  actions={[
+                    {
+                      label: "시작하기",
+                      kind: "primary",
+                      onClick: () => openStory(item),
+                    },
+                    {
+                      label: "다듬기",
+                      kind: "secondary",
+                      onClick: () => {
                         play.selectSetting(item.id);
                         router.push(`/setup?id=${encodeURIComponent(item.id)}`);
-                      }}
-                    >
-                      다듬기
-                    </button>
-                  </div>
-                </div>
+                      },
+                    },
+                  ]}
+                />
               ))}
             </section>
           ) : null}

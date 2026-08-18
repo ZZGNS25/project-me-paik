@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useOverlayLeave } from "@/hooks/useOverlayLeave";
 
 type ConfirmRequest = {
+  title?: string;
   message: string;
   confirmLabel?: string;
   altLabel?: string;
@@ -17,6 +19,7 @@ export function useConfirm() {
 
   const dialog = request ? (
     <ConfirmDialog
+      title={request.title}
       message={request.message}
       confirmLabel={request.confirmLabel}
       altLabel={request.altLabel}
@@ -48,6 +51,7 @@ export function useConfirm() {
 }
 
 type ConfirmDialogProps = {
+  title?: string;
   message: string;
   confirmLabel?: string;
   altLabel?: string;
@@ -58,6 +62,7 @@ type ConfirmDialogProps = {
 };
 
 export default function ConfirmDialog({
+  title,
   message,
   confirmLabel = "확인",
   altLabel,
@@ -67,6 +72,8 @@ export default function ConfirmDialog({
   onConfirm,
 }: ConfirmDialogProps) {
   const [mounted, setMounted] = useState(false);
+  const { leaveClass, dismiss } = useOverlayLeave();
+  const heading = title || message;
 
   useEffect(() => {
     setMounted(true);
@@ -74,40 +81,40 @@ export default function ConfirmDialog({
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onCancel();
+      if (event.key === "Escape") dismiss(onCancel);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onCancel]);
+  }, [dismiss, onCancel]);
 
   if (!mounted) return null;
 
   return createPortal(
     <div
-      className="confirm-layer"
+      className={`confirm-layer ${leaveClass}`}
       role="dialog"
       aria-modal="true"
-      aria-label={message}
+      aria-label={heading}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onCancel();
+        if (event.target === event.currentTarget) dismiss(onCancel);
       }}
     >
-      <div className="confirm-card">
-        <p className="label-caps">이어롤</p>
-        <p className="confirm-copy">{message}</p>
-        <div className="confirm-actions">
-          <button type="button" className="btn-quiet" onClick={onCancel}>
+      <div className="confirm-card is-center">
+        <p className="confirm-heading">{heading}</p>
+        {title ? <p className="confirm-copy">{message}</p> : null}
+        <div className="confirm-actions is-split">
+          <button type="button" className="btn-quiet" onClick={() => dismiss(onCancel)}>
             취소
           </button>
           {onAlt && altLabel ? (
-            <button type="button" className="btn-quiet" onClick={onAlt}>
+            <button type="button" className="btn-quiet" onClick={() => dismiss(onAlt)}>
               {altLabel}
             </button>
           ) : null}
           <button
             type="button"
             className={danger ? "btn-danger" : "btn-primary"}
-            onClick={onConfirm}
+            onClick={() => dismiss(onConfirm)}
           >
             {confirmLabel}
           </button>

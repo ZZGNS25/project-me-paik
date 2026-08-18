@@ -1,10 +1,11 @@
+import { memo } from "react";
 import { splitItalics } from "@/lib/parseMessage";
 
 type MarkupTextProps = {
   text: string;
 };
 
-export default function MarkupText({ text }: MarkupTextProps) {
+function MarkupText({ text }: MarkupTextProps) {
   return (
     <>
       {splitItalics(text).map((part, index) =>
@@ -19,3 +20,5 @@ export default function MarkupText({ text }: MarkupTextProps) {
     </>
   );
 }
+
+export default memo(MarkupText);

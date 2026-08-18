@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import AvatarCircle from "@/components/AvatarCircle";
-import Icon from "@/components/Icon";
-import MarkupText from "@/components/MarkupText";
+import PlayLines from "@/components/PlayLines";
 import PrologueCard from "@/components/PrologueCard";
-import { isUserSpeaker, parseModelReply } from "@/lib/parseMessage";
+import { replyVersions } from "@/lib/messageVersions";
 import type { CastNote, ChatMessage } from "@/lib/types";
 
 type ChatLogProps = {
@@ -25,6 +23,7 @@ type ChatLogProps = {
   onRegenerate?: (userMessageId: string) => void;
   onPinTurn?: (user: ChatMessage, model?: ChatMessage) => void;
   onEditMessage?: (messageId: string, content: string) => void;
+  onSetReplyVersion?: (modelId: string, index: number) => void;
   onPickMe?: () => void;
   pinFlashId?: string | null;
 };
@@ -48,6 +47,7 @@ export default function ChatLog({
   onRegenerate,
   onPinTurn,
   onEditMessage,
+  onSetReplyVersion,
   onPickMe,
   pinFlashId,
 }: ChatLogProps) {
@@ -59,7 +59,12 @@ export default function ChatLog({
   const [editDraft, setEditDraft] = useState("");
   const hasThread = messages.length > 0 || Boolean(pendingUserText);
   const showActions = Boolean(
-    onTruncateFrom || onResend || onRegenerate || onPinTurn || onEditMessage,
+    onTruncateFrom ||
+      onResend ||
+      onRegenerate ||
+      onPinTurn ||
+      onEditMessage ||
+      onSetReplyVersion,
   );
 
   function measure() {
@@ -78,10 +83,13 @@ export default function ChatLog({
 
   useEffect(() => {
     if (!pinToBottom.current) return;
-    endRef.current?.scrollIntoView({
-      block: "end",
-      behavior: streamingText ? "auto" : "smooth",
+    const id = requestAnimationFrame(() => {
+      endRef.current?.scrollIntoView({
+        block: "end",
+        behavior: streamingText ? "auto" : "smooth",
+      });
     });
+    return () => cancelAnimationFrame(id);
   }, [messages, pendingUserText, streamingText]);
 
   function startEdit(id: string, content: string) {
@@ -177,6 +185,16 @@ export default function ChatLog({
                   editDraft={editDraft}
                   actionsDisabled={actionsDisabled}
                   showActions={showActions && !pendingUserText && !streamingText}
+                  replyPage={
+                    streamingForId === model.id && streamingText
+                      ? undefined
+                      : replyVersions(model)
+                  }
+                  onSetReplyVersion={
+                    onSetReplyVersion
+                      ? (index) => onSetReplyVersion(model.id, index)
+                      : undefined
+                  }
                   onEditDraft={setEditDraft}
                   onStartEdit={() => startEdit(model.id, model.content)}
                   onSaveEdit={saveEdit}
@@ -196,30 +214,34 @@ export default function ChatLog({
             </div>
             );
           })}
-          {pendingUserText ? (
-            <PlayLines
-              content={pendingUserText}
-              characterName={characterName}
-              characterPhoto={characterPhoto}
-              userName={userName}
-              userPhoto={userPhoto}
-              castNotes={castNotes}
-              fromUser
-              onPickMe={onPickMe}
-            />
-          ) : null}
-          {streamingText && !streamingForId ? (
-            <PlayLines
-              content={streamingText}
-              characterName={characterName}
-              characterPhoto={characterPhoto}
-              userName={userName}
-              userPhoto={userPhoto}
-              castNotes={castNotes}
-              streaming
-            />
-          ) : pendingUserText ? (
-            <p className="streaming-wait">쓰는 중…</p>
+          {pendingUserText || (streamingText && !streamingForId) ? (
+            <div className="chat-thread">
+              {pendingUserText ? (
+                <PlayLines
+                  content={pendingUserText}
+                  characterName={characterName}
+                  characterPhoto={characterPhoto}
+                  userName={userName}
+                  userPhoto={userPhoto}
+                  castNotes={castNotes}
+                  fromUser
+                  onPickMe={onPickMe}
+                />
+              ) : null}
+              {streamingText && !streamingForId ? (
+                <PlayLines
+                  content={streamingText}
+                  characterName={characterName}
+                  characterPhoto={characterPhoto}
+                  userName={userName}
+                  userPhoto={userPhoto}
+                  castNotes={castNotes}
+                  streaming
+                />
+              ) : pendingUserText ? (
+                <p className="streaming-wait">쓰는 중…</p>
+              ) : null}
+            </div>
           ) : null}
           <div ref={endRef} />
         </div>
@@ -248,232 +270,4 @@ function groupTurns(messages: ChatMessage[]) {
     }
   }
   return turns;
-}
-
-function samePerson(a?: string, b?: string) {
-  return Boolean(a?.trim() && b?.trim() && a.trim() === b.trim());
-}
-
-function PlayLines({
-  content,
-  characterName,
-  characterPhoto,
-  userName,
-  userPhoto,
-  castNotes = [],
-  fromUser = false,
-  streaming = false,
-  editing = false,
-  editDraft = "",
-  actionsDisabled = false,
-  showActions = false,
-  onPickMe,
-  onEditDraft,
-  onStartEdit,
-  onSaveEdit,
-  onCancelEdit,
-  onResend,
-  onRegenerate,
-  onPin,
-  pinFlashed = false,
-  onTruncate,
-}: {
-  messageId?: string;
-  content: string;
-  characterName?: string;
-  characterPhoto?: string;
-  userName?: string;
-  userPhoto?: string;
-  castNotes?: CastNote[];
-  fromUser?: boolean;
-  streaming?: boolean;
-  editing?: boolean;
-  editDraft?: string;
-  actionsDisabled?: boolean;
-  showActions?: boolean;
-  onPickMe?: () => void;
-  onEditDraft?: (value: string) => void;
-  onStartEdit?: () => void;
-  onSaveEdit?: () => void;
-  onCancelEdit?: () => void;
-  onResend?: () => void;
-  onRegenerate?: () => void;
-  onPin?: () => void;
-  pinFlashed?: boolean;
-  onTruncate?: () => void;
-}) {
-  const lines = parseModelReply(content);
-  const last = lines[lines.length - 1];
-
-  return (
-    <div className={`chat-msg ${fromUser ? "is-user" : ""} ${editing ? "is-editing" : ""}`}>
-      {editing ? (
-        <div className={`chat-edit ${fromUser ? "is-user" : ""}`}>
-          <textarea
-            className="chat-edit-box"
-            value={editDraft}
-            rows={6}
-            autoFocus
-            onChange={(event) => onEditDraft?.(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") onCancelEdit?.();
-              if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-                event.preventDefault();
-                onSaveEdit?.();
-              }
-            }}
-          />
-          <div className="chat-edit-actions">
-            <button
-              type="button"
-              className="chat-edit-cancel"
-              onClick={onCancelEdit}
-              aria-label="수정 취소"
-              title="없던 일로"
-            >
-              <Icon name="close" size={18} />
-            </button>
-            <button
-              type="button"
-              className="chat-edit-save"
-              disabled={!editDraft.trim()}
-              onClick={onSaveEdit}
-              aria-label="수정 저장"
-              title="이 내용으로"
-            >
-              <Icon name="check" size={18} />
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="appear chat-turn-stack">
-          {lines.map((line, index) => {
-            const live = streaming && line === last;
-            if (line.kind === "narration") {
-              return (
-                <p key={index} className={`scene-narration ${live ? "is-streaming" : ""}`}>
-                  <MarkupText text={line.text} />
-                </p>
-              );
-            }
-
-            const speaker = line.kind === "speech" ? line.name : "";
-            const mine =
-              line.kind === "speech" ? isUserSpeaker(speaker, userName) : fromUser;
-            const photo = mine
-              ? userPhoto
-              : samePerson(speaker, characterName)
-                ? characterPhoto
-                : castNotes.find((note) => samePerson(note.name, speaker))?.photo ||
-                  "";
-            const label = mine ? userName || "나" : speaker || characterName;
-
-            return (
-              <div
-                key={index}
-                className={`chat-turn ${mine ? "is-user" : ""}`}
-              >
-                <div className={`chat-speech ${mine ? "is-user" : ""}`}>
-                  {mine ? null : <AvatarCircle src={photo} name={label} size="sm" />}
-                  <div className={`chat-bubbles ${mine ? "is-user" : ""}`}>
-                    {mine && onPickMe ? (
-                      <button
-                        type="button"
-                        className="chat-speaker is-me"
-                        onClick={onPickMe}
-                      >
-                        {userName?.trim() || "나"}
-                      </button>
-                    ) : (
-                      <p className="chat-speaker">{label}</p>
-                    )}
-                    <div
-                      className={`${
-                        mine
-                          ? "bubble-user"
-                          : line.kind === "fallback"
-                            ? "fallback-box"
-                            : "bubble-model"
-                      } ${live ? "is-streaming" : ""}`}
-                    >
-                      <p className="whitespace-pre-wrap">
-                        <MarkupText text={line.text} />
-                      </p>
-                    </div>
-                  </div>
-                  {mine ? (
-                    <AvatarCircle src={photo} name={label || "나"} size="sm" />
-                  ) : null}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {showActions && !editing ? (
-        <div className="chat-msg-actions">
-          {onStartEdit ? (
-            <button
-              type="button"
-              className="icon-btn is-tiny"
-              disabled={actionsDisabled}
-              onClick={onStartEdit}
-              aria-label="수정"
-              title="수정"
-            >
-              <Icon name="edit" size={15} />
-            </button>
-          ) : null}
-          {onResend ? (
-            <button
-              type="button"
-              className="icon-btn is-tiny"
-              disabled={actionsDisabled}
-              onClick={onResend}
-              aria-label="이 말로 다시"
-              title="이 말로 다시"
-            >
-              <Icon name="resend" size={15} />
-            </button>
-          ) : null}
-          {onRegenerate ? (
-            <button
-              type="button"
-              className="icon-btn is-tiny"
-              disabled={actionsDisabled}
-              onClick={onRegenerate}
-              aria-label="다시 생성"
-              title="다시 생성"
-            >
-              <Icon name="regen" size={15} />
-            </button>
-          ) : null}
-          {onPin ? (
-            <button
-              type="button"
-              className={`icon-btn is-tiny ${pinFlashed ? "is-on" : ""}`}
-              disabled={actionsDisabled}
-              onClick={onPin}
-              aria-label={pinFlashed ? "고정됨" : "사건 고정"}
-              title={pinFlashed ? "고정됨" : "고정"}
-            >
-              <Icon name="pin" size={15} />
-            </button>
-          ) : null}
-          {onTruncate ? (
-            <button
-              type="button"
-              className="icon-btn is-tiny is-danger"
-              disabled={actionsDisabled}
-              onClick={onTruncate}
-              aria-label="여기부터 삭제"
-              title="여기부터 삭제"
-            >
-              <Icon name="trash" size={15} />
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  );
 }

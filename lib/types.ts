@@ -79,6 +79,8 @@ export type AppStore = {
   lastPersonaId: string | null;
 };
 
+export type GenerateMode = "chat" | "summary" | "regen" | "continue";
+
 export type PromptState = Pick<
   PlayState,
   | "character"

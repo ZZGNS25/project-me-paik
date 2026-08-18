@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ShareButton from "@/components/ShareButton";
+import { useOverlayLeave } from "@/hooks/useOverlayLeave";
 
 type ChatMenuProps = {
   profileName: string;
@@ -52,6 +53,7 @@ export default function ChatMenu({
   onClose,
 }: ChatMenuProps) {
   const [mounted, setMounted] = useState(false);
+  const { leaveClass, dismiss } = useOverlayLeave();
 
   useEffect(() => {
     setMounted(true);
@@ -59,27 +61,27 @@ export default function ChatMenu({
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") dismiss(onClose);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [dismiss, onClose]);
 
   if (!mounted) return null;
 
   return createPortal(
     <div
-      className="chat-sheet-layer"
+      className={`chat-sheet-layer ${leaveClass}`}
       role="dialog"
       aria-modal="true"
       aria-label="대화 메뉴"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) dismiss(onClose);
       }}
     >
       <div className="chat-sheet">
         <p className="label-caps px-2">이 대화</p>
-        <button type="button" className="sheet-row" onClick={onPickProfile}>
+        <button type="button" className="sheet-row" onClick={() => dismiss(onPickProfile)}>
           <span>
             <span className="sheet-row-title">대화 프로필</span>
             <span className="sheet-row-hint">목록에서 나를 고릅니다.</span>
@@ -89,16 +91,16 @@ export default function ChatMenu({
             <span aria-hidden="true"> ›</span>
           </span>
         </button>
-        <button type="button" className="sheet-row" onClick={onFresh}>
+        <button type="button" className="sheet-row" onClick={() => dismiss(onFresh)}>
           <span>
             <span className="sheet-row-title">새로하기</span>
-            <span className="sheet-row-hint">같은 세계로 대화를 처음부터 다시 엽니다.</span>
+            <span className="sheet-row-hint">저장할지 고른 뒤 처음으로 돌아갑니다.</span>
           </span>
         </button>
-        <button type="button" className="sheet-row" onClick={onContinue}>
+        <button type="button" className="sheet-row" onClick={() => dismiss(onContinue)}>
           <span>
             <span className="sheet-row-title">이어하기</span>
-            <span className="sheet-row-hint">남긴 대화를 골라 이어갑니다.</span>
+            <span className="sheet-row-hint">저장한 대화를 골라 이어갑니다.</span>
           </span>
           <span className="sheet-row-value">›</span>
         </button>
@@ -107,14 +109,14 @@ export default function ChatMenu({
           type="button"
           className="sheet-row"
           disabled={downloadDisabled}
-          onClick={onDownload}
+          onClick={() => dismiss(onDownload)}
         >
           <span>
             <span className="sheet-row-title">기록 내려받기</span>
             <span className="sheet-row-hint">세계관과 대화를 텍스트로 남깁니다.</span>
           </span>
         </button>
-        <button type="button" className="sheet-row" onClick={onExtras}>
+        <button type="button" className="sheet-row" onClick={() => dismiss(onExtras)}>
           <span>
             <span className="sheet-row-title">인물 추가</span>
             <span className="sheet-row-hint">세계관과 엑스트라를 고칩니다.</span>
@@ -125,7 +127,7 @@ export default function ChatMenu({
           type="button"
           className="sheet-row"
           disabled={compressDisabled}
-          onClick={onCompress}
+          onClick={() => dismiss(onCompress)}
         >
           <span>
             <span className="sheet-row-title">압축</span>
@@ -137,7 +139,7 @@ export default function ChatMenu({
           type="button"
           className="sheet-row"
           disabled={pinDisabled}
-          onClick={onPin}
+          onClick={() => dismiss(onPin)}
         >
           <span>
             <span className="sheet-row-title">고정</span>
@@ -149,14 +151,14 @@ export default function ChatMenu({
           type="button"
           className="sheet-row is-danger"
           disabled={deleteLastDisabled}
-          onClick={onDeleteLast}
+          onClick={() => dismiss(onDeleteLast)}
         >
           <span className="sheet-row-title">마지막 턴 삭제</span>
         </button>
         <button
           type="button"
           className="sheet-row is-danger"
-          onClick={onDeleteStory}
+          onClick={() => dismiss(onDeleteStory)}
         >
           <span>
             <span className="sheet-row-title">이야기 삭제</span>
@@ -172,7 +174,7 @@ export default function ChatMenu({
           >
             {saveLabel || "지금 남기기"}
           </button>
-          <button type="button" className="sheet-close" onClick={onClose}>
+          <button type="button" className="sheet-close" onClick={() => dismiss(onClose)}>
             닫기
           </button>
         </div>

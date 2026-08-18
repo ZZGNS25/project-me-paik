@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AvatarCircle from "@/components/AvatarCircle";
 import PersonaPicker from "@/components/PersonaPicker";
-import ProfileCard from "@/components/ProfileCard";
+import StoryCard from "@/components/StoryCard";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useStartFresh } from "@/hooks/useStartFresh";
 import type { PlayController } from "@/hooks/usePlayState";
-import { deletePlayFromCloud } from "@/lib/cloud";
-import { WORLD_PRESETS, isPresetNamed, type PresetId } from "@/lib/presets";
+import { deleteSettingWithCloud } from "@/lib/deleteSetting";
+import { WORLD_PRESETS, type PresetId } from "@/lib/presets";
+import { listMine } from "@/lib/settingFilters";
 import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
 
@@ -26,14 +27,7 @@ export default function ScenarioLibrary({ play }: ScenarioLibraryProps) {
     next: "chat" | "edit";
   } | null>(null);
 
-  const mine = play.settings
-    .filter(
-      (item) =>
-        item.character.name.trim() &&
-        (item.chatLog.length > 0 || !isPresetNamed(item.character.name)),
-    )
-    .slice()
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const mine = listMine(play.settings);
 
   function goPreset(presetId: PresetId, next: "chat" | "edit", personaId?: string | null) {
     const preset = WORLD_PRESETS.find((item) => item.id === presetId);
@@ -61,14 +55,7 @@ export default function ScenarioLibrary({ play }: ScenarioLibraryProps) {
   }
 
   async function removeMine(setting: SettingRecord) {
-    if (setting.cloudSessionId) {
-      try {
-        await deletePlayFromCloud(setting.cloudSessionId);
-      } catch {
-        // 로컬은 지운다.
-      }
-    }
-    play.deleteSetting(setting.id);
+    await deleteSettingWithCloud(play.deleteSetting, setting);
   }
 
   return (
@@ -86,53 +73,48 @@ export default function ScenarioLibrary({ play }: ScenarioLibraryProps) {
           <section className="mt-8 space-y-3">
             <p className="label-caps">내 시나리오</p>
             {mine.map((item) => (
-              <div key={item.id} className="story-card">
-                <ProfileCard
-                  name={storyTitle(item)}
-                  oneLiner={item.character.oneLiner}
-                  photo={item.character.photo}
-                  meta={item.chatLog.length > 0 ? `${item.turnCount}턴` : "아직 시작 전"}
-                  onRename={(title) => play.renameSetting(item.id, title)}
-                />
-                <div className="story-actions">
-                  <button
-                    type="button"
-                    className="btn-primary"
-                    onClick={() => {
-                      play.selectSetting(item.id);
-                      router.push(`/setup?id=${encodeURIComponent(item.id)}`);
-                    }}
-                  >
-                    다듬기
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => {
+              <StoryCard
+                key={item.id}
+                name={storyTitle(item)}
+                oneLiner={item.character.oneLiner}
+                photo={item.character.photo}
+                meta={item.chatLog.length > 0 ? `${item.turnCount}턴` : "아직 시작 전"}
+                onRename={(title) => play.renameSetting(item.id, title)}
+                actions={[
+                  {
+                    label: item.chatLog.length > 0 ? "이어가기" : "시작하기",
+                    kind: "primary",
+                    onClick: () => {
                       play.selectSetting(item.id);
                       router.push("/chat");
-                    }}
-                  >
-                    {item.chatLog.length > 0 ? "이야기로" : "채팅 시작"}
-                  </button>
-                  {play.settings.length > 1 ? (
-                    <button
-                      type="button"
-                      className="btn-danger"
-                      onClick={() =>
-                        confirm.ask({
-                          message: "이 시나리오를 지울까요? 대화가 있으면 함께 사라집니다.",
-                          confirmLabel: "삭제",
-                          danger: true,
-                          run: () => void removeMine(item),
-                        })
-                      }
-                    >
-                      삭제
-                    </button>
-                  ) : null}
-                </div>
-              </div>
+                    },
+                  },
+                  {
+                    label: "다듬기",
+                    kind: "secondary",
+                    onClick: () => {
+                      play.selectSetting(item.id);
+                      router.push(`/setup?id=${encodeURIComponent(item.id)}`);
+                    },
+                  },
+                  ...(play.settings.length > 1
+                    ? [
+                        {
+                          label: "삭제",
+                          kind: "danger" as const,
+                          onClick: () =>
+                            confirm.ask({
+                              title: "이 시나리오를 지울까요?",
+                              message: "대화가 있으면 함께 사라집니다.",
+                              confirmLabel: "삭제",
+                              danger: true,
+                              run: () => void removeMine(item),
+                            }),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
             ))}
           </section>
         ) : null}
@@ -195,7 +177,7 @@ export default function ScenarioLibrary({ play }: ScenarioLibraryProps) {
           }}
           onAdd={() => {
             setPendingStart(null);
-            router.push("/?view=profiles&from=setup");
+            router.push("/?view=profiles&from=setup&new=1");
           }}
           onEdit={(id) => {
             setPendingStart(null);

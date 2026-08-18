@@ -1,13 +1,28 @@
 import { NextResponse } from "next/server";
-import { GEMINI_SUGGEST_OUTPUT_TOKENS, GEMINI_SUMMARY_OUTPUT_TOKENS } from "@/lib/constants";
+import {
+  GEMINI_CONTINUE_OUTPUT_TOKENS,
+  GEMINI_MAX_OUTPUT_TOKENS,
+  GEMINI_SUMMARY_OUTPUT_TOKENS,
+} from "@/lib/constants";
 import { generateGeminiText, streamGeminiText } from "@/lib/gemini";
-import { buildChatPrompt, buildSuggestPrompt, buildSummaryPrompt } from "@/lib/prompt";
+import {
+  buildChatPrompt,
+  buildContinuePrompt,
+  buildRegenPrompt,
+  buildSummaryPrompt,
+} from "@/lib/prompt";
 import { requireUser } from "@/lib/requireUser";
-import type { PromptState } from "@/lib/types";
+import type { GenerateMode, PromptState } from "@/lib/types";
 
 export const maxDuration = 60;
 
 const USER_TEXT_MAX = 2000;
+
+const STREAM_HEADERS = {
+  "Content-Type": "text/plain; charset=utf-8",
+  "Cache-Control": "no-cache, no-transform",
+  "X-Accel-Buffering": "no",
+};
 
 function isPromptState(value: unknown): value is PromptState {
   if (!value || typeof value !== "object") return false;
@@ -23,8 +38,9 @@ export async function POST(request: Request) {
 
   try {
     const body = (await request.json()) as {
-      mode?: string;
+      mode?: GenerateMode;
       userText?: string;
+      previous?: string;
       state?: unknown;
     };
 
@@ -37,13 +53,12 @@ export async function POST(request: Request) {
       if (!userText) {
         return NextResponse.json({ error: "메시지를 입력해 주세요." }, { status: 400 });
       }
-      const stream = await streamGeminiText(buildChatPrompt(body.state, userText));
-      return new Response(stream, {
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
-      });
+      const stream = await streamGeminiText(
+        buildChatPrompt(body.state, userText),
+        GEMINI_MAX_OUTPUT_TOKENS,
+        "minimal",
+      );
+      return new Response(stream, { headers: STREAM_HEADERS });
     }
 
     if (body.mode === "summary") {
@@ -54,13 +69,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ text });
     }
 
-    if (body.mode === "suggest") {
-      const hint = String(body.userText ?? "").trim().slice(0, USER_TEXT_MAX);
-      const text = await generateGeminiText(
-        buildSuggestPrompt(body.state, hint),
-        GEMINI_SUGGEST_OUTPUT_TOKENS,
+    if (body.mode === "regen") {
+      const userText = String(body.userText ?? "").trim().slice(0, USER_TEXT_MAX);
+      if (!userText) {
+        return NextResponse.json({ error: "메시지를 입력해 주세요." }, { status: 400 });
+      }
+      const previous = String(body.previous ?? "").trim().slice(0, USER_TEXT_MAX);
+      const stream = await streamGeminiText(
+        buildRegenPrompt(body.state, userText, previous),
+        GEMINI_MAX_OUTPUT_TOKENS,
+        "minimal",
       );
-      return NextResponse.json({ text });
+      return new Response(stream, { headers: STREAM_HEADERS });
+    }
+
+    if (body.mode === "continue") {
+      const hint = String(body.userText ?? "").trim().slice(0, USER_TEXT_MAX);
+      const stream = await streamGeminiText(
+        buildContinuePrompt(body.state, hint),
+        GEMINI_CONTINUE_OUTPUT_TOKENS,
+        "minimal",
+      );
+      return new Response(stream, { headers: STREAM_HEADERS });
     }
 
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });

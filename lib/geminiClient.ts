@@ -1,5 +1,6 @@
+import { STREAM_CHARS_PER_SEC } from "./constants";
 import { getSupabase } from "./supabase";
-import type { PlayState, PromptState } from "./types";
+import type { GenerateMode, PlayState, PromptState } from "./types";
 
 function toPromptState(state: PlayState | PromptState): PromptState {
   return {
@@ -29,9 +30,17 @@ async function authHeaders() {
 function applyChunk(full: string, chunk: string) {
   if (!chunk) return full;
   if (!full) return chunk;
+  if (chunk === full || full.endsWith(chunk)) return full;
   if (chunk.startsWith(full)) return chunk;
-  if (full.endsWith(chunk)) return full;
   return full + chunk;
+}
+
+function waitPaint() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
 }
 
 export class GenerateStoppedError extends Error {
@@ -49,7 +58,7 @@ export function isAbortError(err: unknown) {
 }
 
 export async function requestGenerate(
-  mode: "chat" | "summary" | "suggest",
+  mode: Extract<GenerateMode, "chat" | "summary" | "continue">,
   state: PlayState | PromptState,
   userText?: string,
   signal?: AbortSignal,
@@ -83,6 +92,8 @@ export async function requestGenerateStream(
   userText: string,
   onUpdate: (text: string) => void,
   signal?: AbortSignal,
+  mode: Extract<GenerateMode, "chat" | "continue" | "regen"> = "chat",
+  previous = "",
 ) {
   let response: Response;
   try {
@@ -94,9 +105,10 @@ export async function requestGenerateStream(
       method: "POST",
       headers,
       body: JSON.stringify({
-        mode: "chat",
+        mode,
         state: toPromptState(state),
         userText,
+        previous: previous || undefined,
       }),
       signal,
     });
@@ -118,10 +130,64 @@ export async function requestGenerateStream(
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  let full = "";
+  let received = "";
+  let shown = "";
+  let raf = 0;
+  let lastTs = 0;
+  let networkDone = false;
+  let settle: (() => void) | null = null;
+  const caughtUp = new Promise<void>((resolve) => {
+    settle = resolve;
+  });
+
+  const reveal = (receivedText: string, dt: number) => {
+    if (shown.length >= receivedText.length) return receivedText;
+    const step = Math.min(
+      2,
+      Math.max(1, Math.round((STREAM_CHARS_PER_SEC * dt) / 1000)),
+    );
+    return receivedText.slice(0, shown.length + step);
+  };
+
+  const finishIfCaughtUp = () => {
+    if (networkDone && shown.length >= received.length) {
+      settle?.();
+      settle = null;
+    }
+  };
+
+  const tick = (ts: number) => {
+    raf = 0;
+    if (signal?.aborted) {
+      finishIfCaughtUp();
+      return;
+    }
+    const dt = lastTs ? Math.min(ts - lastTs, 40) : 16;
+    lastTs = ts;
+    const next = reveal(received, dt);
+    if (next !== shown) {
+      shown = next;
+      onUpdate(shown);
+    }
+    if (shown.length < received.length || !networkDone) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      finishIfCaughtUp();
+    }
+  };
+
+  const kick = () => {
+    if (!raf && (shown.length < received.length || !networkDone)) {
+      raf = requestAnimationFrame(tick);
+    }
+  };
 
   const onAbort = () => {
     void reader.cancel();
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    settle?.();
+    settle = null;
   };
   signal?.addEventListener("abort", onAbort, { once: true });
 
@@ -130,23 +196,36 @@ export async function requestGenerateStream(
       const { value, done } = await reader.read();
       if (done) break;
       const chunk = decoder.decode(value, { stream: true });
-      full = applyChunk(full, chunk);
-      onUpdate(full);
+      received = applyChunk(received, chunk);
+      kick();
     }
+    received = applyChunk(received, decoder.decode());
+    networkDone = true;
+    if (shown.length >= received.length) {
+      if (shown) onUpdate(shown);
+      finishIfCaughtUp();
+    } else {
+      kick();
+    }
+    await caughtUp;
+    if (!signal?.aborted) await waitPaint();
   } catch (err) {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
     if (signal?.aborted || isAbortError(err)) {
-      throw new GenerateStoppedError(full.trim());
+      throw new GenerateStoppedError(shown.trim() || received.trim());
     }
     throw err;
   } finally {
     signal?.removeEventListener("abort", onAbort);
+    if (raf) cancelAnimationFrame(raf);
   }
 
   if (signal?.aborted) {
-    throw new GenerateStoppedError(full.trim());
+    throw new GenerateStoppedError(shown.trim() || received.trim());
   }
 
-  const text = full.trim();
+  const text = (shown || received).trim();
   if (!text) {
     throw new Error("Gemini 응답이 비어 있습니다. 잠시 후 다시 시도해 주세요.");
   }

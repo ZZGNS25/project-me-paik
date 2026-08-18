@@ -1,9 +1,10 @@
 export const STORAGE_KEY = "eorol-play-state";
 
 export const GEMINI_MODEL = "gemini-3.6-flash";
-export const GEMINI_MAX_OUTPUT_TOKENS = 4096;
-export const GEMINI_SUMMARY_OUTPUT_TOKENS = 768;
-export const GEMINI_SUGGEST_OUTPUT_TOKENS = 400;
+export const GEMINI_MAX_OUTPUT_TOKENS = 768;
+export const GEMINI_SUMMARY_OUTPUT_TOKENS = 512;
+export const GEMINI_CONTINUE_OUTPUT_TOKENS = 896;
+export const STREAM_CHARS_PER_SEC = 108;
 export const SHORT_TERM_TURNS = 3;
 export const COMPRESS_EVERY_TURNS = 30;
 export const PERSONAS_MAX = 12;
@@ -30,6 +31,8 @@ export const FIELD_LIMITS = {
   storyTitle: 40,
   personaLabel: 40,
 } as const;
+
+export const DEFAULT_STORY_TITLE = "새 시나리오";
 
 export const WORLD_PLACEHOLDER = `시대/장소:
 세계의 규칙: (예: 마법 없음 / 스마트폰 있음)
@@ -59,7 +62,7 @@ export function createEmptySetting(
 ): import("./types").SettingRecord {
   return {
     id,
-    title: "",
+    title: DEFAULT_STORY_TITLE,
     shareId: null,
     updatedAt: new Date().toISOString(),
     character: { ...EMPTY_CHARACTER },

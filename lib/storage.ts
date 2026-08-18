@@ -7,9 +7,10 @@ import {
   createEmptyStore,
 } from "./constants";
 import { buildForbidden } from "./forbidden";
+import { isGuestSession } from "./guest";
 import { normalizePins } from "./memory";
 import { WORLD_PRESETS } from "./presets";
-import type { AppStore, PlayState, SavedPersona, SettingRecord } from "./types";
+import type { AppStore, CastNote, PlayState, SavedPersona, SettingRecord } from "./types";
 
 let lastSaved = "";
 
@@ -192,9 +193,19 @@ const OLD_ONE_LINERS: Record<string, string[]> = {
   서윤하: [
     "S급 근접 헌터. 말은 짧고 차갑다.",
     "말은 짧다. 신입이 따라온 뒤에야 문을 연다.",
+    "청룡 S급 근접. 말은 짧고, 신입을 달래지 않는다.",
+    "약점을 선으로 읽고 베어내는, 냉정한 청룡의 최전선.",
   ],
-  "에델 라이트": ["창끝을 내리지 않은 채, 한 번 훑는다."],
-  세레나: ["부드러운 말 속에, 이 사람이 맞는지 잰다."],
+  "에델 라이트": [
+    "창끝을 내리지 않은 채, 한 번 훑는다.",
+    "성창 아카데미 수석. 차갑고 정확하다.",
+    "빛의 궤적으로 승부를 설계하는, 루멘 아카데미의 흔들림 없는 수석.",
+  ],
+  세레나: [
+    "부드러운 말 속에, 이 사람이 맞는지 잰다.",
+    "공녀. 유저의 전생을 어렴풋이 의심한다.",
+    "꽃에 남은 감정을 읽고, 미소 너머의 진의를 헤아리는 백작 영애.",
+  ],
 };
 
 const OLD_OPENING: Record<string, string> = {
@@ -211,6 +222,63 @@ function isLegacyPresetPhoto(current: string | undefined, next: string) {
   return current === `${stem}.jpg` || current === `${stem}.png`;
 }
 
+function restorePresetCast(
+  notes: CastNote[],
+  preset: (typeof WORLD_PRESETS)[number],
+  recordId: string,
+): CastNote[] {
+  const stockNames = new Set(preset.cast.map((item) => item.name));
+  const byName = new Map<string, CastNote>();
+  const extras: CastNote[] = [];
+  const usedIds = new Set<string>();
+
+  for (const note of notes) {
+    const name = note.name.trim();
+    if (name && stockNames.has(name) && !byName.has(name)) {
+      byName.set(name, note);
+    } else {
+      extras.push(note);
+      usedIds.add(note.id);
+    }
+  }
+
+  const restored = preset.cast.map((item, index) => {
+    const existing = byName.get(item.name);
+    if (existing) {
+      usedIds.add(existing.id);
+      const oldNotes = [
+        OLD_CAST_NOTES[item.name],
+        OLD_CAST_NOTES_V2[item.name],
+        OLD_CAST_NOTES_V3[item.name],
+      ].filter((value): value is string => Boolean(value));
+      return {
+        ...existing,
+        photo:
+          !existing.photo?.trim() || isLegacyPresetPhoto(existing.photo, item.photo)
+            ? item.photo
+            : existing.photo,
+        note: oldNotes.includes(existing.note)
+          ? item.note
+          : item.name === "드레이크"
+            ? existing.note.replaceAll("성창의 봉인", "초대 계약석의 봉인")
+            : existing.note,
+      };
+    }
+
+    let id = `${recordId}-cast-${index}`;
+    if (usedIds.has(id)) id = `${recordId}-cast-${index}-${crypto.randomUUID()}`;
+    usedIds.add(id);
+    return {
+      id,
+      name: clip(item.name, FIELD_LIMITS.castName),
+      note: clip(item.note, FIELD_LIMITS.castNote),
+      photo: item.photo,
+    };
+  });
+
+  return [...restored, ...extras];
+}
+
 export function backfillPresetMeta(record: SettingRecord): SettingRecord {
   const preset = WORLD_PRESETS.find(
     (item) => item.character.name === record.character.name.trim(),
@@ -223,7 +291,6 @@ export function backfillPresetMeta(record: SettingRecord): SettingRecord {
 
   const name = preset.character.name;
   const oldHunterSpeech = "존댓말, 짧은 문장, 이모지 금지. 감정은 잘 안 드러낸다.";
-  const castByName = new Map(preset.cast.map((item) => [item.name, item]));
   const worldPrefix = OLD_WORLD_PREFIX[name];
   const prologuePrefixes = OLD_PROLOGUE_PREFIX[name] ?? [];
   const oldExact = (OLD_PROLOGUE_EXACT[name] ?? []).map((text) => text.trim());
@@ -297,27 +364,7 @@ export function backfillPresetMeta(record: SettingRecord): SettingRecord {
           ? preset.userPersona.photo
           : (record.userPersona.photo ?? ""),
     },
-    castNotes: notes.map((note) => {
-      const next = castByName.get(note.name.trim());
-      if (!next) return note;
-      const oldNotes = [
-        OLD_CAST_NOTES[note.name.trim()],
-        OLD_CAST_NOTES_V2[note.name.trim()],
-        OLD_CAST_NOTES_V3[note.name.trim()],
-      ].filter((value): value is string => Boolean(value));
-      return {
-        ...note,
-        photo:
-          !note.photo?.trim() || isLegacyPresetPhoto(note.photo, next.photo)
-            ? next.photo
-            : note.photo,
-        note: oldNotes.includes(note.note)
-          ? next.note
-          : note.name.trim() === "드레이크"
-            ? note.note.replaceAll("성창의 봉인", "초대 계약석의 봉인")
-            : note.note,
-      };
-    }),
+    castNotes: restorePresetCast(notes, preset, record.id),
   };
 }
 
@@ -461,7 +508,10 @@ export function loadStore(): AppStore {
   if (typeof window === "undefined") return createEmptyStore();
 
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const storage = isGuestSession()
+      ? window.sessionStorage
+      : window.localStorage;
+    const raw = storage.getItem(STORAGE_KEY);
     if (!raw) return createEmptyStore();
     const parsed = JSON.parse(raw) as unknown;
     if (isStore(parsed) && parsed.settings.length > 0) {
@@ -498,33 +548,10 @@ export function saveStore(store: AppStore) {
   const raw = JSON.stringify(store);
   if (raw === lastSaved) return;
   lastSaved = raw;
-  window.localStorage.setItem(STORAGE_KEY, raw);
-}
-
-export function loadPlayState(): PlayState {
-  return toPlayState(loadStore());
-}
-
-export function savePlayState(state: PlayState) {
-  const store = loadStore();
-  const currentId = store.currentSettingId;
-  const next: AppStore = {
-    ...store,
-    apiKey: state.apiKey,
-    settings: store.settings.map((item) =>
-      item.id === currentId
-        ? {
-            ...item,
-            ...state,
-            id: item.id,
-            title: item.title,
-            shareId: item.shareId ?? null,
-            updatedAt: new Date().toISOString(),
-          }
-        : item,
-    ),
-  };
-  saveStore(next);
+  const storage = isGuestSession()
+    ? window.sessionStorage
+    : window.localStorage;
+  storage.setItem(STORAGE_KEY, raw);
 }
 
 export function clip(value: string, max: number) {

@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { FACE_LIBRARY } from "@/lib/faceLibrary";
+import { useOverlayLeave } from "@/hooks/useOverlayLeave";
 
 type FacePickerProps = {
   current?: string;
@@ -16,15 +18,24 @@ export default function FacePicker({
   onClose,
 }: FacePickerProps) {
   const selected = current.trim();
+  const { leaveClass, dismiss } = useOverlayLeave();
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") dismiss(onClose);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dismiss, onClose]);
 
   return (
     <div
-      className="photo-layer"
+      className={`photo-layer ${leaveClass}`}
       role="dialog"
       aria-modal="true"
       aria-label="얼굴 고르기"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) dismiss(onClose);
       }}
     >
       <div className="paper-card face-picker">
@@ -40,7 +51,7 @@ export default function FacePicker({
                 className={`face-picker-item ${on ? "is-on" : ""}`}
                 aria-pressed={on}
                 aria-label="이 얼굴 쓰기"
-                onClick={() => onPick(src)}
+                onClick={() => dismiss(() => onPick(src))}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={src} alt="" width={72} height={72} />
@@ -49,10 +60,10 @@ export default function FacePicker({
           })}
         </div>
         <div className="face-picker-actions">
-          <button type="button" className="btn-secondary" onClick={onFile}>
+          <button type="button" className="btn-secondary" onClick={() => dismiss(onFile)}>
             파일에서
           </button>
-          <button type="button" className="btn-quiet" onClick={onClose}>
+          <button type="button" className="btn-quiet" onClick={() => dismiss(onClose)}>
             닫기
           </button>
         </div>

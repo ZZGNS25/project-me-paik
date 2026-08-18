@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import BrandLockup from "@/components/BrandLockup";
 import { SITE_TAGLINE } from "@/lib/site";
 
@@ -8,6 +9,7 @@ type LoginGateProps = {
   error?: string;
   enabled: boolean;
   onGoogle: () => void;
+  onGuest: () => void;
 };
 
 export default function LoginGate({
@@ -15,7 +17,10 @@ export default function LoginGate({
   error,
   enabled,
   onGoogle,
+  onGuest,
 }: LoginGateProps) {
+  const [guestWarning, setGuestWarning] = useState(false);
+
   return (
     <main className="login-stage paper-card">
       <div className="login-copy">
@@ -28,14 +33,50 @@ export default function LoginGate({
           </p>
         ) : (
           <>
-            <button
-              type="button"
-              className="btn-primary login-cta"
-              onClick={onGoogle}
-              disabled={busy}
-            >
-              {busy ? "연결 중…" : "Google로 시작하기"}
-            </button>
+            <div className="login-actions">
+              <button
+                type="button"
+                className="btn-primary login-cta"
+                onClick={onGoogle}
+                disabled={busy}
+              >
+                Google로 시작하기
+              </button>
+              <button
+                type="button"
+                className="btn-secondary login-cta"
+                onClick={() => setGuestWarning(true)}
+                disabled={busy}
+              >
+                Guest로 로그인
+              </button>
+            </div>
+            {guestWarning ? (
+              <div className="login-guest-warning" role="alert">
+                <p>
+                  Guest로 시작하면 이야기가 이 브라우저 세션에만 남습니다. 브라우저를
+                  닫으면 모든 기록이 사라집니다.
+                </p>
+                <div className="login-guest-warning-actions">
+                  <button
+                    type="button"
+                    className="btn-quiet"
+                    onClick={() => setGuestWarning(false)}
+                    disabled={busy}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={onGuest}
+                    disabled={busy}
+                  >
+                    {busy ? "연결 중…" : "Guest로 계속"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {error ? <p className="alert-error">{error}</p> : null}
           </>
         )}

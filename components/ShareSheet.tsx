@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useOverlayLeave } from "@/hooks/useOverlayLeave";
 import {
   canShareToApps,
   copyText,
@@ -20,6 +21,7 @@ type ShareSheetProps = {
 export default function ShareSheet({ url, title, text, onClose }: ShareSheetProps) {
   const [mounted, setMounted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { leaveClass, dismiss } = useOverlayLeave();
   const nativeShare = canShareToApps();
   const destinations = shareDestinations(url, text);
 
@@ -29,11 +31,11 @@ export default function ShareSheet({ url, title, text, onClose }: ShareSheetProp
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") dismiss(onClose);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [dismiss, onClose]);
 
   async function copyLink() {
     await copyText(url);
@@ -46,7 +48,7 @@ export default function ShareSheet({ url, title, text, onClose }: ShareSheetProp
     const result = await shareToApps({ title, text, url });
     if (result.status === "shared") {
       trackEvent("share_native");
-      onClose();
+      dismiss(onClose);
     }
   }
 
@@ -54,12 +56,12 @@ export default function ShareSheet({ url, title, text, onClose }: ShareSheetProp
 
   return createPortal(
     <div
-      className="confirm-layer"
+      className={`confirm-layer ${leaveClass}`}
       role="dialog"
       aria-modal="true"
       aria-label="공유"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) dismiss(onClose);
       }}
     >
       <div className="confirm-card share-sheet">
@@ -89,7 +91,7 @@ export default function ShareSheet({ url, title, text, onClose }: ShareSheetProp
           ))}
         </div>
         <div className="confirm-actions">
-          <button type="button" className="btn-quiet" onClick={onClose}>
+          <button type="button" className="btn-quiet" onClick={() => dismiss(onClose)}>
             닫기
           </button>
         </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import ProfileCard from "@/components/ProfileCard";
+import StoryCard from "@/components/StoryCard";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { PlayController } from "@/hooks/usePlayState";
@@ -14,6 +14,8 @@ import {
   type SessionSummary,
 } from "@/lib/cloud";
 import { storyTitle } from "@/lib/storyTitle";
+import { deleteSettingWithCloud } from "@/lib/deleteSetting";
+import { listLocalNamed } from "@/lib/settingFilters";
 
 export default function HistoryPanel({ play }: { play: PlayController }) {
   const router = useRouter();
@@ -25,13 +27,13 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
   const fresh = useStartFresh();
 
   useEffect(() => {
-    if (!auth.user) return;
+    if (!auth.user || auth.isGuest) return;
     listPlaySessions(auth.user.id)
       .then(setSessions)
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : "기록을 불러오지 못했습니다.");
       });
-  }, [auth.user]);
+  }, [auth.isGuest, auth.user]);
 
   async function openSession(id: string, next: "/chat" | "/setup") {
     setBusyId(id);
@@ -78,20 +80,15 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
       confirmLabel: "삭제",
       danger: true,
       run: async () => {
+        await deleteSettingWithCloud(play.deleteSetting, { id, cloudSessionId });
         if (cloudSessionId) {
-          try {
-            await deletePlayFromCloud(cloudSessionId);
-            setSessions((current) => current.filter((item) => item.id !== cloudSessionId));
-          } catch {
-            // 로컬은 지운다. 클라우드가 남아 있으면 아래 목록에서 다시 지울 수 있다.
-          }
+          setSessions((current) => current.filter((item) => item.id !== cloudSessionId));
         }
-        play.deleteSetting(id);
       },
     });
   }
 
-  const localStories = play.settings.filter((item) => item.character.name.trim());
+  const localStories = listLocalNamed(play.settings);
   const localCloudIds = new Set(
     localStories
       .map((item) => item.cloudSessionId)
@@ -124,50 +121,46 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
       ) : (
         <div className="mt-3 space-y-3">
           {localStories.map((item) => (
-            <div key={item.id} className="history-card">
-              <ProfileCard
-                name={storyTitle(item)}
-                oneLiner={item.character.oneLiner}
-                photo={item.character.photo}
-                meta={
-                  item.chatLog.length > 0
-                    ? `${item.turnCount}턴`
-                    : "아직 시작 전"
-                }
-                onRename={(title) => play.renameSetting(item.id, title)}
-              />
-              <div className="story-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    play.selectSetting(item.id);
-                    router.push(`/setup?id=${encodeURIComponent(item.id)}`);
-                  }}
-                >
-                  시나리오
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => {
+            <StoryCard
+              key={item.id}
+              variant="history-card"
+              name={storyTitle(item)}
+              oneLiner={item.character.oneLiner}
+              photo={item.character.photo}
+              meta={
+                item.chatLog.length > 0
+                  ? `${item.turnCount}턴`
+                  : "아직 시작 전"
+              }
+              onRename={(title) => play.renameSetting(item.id, title)}
+              actions={[
+                {
+                  label: item.chatLog.length > 0 ? "이어가기" : "시작하기",
+                  kind: "primary",
+                  onClick: () => {
                     play.selectSetting(item.id);
                     router.push("/chat");
-                  }}
-                >
-                  {item.chatLog.length > 0 ? "이어가기" : "시작"}
-                </button>
-                {play.settings.length > 1 ? (
-                  <button
-                    type="button"
-                    className="btn-danger"
-                    onClick={() => void deleteLocal(item.id, item.cloudSessionId)}
-                  >
-                    삭제
-                  </button>
-                ) : null}
-              </div>
-            </div>
+                  },
+                },
+                {
+                  label: "다듬기",
+                  kind: "secondary",
+                  onClick: () => {
+                    play.selectSetting(item.id);
+                    router.push(`/setup?id=${encodeURIComponent(item.id)}`);
+                  },
+                },
+                ...(play.settings.length > 1
+                  ? [
+                      {
+                        label: "삭제",
+                        kind: "danger" as const,
+                        onClick: () => void deleteLocal(item.id, item.cloudSessionId),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           ))}
         </div>
       )}
@@ -175,7 +168,12 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
       <p className="label-caps mt-10">클라우드</p>
       {error ? <p className="alert-error mt-3">{error}</p> : null}
       <div className="mt-3 space-y-3">
-        {sessions.length === 0 ? (
+        {auth.isGuest ? (
+          <p className="text-sm text-[var(--ink-dim)]">
+            Guest는 클라우드에 남기지 않습니다. 브라우저를 닫으면 모든 기록이
+            사라집니다.
+          </p>
+        ) : sessions.length === 0 ? (
           <p className="text-sm text-[var(--ink-dim)]">
             로그인한 이야기는 여기에 자동으로 쌓입니다.
           </p>
@@ -185,40 +183,34 @@ export default function HistoryPanel({ play }: { play: PlayController }) {
           </p>
         ) : (
           remoteOnly.map((session) => (
-            <div key={session.id} className="history-card">
-              <ProfileCard
-                name={session.characterName}
-                oneLiner={session.oneLiner}
-                photo={session.photo}
-                meta={`${session.turnCount}턴${busyId === session.id ? " · 여는 중…" : ""}`}
-              />
-              <div className="story-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  disabled={busyId === session.id}
-                  onClick={() => void openSession(session.id, "/setup")}
-                >
-                  시나리오
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={busyId === session.id}
-                  onClick={() => void openSession(session.id, "/chat")}
-                >
-                  이어가기
-                </button>
-                <button
-                  type="button"
-                  className="btn-danger"
-                  disabled={busyId === session.id}
-                  onClick={() => void deleteSession(session.id)}
-                >
-                  삭제
-                </button>
-              </div>
-            </div>
+            <StoryCard
+              key={session.id}
+              variant="history-card"
+              name={session.characterName}
+              oneLiner={session.oneLiner}
+              photo={session.photo}
+              meta={`${session.turnCount}턴${busyId === session.id ? " · 여는 중…" : ""}`}
+              actions={[
+                {
+                  label: "이어가기",
+                  kind: "primary",
+                  disabled: busyId === session.id,
+                  onClick: () => void openSession(session.id, "/chat"),
+                },
+                {
+                  label: "다듬기",
+                  kind: "secondary",
+                  disabled: busyId === session.id,
+                  onClick: () => void openSession(session.id, "/setup"),
+                },
+                {
+                  label: "삭제",
+                  kind: "danger",
+                  disabled: busyId === session.id,
+                  onClick: () => void deleteSession(session.id),
+                },
+              ]}
+            />
           ))
         )}
       </div>

@@ -35,7 +35,15 @@ export function isUserSpeaker(name: string | undefined, userName?: string) {
   return Boolean(me) && speaker === me;
 }
 
-export function parseModelReply(raw: string): ParsedLine[] {
+export function parseModelReply(raw: string, streaming = false): ParsedLine[] {
+  if (streaming && raw && !/\n$/.test(raw)) {
+    const parts = raw.split(/\r?\n/);
+    const tail = parts.pop() ?? "";
+    const head = parts.join("\n");
+    const parsed = head ? parseModelReply(head, false) : [];
+    return appendStreamingLine(parsed, tail);
+  }
+
   const lines = raw.split(/\r?\n/);
   const parsed: ParsedLine[] = [];
   let leftover: string[] = [];
@@ -96,6 +104,47 @@ export function parseModelReply(raw: string): ParsedLine[] {
 
   flushLeftover();
   return mergeRuns(parsed.length > 0 ? parsed : [{ kind: "fallback", text: raw.trim() }]);
+}
+
+function appendStreamingLine(parsed: ParsedLine[], tail: string): ParsedLine[] {
+  if (!tail) return parsed;
+  const next = parsed.map((line) => ({ ...line }));
+  const line = tail.trimStart();
+
+  if (line.startsWith("@:")) {
+    pushNarration(next, line.slice(2));
+    return next.length > 0 ? next : [{ kind: "fallback", text: tail }];
+  }
+
+  const mention = line.match(AT_NAME);
+  if (mention?.[1].trim()) {
+    const name = mention[1].trim();
+    const text = unwrapSpeech(mention[2]);
+    const last = next[next.length - 1];
+    if (last?.kind === "speech" && last.name === name) {
+      last.text = text ? `${last.text}\n${text}` : last.text;
+      return next;
+    }
+    next.push({ kind: "speech", name, text });
+    return next;
+  }
+
+  if (line.startsWith("@")) {
+    next.push({ kind: "fallback", text: tail });
+    return next;
+  }
+
+  const last = next[next.length - 1];
+  if (last?.kind === "narration") {
+    pushNarration(next, line);
+    return next;
+  }
+  if (last?.kind === "fallback") {
+    last.text = `${last.text}\n${tail}`;
+    return next;
+  }
+  next.push({ kind: "fallback", text: tail });
+  return next;
 }
 
 function pushNarration(parsed: ParsedLine[], text: string) {

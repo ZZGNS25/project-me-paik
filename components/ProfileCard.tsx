@@ -32,9 +32,11 @@ export default function ProfileCard({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(name);
   const label = name.trim() || "이름 없음";
+  const untitled = !name.trim() || name.trim() === "이름 없음";
 
   function commit() {
-    onRename?.(draft.trim());
+    const next = draft.trim();
+    onRename?.(next === "이름 없음" ? "" : next);
     setEditing(false);
   }
 
@@ -51,6 +53,7 @@ export default function ProfileCard({
           >
             <input
               className="field-input story-rename-input"
+              placeholder="새 시나리오"
               value={draft}
               maxLength={FIELD_LIMITS.storyTitle}
               autoFocus
@@ -65,7 +68,7 @@ export default function ProfileCard({
             className="story-name-edit"
             title="이름 바꾸기"
             onClick={() => {
-              setDraft(name);
+              setDraft(untitled ? "" : name);
               setEditing(true);
             }}
           >

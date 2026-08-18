@@ -305,15 +305,6 @@ export function usePlayState() {
     setStore(nextStore);
   }
 
-  function rewindForRegen(userMessageId: string): {
-    text: string;
-    state: PlayState;
-  } | null {
-    const prepared = prepareRegen(userMessageId);
-    if (!prepared) return null;
-    return { text: prepared.text, state: prepared.state };
-  }
-
   function prepareRegen(
     userMessageId: string,
     textOverride?: string,
@@ -389,10 +380,6 @@ export function usePlayState() {
 
   function deleteLastTurn() {
     removeLastTurn();
-  }
-
-  function popLastUserMessage() {
-    return removeLastTurn();
   }
 
   function updateMessage(id: string, content: string) {
@@ -543,34 +530,6 @@ export function usePlayState() {
     setStore(next);
   }
 
-  function hydrateFromCloud(partial: Partial<PlayState>) {
-    updateStore((prev) =>
-      patchCurrent(prev, (current) => {
-        const character = partial.character
-          ? {
-              ...current.character,
-              ...partial.character,
-              forbiddenManual:
-                partial.character.forbiddenManual ??
-                Boolean(partial.character.forbidden.trim()),
-            }
-          : current.character;
-
-        return backfillPresetMeta({
-          ...current,
-          ...partial,
-          character,
-          storyPins: normalizePins(partial.storyPins ?? current.storyPins),
-          shortTermBuffer:
-            partial.shortTermBuffer ??
-            syncBuffer(partial.chatLog ?? current.chatLog),
-          prologue: partial.prologue?.trim() ? partial.prologue : current.prologue,
-          id: current.id,
-        });
-      }),
-    );
-  }
-
   function setCloudSessionId(cloudSessionId: string | null) {
     updateStore((prev) =>
       patchCurrent(prev, (current) => ({ ...current, cloudSessionId })),
@@ -592,28 +551,35 @@ export function usePlayState() {
     });
   }
 
-  function forkCurrentSetting() {
+  function forkCurrentSetting(savedTitle?: string) {
     updateStore((prev) => {
       const current =
         prev.settings.find((item) => item.id === prev.currentSettingId) ??
         prev.settings[0];
       if (!current) return prev;
+      const now = new Date().toISOString();
+      const keptTitle = clip(savedTitle?.trim() || current.title, FIELD_LIMITS.storyTitle);
       const setting: SettingRecord = {
         ...current,
         id: newId(),
-        title: "",
+        title: current.title,
         shareId: null,
         cloudSessionId: null,
         storySummary: "",
         chatLog: [],
         shortTermBuffer: [],
         turnCount: 0,
-        updatedAt: new Date().toISOString(),
+        updatedAt: now,
       };
+      const settings = prev.settings.map((item) =>
+        item.id === current.id
+          ? { ...item, title: keptTitle || item.title, updatedAt: now }
+          : item,
+      );
       const next = {
         ...prev,
         currentSettingId: setting.id,
-        settings: [...prev.settings, setting],
+        settings: [...settings, setting],
       };
       saveStore(next);
       return next;
@@ -630,6 +596,7 @@ export function usePlayState() {
     const name = input.name.trim();
     const label = input.label.trim() || name;
     if (!name) return;
+    let savedId: string | undefined;
 
     updateStore((prev) => {
       const personas = prev.personas ?? [];
@@ -645,6 +612,7 @@ export function usePlayState() {
         photo: input.photo ?? "",
         updatedAt: new Date().toISOString(),
       };
+      savedId = nextPersona.id;
       return {
         ...prev,
         lastPersonaId: nextPersona.id,
@@ -655,6 +623,7 @@ export function usePlayState() {
           : [...personas, nextPersona],
       };
     });
+    return savedId;
   }
 
   function applyPersona(id: string) {
@@ -929,10 +898,8 @@ export function usePlayState() {
     removeCastNote,
     appendTurn,
     deleteLastTurn,
-    popLastUserMessage,
     updateMessage,
     truncateFrom,
-    rewindForRegen,
     prepareRegen,
     commitRegen,
     setReplyVersion,
@@ -943,7 +910,6 @@ export function usePlayState() {
     removeStoryPin,
     addFromCloud,
     openFromCloud,
-    hydrateFromCloud,
     setCloudSessionId,
     startNewStory,
     forkCurrentSetting,

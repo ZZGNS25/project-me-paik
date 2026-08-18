@@ -24,7 +24,7 @@ export function useCloudAutosave(play: PlayController): CloudSync {
   const saveNow = useCallback(async () => {
     const user = auth.user;
     const current = playRef.current;
-    if (!user || !current.ready) return;
+    if (!user || auth.isGuest || !current.ready) return;
 
     const state = current.state;
     if (!state.character.name.trim() && state.chatLog.length === 0) return;
@@ -53,16 +53,17 @@ export function useCloudAutosave(play: PlayController): CloudSync {
         void saveNow();
       }
     }
-  }, [auth.user]);
+  }, [auth.isGuest, auth.user]);
 
   useEffect(() => {
-    if (!auth.user || !play.ready) return;
+    if (!auth.user || auth.isGuest || !play.ready) return;
     const timer = window.setTimeout(() => {
       void saveNow();
     }, 2200);
     return () => window.clearTimeout(timer);
   }, [
     auth.user,
+    auth.isGuest,
     play.ready,
     play.currentSettingId,
     play.updatedAt,
@@ -72,7 +73,7 @@ export function useCloudAutosave(play: PlayController): CloudSync {
   ]);
 
   useEffect(() => {
-    if (!auth.user || !play.ready) return;
+    if (!auth.user || auth.isGuest || !play.ready) return;
 
     function onHide() {
       if (document.visibilityState === "hidden") {
@@ -82,10 +83,10 @@ export function useCloudAutosave(play: PlayController): CloudSync {
 
     document.addEventListener("visibilitychange", onHide);
     return () => document.removeEventListener("visibilitychange", onHide);
-  }, [auth.user, play.ready, saveNow]);
+  }, [auth.isGuest, auth.user, play.ready, saveNow]);
 
   useEffect(() => {
-    if (!auth.user || !play.ready || pulled.current) return;
+    if (!auth.user || auth.isGuest || !play.ready || pulled.current) return;
     const key = `eorol-cloud-pulled:${auth.user.id}`;
     if (sessionStorage.getItem(key)) {
       pulled.current = true;
@@ -119,7 +120,7 @@ export function useCloudAutosave(play: PlayController): CloudSync {
         pulled.current = false;
       }
     })();
-  }, [auth.user, play.ready]);
+  }, [auth.isGuest, auth.user, play.ready]);
 
   return { status, error, saveNow };
 }

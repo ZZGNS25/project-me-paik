@@ -9,7 +9,8 @@ type IconName =
   | "check"
   | "resend"
   | "prev"
-  | "next";
+  | "next"
+  | "more";
 
 type IconProps = {
   name: IconName;
@@ -31,6 +32,7 @@ const PATHS: Record<IconName, string[]> = {
   resend: ["M5 12h12", "M13 7l5 5-5 5"],
   prev: ["M14.5 6 8.5 12l6 6"],
   next: ["M9.5 6l6 6-6 6"],
+  more: ["M12 6.2h.01", "M12 12h.01", "M12 17.8h.01"],
 };
 
 export default function Icon({ name, size = 18 }: IconProps) {
@@ -46,9 +48,15 @@ export default function Icon({ name, size = 18 }: IconProps) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {PATHS[name].map((d) => (
-        <path key={d} d={d} />
-      ))}
+      {name === "more" ? (
+        <>
+          <circle cx="12" cy="6.5" r="1.25" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="12" r="1.25" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="17.5" r="1.25" fill="currentColor" stroke="none" />
+        </>
+      ) : (
+        PATHS[name].map((d) => <path key={d} d={d} />)
+      )}
     </svg>
   );
 }

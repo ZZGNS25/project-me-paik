@@ -1,6 +1,28 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient, type SupportedStorage } from "@supabase/supabase-js";
+import { isGuestSession } from "@/lib/guest";
 
 let supabase: SupabaseClient | undefined;
+
+const authStorage: SupportedStorage = {
+  getItem(key) {
+    if (typeof window === "undefined") return null;
+    return (isGuestSession() ? window.sessionStorage : window.localStorage).getItem(
+      key,
+    );
+  },
+  setItem(key, value) {
+    if (typeof window === "undefined") return;
+    (isGuestSession() ? window.sessionStorage : window.localStorage).setItem(
+      key,
+      value,
+    );
+  },
+  removeItem(key) {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.removeItem(key);
+    window.localStorage.removeItem(key);
+  },
+};
 
 export function hasSupabaseEnv() {
   return Boolean(
@@ -24,6 +46,7 @@ export function getSupabase() {
           autoRefreshToken: true,
           detectSessionInUrl: true,
           flowType: "pkce",
+          storage: authStorage,
         },
       },
     );

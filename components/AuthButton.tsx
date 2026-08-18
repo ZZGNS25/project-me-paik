@@ -21,7 +21,7 @@ export default function AuthButton() {
     return (
       <div className="flex items-center gap-3">
         <span className="max-w-[10rem] truncate text-xs text-[var(--ink-soft)]">
-          {auth.user.email}
+          {auth.isGuest ? "Guest" : auth.user.email}
         </span>
         <button
           type="button"

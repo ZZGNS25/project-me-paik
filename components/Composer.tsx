@@ -20,6 +20,7 @@ export default function Composer({
   placeholder = "말을 이어 보세요",
 }: ComposerProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const locked = disabled || Boolean(onStop);
 
   useEffect(() => {
     const input = inputRef.current;
@@ -27,6 +28,23 @@ export default function Composer({
     input.style.height = "auto";
     input.style.height = `${Math.min(input.scrollHeight, 128)}px`;
   }, [value]);
+
+  function insertStar() {
+    const input = inputRef.current;
+    if (!input || locked) return;
+    const start = input.selectionStart ?? value.length;
+    const end = input.selectionEnd ?? value.length;
+    const selected = value.slice(start, end);
+    const next = selected
+      ? `${value.slice(0, start)}*${selected}*${value.slice(end)}`
+      : `${value.slice(0, start)}*${value.slice(end)}`;
+    onChange(next);
+    const cursor = selected ? start + selected.length + 2 : start + 1;
+    requestAnimationFrame(() => {
+      input.focus();
+      input.setSelectionRange(cursor, cursor);
+    });
+  }
 
   return (
     <form
@@ -42,7 +60,7 @@ export default function Composer({
         rows={1}
         placeholder={placeholder}
         value={value}
-        disabled={disabled || Boolean(onStop)}
+        disabled={locked}
         enterKeyHint="send"
         autoComplete="off"
         onChange={(event) => onChange(event.target.value)}
@@ -53,6 +71,18 @@ export default function Composer({
           }
         }}
       />
+      <button
+        type="button"
+        className="composer-star"
+        disabled={locked}
+        onClick={insertStar}
+        aria-label="별 넣기"
+        title="*행동*"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+          <path d="M12 2.8 13.4 10 21 12l-7.6 2L12 21.2 10.6 14 3 12l7.6-2Z" />
+        </svg>
+      </button>
       {onStop ? (
         <button
           type="button"

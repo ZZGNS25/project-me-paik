@@ -116,7 +116,8 @@ export default function GuidePanel() {
           </li>
           <li>
             <strong className="text-[var(--ink)]">*행동*</strong>은 동작이나 속마음입니다.
-            내 손, 시선, 숨은 여기에 적습니다.
+            내 손, 시선, 숨은 여기에 적습니다. 입력창 별은 * 를 넣고, 고른 글이 있으면
+            양쪽에 감쌉니다.
           </li>
         </ul>
         <pre className="guide-example">{`@:빗소리가 복도를 채웠다. 등 뒤에서 발소리가 한 걸음 가까워졌다.

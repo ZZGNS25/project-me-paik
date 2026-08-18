@@ -240,6 +240,16 @@ function SetupBody() {
                   />
                 </div>
               </div>
+              <CharField
+                label="인물 설정"
+                multiline
+                rows={6}
+                value={play.state.character.setting}
+                max={FIELD_LIMITS.characterSetting}
+                onChange={(value) => play.updateCharacter("setting", value)}
+                placeholder="능력, 성격"
+                hint="프롤로그 행적이 아니라, 이 사람의 능력과 성격을 적습니다."
+              />
             </section>
 
             <details className="setup-fold">

@@ -9,9 +9,10 @@ type SessionRow = {
   character_name: string;
   character_one_liner: string;
   speech_style: string;
-  appearance: string;
-  forbidden: string;
-  opening_situation: string;
+    appearance: string;
+    forbidden: string;
+    opening_situation: string;
+    character_setting?: string;
   user_name: string;
   user_setting: string;
   world_setting: string;
@@ -38,6 +39,7 @@ function toSessionPayload(userId: string, state: PlayState) {
     user_id: userId,
     character_name: state.character.name,
     character_one_liner: state.character.oneLiner,
+    character_setting: state.character.setting,
     speech_style: state.character.speechStyle,
     appearance: state.character.appearance,
     forbidden: state.character.forbidden,
@@ -187,6 +189,7 @@ async function loadPlayBySession(row: SessionRow) {
     character: {
       name: row.character_name,
       oneLiner: row.character_one_liner,
+      setting: row.character_setting ?? "",
       speechStyle: row.speech_style,
       appearance: row.appearance,
       forbidden: row.forbidden,

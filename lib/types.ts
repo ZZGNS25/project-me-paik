@@ -24,6 +24,7 @@ export type StoryPin = {
 export type CharacterProfile = {
   name: string;
   oneLiner: string;
+  setting: string;
   speechStyle: string;
   appearance: string;
   forbidden: string;

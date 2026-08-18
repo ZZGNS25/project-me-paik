@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import FacePicker from "@/components/FacePicker";
 import { readPhotoFile } from "@/lib/photo";
 
 type AvatarSize = "sm" | "md" | "lg";
@@ -47,6 +48,7 @@ export default function AvatarCircle({
   const photo = src?.trim() ?? "";
   const [broken, setBroken] = useState(false);
   const [open, setOpen] = useState(false);
+  const [picker, setPicker] = useState(false);
   const [mounted, setMounted] = useState(false);
   const hasPhoto = Boolean(photo && !broken);
   const canPreview = hasPhoto && zoom;
@@ -61,13 +63,16 @@ export default function AvatarCircle({
   }, [photo]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open && !picker) return;
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        setPicker(false);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, picker]);
 
   async function handleFile(file?: File) {
     if (!file || !onChange) return;
@@ -149,7 +154,7 @@ export default function AvatarCircle({
         <button
           type="button"
           className="btn-quiet avatar-change"
-          onClick={() => inputRef.current?.click()}
+          onClick={() => setPicker(true)}
         >
           {hasPhoto ? "바꾸기" : "추가"}
         </button>
@@ -174,6 +179,23 @@ export default function AvatarCircle({
         }}
       />
       {preview}
+      {picker && mounted
+        ? createPortal(
+            <FacePicker
+              current={photo}
+              onPick={(src) => {
+                onChange?.(src);
+                setPicker(false);
+              }}
+              onFile={() => {
+                setPicker(false);
+                window.setTimeout(() => inputRef.current?.click(), 0);
+              }}
+              onClose={() => setPicker(false)}
+            />,
+            document.body,
+          )
+        : null}
     </span>
   );
 }

@@ -1,8 +1,6 @@
 "use client";
 
-import AvatarCircle from "@/components/AvatarCircle";
 import BrandLockup from "@/components/BrandLockup";
-import { WORLD_PRESETS } from "@/lib/presets";
 import { SITE_TAGLINE } from "@/lib/site";
 
 type LoginGateProps = {
@@ -22,7 +20,7 @@ export default function LoginGate({
     <main className="login-stage paper-card">
       <div className="login-copy">
         <BrandLockup layout="row" />
-        <h1>이야기가 끊기지 않게</h1>
+        <h1>이야기가 끊기지 않게.</h1>
         <p className="login-lead">{SITE_TAGLINE}</p>
         {!enabled ? (
           <p className="alert-error">
@@ -41,22 +39,6 @@ export default function LoginGate({
             {error ? <p className="alert-error">{error}</p> : null}
           </>
         )}
-      </div>
-      <div className="login-cast">
-        {WORLD_PRESETS.map((preset) => (
-          <div key={preset.id} className="login-cast-item">
-            <AvatarCircle
-              src={preset.character.photo}
-              name={preset.character.name}
-              size="lg"
-              zoom={false}
-            />
-            <p className="login-cast-name">{preset.character.name}</p>
-          </div>
-        ))}
-        <div className="login-cast-item is-blank" aria-hidden="true">
-          <AvatarCircle size="lg" zoom={false} />
-        </div>
       </div>
     </main>
   );

@@ -57,7 +57,7 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     buildPinnedRules(state),
     "",
     "[세계관]",
-    clip(state.worldSetting, started ? 1200 : 2000) || "(없음)",
+    clip(state.worldSetting, FIELD_LIMITS.worldSetting) || "(없음)",
     "",
     "[프롤로그]",
     started
@@ -69,6 +69,9 @@ export function buildChatPrompt(state: PromptState, userText: string) {
     "[캐릭터]",
     `이름: ${state.character.name}`,
     state.character.oneLiner.trim() ? `한 줄: ${state.character.oneLiner}` : "",
+    state.character.setting.trim()
+      ? `설정: ${clip(state.character.setting, FIELD_LIMITS.characterSetting)}`
+      : "",
     state.character.speechStyle.trim()
       ? `말투: ${clip(state.character.speechStyle, 200)}`
       : "",
@@ -154,6 +157,9 @@ export function buildSuggestPrompt(state: PromptState, hint = "") {
     "[상대]",
     `이름: ${character}`,
     state.character.oneLiner.trim() ? `한 줄: ${state.character.oneLiner}` : "",
+    state.character.setting.trim()
+      ? `설정: ${clip(state.character.setting, 400)}`
+      : "",
     "",
     "[요약]",
     clip(state.storySummary, 400) || "(아직 없음)",

@@ -111,6 +111,7 @@ export function usePlayState() {
     const limits = {
       name: FIELD_LIMITS.characterName,
       oneLiner: FIELD_LIMITS.oneLiner,
+      setting: FIELD_LIMITS.characterSetting,
       speechStyle: FIELD_LIMITS.speechStyle,
       appearance: FIELD_LIMITS.appearance,
       forbidden: FIELD_LIMITS.forbidden,

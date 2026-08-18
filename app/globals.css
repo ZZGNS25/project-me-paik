@@ -997,17 +997,77 @@ button.chat-speaker.is-me {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  background: url("/earrole-mark.png") center 36% / min(18rem, 58vw) no-repeat;
-  opacity: 0.07;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(11, 13, 16, 0.35) 0%, rgba(7, 9, 12, 0.72) 58%, var(--background) 100%);
+}
+
+.login-field {
+  pointer-events: none;
+  position: absolute;
+  inset: -8% -10%;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2.1rem;
+  overflow: hidden;
+  opacity: 0.28;
+  filter: saturate(0.72) brightness(0.86);
+  mask-image: radial-gradient(ellipse at 50% 48%, #000 8%, transparent 72%);
+}
+
+.login-field-row {
+  overflow: hidden;
+}
+
+.login-field-row:nth-child(even) {
+  padding-left: 2.4rem;
+}
+
+.login-field-belt {
+  display: flex;
+  width: max-content;
+  gap: 2.1rem;
+  animation: login-field-drift linear infinite;
+}
+
+.login-field-row.is-right .login-field-belt {
+  animation-direction: reverse;
+}
+
+.login-field-face {
+  width: 3.6rem;
+  height: 3.6rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  object-fit: cover;
+  opacity: 0.9;
+}
+
+@keyframes login-field-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-field-belt {
+    animation: none;
+  }
 }
 
 .login-stage {
   position: relative;
+  z-index: 2;
   display: flex;
-  width: min(46rem, 100%);
+  width: min(32rem, 100%);
   flex-direction: column;
   align-items: center;
-  padding: 2.1rem 1.7rem 1.9rem;
+  padding: 2.7rem 2.4rem 2.4rem;
   text-align: center;
 }
 
@@ -1030,7 +1090,7 @@ button.chat-speaker.is-me {
 }
 
 .login-lead {
-  margin-top: 0.7rem;
+  margin-top: 2.15rem;
   max-width: 22rem;
   color: var(--ink-soft);
   font-size: 0.95rem;
@@ -1046,97 +1106,11 @@ button.chat-speaker.is-me {
   margin-top: 1rem;
 }
 
-.login-cast {
-  display: flex;
-  justify-content: center;
-  margin-top: 1.7rem;
-  padding-top: 1.45rem;
-  border-top: 1px solid var(--line);
-}
-
-.login-cast-item {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.45rem;
-  margin-left: -0.55rem;
-}
-
-.login-cast-item:first-child {
-  margin-left: 0;
-}
-
-.login-cast-item.is-blank {
-  z-index: 0;
-  margin-left: -1.55rem;
-}
-
-.login-cast-item .avatar-circle {
-  box-shadow: 0 0 0 3px var(--paper);
-}
-
-.login-cast-item.is-blank .avatar-circle {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: #1a1e26;
-}
-
-.login-cast-item.is-blank .avatar-silhouette {
-  color: #6a717c;
-}
-
-.login-cast-name {
-  color: var(--ink-dim);
-  font-size: 0.78rem;
-}
-
 .login-kicker {
   margin-top: 1.15rem;
   color: var(--ink-dim);
   font-size: 0.82rem;
   letter-spacing: 0.04em;
-}
-
-@media (min-width: 820px) {
-  .login-stage {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.5rem 2.4rem;
-    padding: 2.35rem 2.5rem;
-    text-align: left;
-  }
-
-  .login-copy {
-    align-items: flex-start;
-  }
-
-  .login-copy .brand-lockup {
-    align-items: center;
-  }
-
-  .login-lead {
-    max-width: 22rem;
-  }
-
-  .login-cast {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: 0;
-    padding-left: 0.4rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .login-cast-item .avatar-lg {
-    width: 4.35rem;
-    height: 4.35rem;
-  }
-
-  .login-cast-item.is-blank {
-    margin-left: -1.7rem;
-  }
 }
 
 .cast-grid {
@@ -1428,17 +1402,151 @@ button.story-name-edit {
   font-weight: 600;
 }
 
-.cast-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.75rem;
-  align-items: start;
+.face-picker {
+  width: min(22rem, 100%);
+  padding: 1.15rem 1.2rem 1rem;
 }
 
-.cast-row-fields {
-  min-width: 0;
+.face-picker-lead {
+  margin-top: 0.35rem;
+  color: var(--ink-dim);
+  font-size: 0.82rem;
+}
+
+.face-picker-grid {
   display: grid;
-  gap: 0.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+
+.face-picker-item {
+  overflow: hidden;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #22262e;
+}
+
+.face-picker-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.face-picker-item.is-on {
+  border-color: var(--blue);
+}
+
+.face-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.95rem;
+}
+
+.cast-editor {
+  display: grid;
+  gap: 1rem;
+}
+
+.cast-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cast-editor-toolbar p {
+  max-width: 30rem;
+  line-height: 1.55;
+}
+
+.cast-editor-toolbar button {
+  flex-shrink: 0;
+}
+
+.cast-editor-list {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.cast-editor-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.cast-editor-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.85rem;
+}
+
+.cast-editor-name {
+  min-width: 0;
+}
+
+.cast-editor-name > span,
+.cast-editor-note-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.cast-editor-note {
+  display: grid;
+}
+
+.cast-editor-note-label .mono-readout {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+
+.cast-editor-note textarea {
+  min-height: 7.6rem;
+  line-height: 1.65;
+}
+
+.cast-editor-remove {
+  margin-top: 1.45rem;
+}
+
+.cast-editor-empty {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 1.25rem;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .cast-editor-toolbar {
+    align-items: flex-start;
+  }
+
+  .cast-editor-head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .cast-editor-remove {
+    grid-column: 2;
+    width: max-content;
+    margin-top: -0.35rem;
+  }
 }
 
 .persona-list {

@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
+import LoginField from "@/components/LoginField";
 import LoginGate from "@/components/LoginGate";
 import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
@@ -38,6 +39,7 @@ function HomeBody() {
   if (!auth.enabled || !auth.user) {
     return (
       <div className="login-gate">
+        <LoginField />
         <LoginGate
           enabled={auth.enabled}
           busy={auth.busy}

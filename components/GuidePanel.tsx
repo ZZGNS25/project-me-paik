@@ -63,8 +63,12 @@ export default function GuidePanel() {
         </p>
         <ul className="mt-3 text-sm leading-relaxed text-[var(--ink-soft)]">
           <li>
+            <strong className="text-[var(--ink)]">인물 설정</strong>은 능력과
+            성격입니다. 프롤로그 행적이나 지금 장면은 적지 않습니다.
+          </li>
+          <li>
             <strong className="text-[var(--ink)]">한 줄 · 말투 · 외형</strong>은 상대가
-            누구인지, 어떻게 말하는지입니다.
+            한 줄로 누구인지, 어떻게 말하는지, 어떻게 보이는지입니다.
           </li>
           <li>
             <strong className="text-[var(--ink)]">금지</strong>는 깨지면 안 되는 규칙입니다.

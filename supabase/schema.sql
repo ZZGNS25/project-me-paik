@@ -19,6 +19,7 @@ create table if not exists public.eorol_play_sessions (
   user_id uuid not null references auth.users (id) on delete cascade,
   character_name text not null default '',
   character_one_liner text not null default '',
+  character_setting text not null default '',
   speech_style text not null default '',
   appearance text not null default '',
   forbidden text not null default '',

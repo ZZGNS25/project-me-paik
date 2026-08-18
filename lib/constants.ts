@@ -12,6 +12,7 @@ export const REPLY_VERSIONS_MAX = 8;
 export const FIELD_LIMITS = {
   characterName: 32,
   oneLiner: 80,
+  characterSetting: 1000,
   speechStyle: 200,
   appearance: 300,
   forbidden: 400,
@@ -38,6 +39,7 @@ export const WORLD_PLACEHOLDER = `시대/장소:
 export const EMPTY_CHARACTER = {
   name: "",
   oneLiner: "",
+  setting: "",
   speechStyle: "",
   appearance: "",
   forbidden: "",

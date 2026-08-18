@@ -557,8 +557,22 @@ button.chat-speaker.is-me {
 }
 
 .chat-feed-inner.is-empty {
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.chat-feed-inner.is-empty .prologue-card {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  flex-direction: column;
+}
+
+.chat-feed-inner.is-empty .prologue-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .chat-empty {
@@ -1492,11 +1506,12 @@ button.story-name-edit {
 }
 
 .prologue-card {
-  max-width: 36rem;
+  width: 100%;
+  max-width: none;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 12px;
   background: var(--paper);
-  padding: 1.2rem 1.35rem;
+  padding: 1.15rem 1.4rem 1.35rem;
   text-align: left;
 }
 

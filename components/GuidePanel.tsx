@@ -128,7 +128,7 @@ export default function GuidePanel() {
 
 @서윤하: 따라와. 말은 나중에.`}</pre>
         <p className="mt-3 text-sm leading-relaxed text-[var(--ink-soft)]">
-          입력창 아래 힌트도 같습니다. @: 장면 · @나: 내 말 · @이름: 그 인물 · *행동*.
+          입력창 아래 힌트도 같습니다. @: 장면 · @나: 내 대사 · @이름: 다른 사람 · *행동*.
         </p>
       </section>
 
@@ -183,8 +183,8 @@ export default function GuidePanel() {
             내 말의 보내기 화살표는 <strong className="text-[var(--ink)]">이 말로 다시</strong>입니다.
             고친 내 말을 기준으로 상대의 답을 새로 받습니다.
             연필은 그 말만 고칩니다. 체크해도 답은 바로 바뀌지 않습니다.
-            입력창을 비우거나 의미 없는 글만 넣고 보내면, 맥락에 맞는 내 말을
-            대신 써서 보냅니다.
+            칸을 비우거나 점·기호만 넣고 보내면, 맥락에 맞는 내 대사를
+            이어서 보냅니다.
             상대가 쓰는 중에는 보내기 자리가 <strong className="text-[var(--ink)]">멈추기</strong>로
             바뀝니다. 그때까지 나온 말은 남습니다.
             아이콘은 말풍선에 커서를 올리면 나타납니다.

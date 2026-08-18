@@ -453,11 +453,11 @@ function ChatBody() {
               disabled={busy === "suggest"}
               placeholder={
                 busy === "suggest"
-                  ? "맥락에 맞게 쓰는 중…"
-                  : "비우면 대신 씀  ·  @나: 내 말"
+                  ? "내 대사를 쓰는 중…"
+                  : "할 말을 적거나, 비워 보내면 이어 줍니다"
               }
             />
-            <p className="composer-hint">비우면 대신 씀 · @: 장면 · @나: 내 말 · @이름: 그 인물 · *행동*</p>
+            <p className="composer-hint">@: 장면 · @나: 내 대사 · @이름: 다른 사람 · *행동*</p>
           </div>
         </div>
         {confirm.dialog}

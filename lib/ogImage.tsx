@@ -84,8 +84,9 @@ export default async function OgImage() {
           <div
             style={{
               color: "#7c8593",
-              fontSize: 22,
-              letterSpacing: "0.16em",
+              fontSize: 20,
+              letterSpacing: "0.04em",
+              lineHeight: 1.4,
               fontFamily: fonts.length ? "Noto Sans KR" : "sans-serif",
             }}
           >

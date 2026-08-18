@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   keywords: [
     "이어롤",
     "EarRole",
-    "롤플",
+    "롤플레이",
     "스토리 채팅",
     "RP",
     "캐릭터",

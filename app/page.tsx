@@ -3,8 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppFrame from "@/components/AppFrame";
-import AvatarCircle from "@/components/AvatarCircle";
-import BrandLockup from "@/components/BrandLockup";
+import LoginGate from "@/components/LoginGate";
 import GuidePanel from "@/components/GuidePanel";
 import HistoryPanel from "@/components/HistoryPanel";
 import PageShell from "@/components/PageShell";
@@ -16,8 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { deletePlayFromCloud } from "@/lib/cloud";
 import { timeAgo } from "@/lib/korean";
 import { previewText } from "@/lib/parseMessage";
-import { WORLD_PRESETS, isPresetNamed } from "@/lib/presets";
-import { SITE_TAGLINE } from "@/lib/site";
+import { isPresetNamed } from "@/lib/presets";
 import { storyTitle } from "@/lib/storyTitle";
 import type { SettingRecord } from "@/lib/types";
 
@@ -39,46 +37,13 @@ function HomeBody() {
 
   if (!auth.enabled || !auth.user) {
     return (
-      <PageShell>
-        <main className="paper-card login-card mt-8 px-7 py-10">
-          <BrandLockup />
-          <p className="login-kicker">{SITE_TAGLINE}</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">
-            이야기가 끊기지 않게
-          </h1>
-          <p className="mt-4 text-base leading-relaxed text-[var(--ink-soft)]">
-            캐릭터 설정이 이어지는 개인용 스토리 롤플.
-          </p>
-          <div className="login-cast">
-            {WORLD_PRESETS.map((preset) => (
-              <div key={preset.id} className="login-cast-item">
-                <AvatarCircle
-                  src={preset.character.photo}
-                  name={preset.character.name}
-                  size="md"
-                />
-                <p className="login-cast-name">{preset.character.name}</p>
-              </div>
-            ))}
-          </div>
-          {!auth.enabled ? (
-            <p className="alert-error mt-8">
-              Supabase 환경 변수가 없어 로그인할 수 없습니다.
-            </p>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="btn-primary mt-8 w-full"
-                onClick={auth.signInWithGoogle}
-                disabled={auth.busy}
-              >
-                {auth.busy ? "연결 중…" : "Google로 시작하기"}
-              </button>
-              {auth.error ? <p className="alert-error mt-4">{auth.error}</p> : null}
-            </>
-          )}
-        </main>
+      <PageShell wide>
+        <LoginGate
+          enabled={auth.enabled}
+          busy={auth.busy}
+          error={auth.error}
+          onGoogle={auth.signInWithGoogle}
+        />
       </PageShell>
     );
   }

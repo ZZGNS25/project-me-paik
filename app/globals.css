@@ -1055,6 +1055,8 @@ button.chat-speaker.is-me {
 }
 
 .login-cast-item {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1067,39 +1069,26 @@ button.chat-speaker.is-me {
 }
 
 .login-cast-item.is-blank {
-  margin-left: -0.95rem;
+  z-index: 0;
+  margin-left: -1.55rem;
 }
 
-.login-cast-item .avatar-circle,
-.login-cast-slot {
+.login-cast-item .avatar-circle {
   box-shadow: 0 0 0 3px var(--paper);
 }
 
-.login-cast-slot {
-  display: inline-flex;
-  width: 5.5rem;
-  height: 5.5rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px dashed rgba(154, 176, 214, 0.5);
-  border-radius: 999px;
-  background: rgba(10, 12, 16, 0.35);
-  color: rgba(168, 186, 214, 0.88);
+.login-cast-item.is-blank .avatar-circle {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: #1a1e26;
 }
 
-.login-cast-slot svg {
-  width: 1.55rem;
-  height: 1.55rem;
+.login-cast-item.is-blank .avatar-silhouette {
+  color: #6a717c;
 }
 
 .login-cast-name {
   color: var(--ink-dim);
   font-size: 0.78rem;
-}
-
-.login-cast-item.is-blank .login-cast-name {
-  color: rgba(168, 186, 214, 0.78);
 }
 
 .login-kicker {
@@ -1140,14 +1129,13 @@ button.chat-speaker.is-me {
 }
 
 @media (max-width: 480px) {
-  .login-cast-item .avatar-lg,
-  .login-cast-slot {
+  .login-cast-item .avatar-lg {
     width: 4.35rem;
     height: 4.35rem;
   }
 
   .login-cast-item.is-blank {
-    margin-left: -1.15rem;
+    margin-left: -1.7rem;
   }
 }
 

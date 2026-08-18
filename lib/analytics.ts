@@ -15,7 +15,10 @@ export function gaId() {
 export function trackPageView(path: string) {
   const id = gaId();
   if (!id || typeof window === "undefined" || !window.gtag) return;
-  window.gtag("config", id, { page_path: path });
+  window.gtag("event", "page_view", {
+    page_path: path,
+    page_location: `${window.location.origin}${path}`,
+  });
 }
 
 export function trackEvent(name: string, params?: Record<string, string>) {

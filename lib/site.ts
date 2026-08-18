@@ -1,4 +1,12 @@
-export const SITE_URL = "https://project-me-paik.vercel.app";
+function siteOrigin() {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercel) return `https://${vercel.replace(/^https?:\/\//, "")}`;
+  return "https://project-me-paik.vercel.app";
+}
+
+export const SITE_URL = siteOrigin();
 export const SITE_NAME = "이어롤";
 export const SITE_TITLE = "EarRole · 이어롤";
 export const SITE_TAGLINE = "듣고, 잇고, 몰입하다.";

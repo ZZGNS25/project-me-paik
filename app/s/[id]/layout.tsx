@@ -24,8 +24,9 @@ export async function generateMetadata({
   const url = shareUrl(id, SITE_URL);
 
   return {
-    title,
+    title: { absolute: title },
     description,
+    robots: { index: true, follow: true },
     alternates: { canonical: url },
     openGraph: {
       type: "website",

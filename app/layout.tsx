@@ -1,16 +1,25 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import MotionRoot from "@/components/MotionRoot";
+import { gaId } from "@/lib/analytics";
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
+  SITE_TAGLINE,
   SITE_TITLE,
   SITE_URL,
 } from "@/lib/site";
 import "./globals.css";
 
+const measurementId = gaId();
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: SITE_TITLE,
+  applicationName: SITE_NAME,
+  title: {
+    default: SITE_TITLE,
+    template: `%s · ${SITE_NAME}`,
+  },
   description: SITE_DESCRIPTION,
   keywords: [
     "이어롤",
@@ -23,6 +32,8 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: SITE_NAME }],
   creator: SITE_NAME,
+  category: "entertainment",
+  formatDetection: { telephone: false, email: false, address: false },
   robots: { index: true, follow: true },
   alternates: { canonical: SITE_URL },
   openGraph: {
@@ -42,6 +53,11 @@ export const metadata: Metadata = {
     icon: "/earrole-mark.png",
     apple: "/earrole-mark.png",
   },
+  appleWebApp: {
+    capable: true,
+    title: SITE_NAME,
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
@@ -60,6 +76,8 @@ const jsonLd = {
   alternateName: "EarRole",
   url: SITE_URL,
   description: SITE_DESCRIPTION,
+  slogan: SITE_TAGLINE,
+  image: `${SITE_URL}/opengraph-image`,
   applicationCategory: "EntertainmentApplication",
   operatingSystem: "Web",
   inLanguage: "ko-KR",
@@ -84,6 +102,21 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col">
+        {measurementId ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+window.gtag=gtag;
+gtag('js', new Date());
+gtag('config','${measurementId}',{anonymize_ip:true});`}
+            </Script>
+          </>
+        ) : null}
         <MotionRoot>{children}</MotionRoot>
       </body>
     </html>
